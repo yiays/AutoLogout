@@ -18,8 +18,7 @@ namespace AutoLogout
             StartPosition = FormStartPosition.Manual;
             Width = 200;
             Height = 130;
-
-            ControlBox = false;
+            ControlBox = false; // No control buttons
 
             // Calculate the position just offset from the bottom right corner
             int offset = 0; // Adjust the offset as needed
@@ -34,7 +33,7 @@ namespace AutoLogout
             {
                 Interval = 1000
             };
-            timer.Tick += TimerTick;
+            timer.Tick += Timer_Tick;
 
             textTimer = new Label
             {
@@ -42,7 +41,7 @@ namespace AutoLogout
                 AutoSize = true,
                 Font = new Font("Segoe UI", 24, FontStyle.Bold)
             };
-            CheckBedtime();
+            EnforceBedtime();
             UpdateClock();
 
             pauseButton = new Button
@@ -51,7 +50,7 @@ namespace AutoLogout
                 AutoSize = true,
                 Text = "Pause"
             };
-            pauseButton.Click += pauseButton_Click;
+            pauseButton.Click += Pause;
 
             Controls.Add(textTimer);
             Controls.Add(pauseButton);
@@ -70,7 +69,7 @@ namespace AutoLogout
             timer.Start();
         }
 
-        private void pauseButton_Click(object? sender, EventArgs e) {
+        private void Pause(object? sender, EventArgs e) {
             // Pause the timer
             if(timer.Enabled) {
                 timer.Stop();
@@ -82,25 +81,19 @@ namespace AutoLogout
                 timer.Start();
                 pauseButton.Text = "Pause";
                 remainingTime--;
-                CheckBedtime();
+                EnforceBedtime();
                 UpdateClock();
             }
         }
 
-        private void TimerTick(object? sender, EventArgs e) {
+        private void Timer_Tick(object? sender, EventArgs e) {
             if(remainingTime > 0) {
                 remainingTime--;
+                EnforceBedtime();
                 UpdateClock();
             } else {
                 timer.Stop();
-                
-                ProcessStartInfo startInfo = new()
-                {
-                    FileName = "notepad.exe",
-                    UseShellExecute = false
-                };
-                Process.Start(startInfo);
-                Application.Exit();
+                if(CheckBedtime() <= 10)
             }
         }
 
@@ -110,22 +103,31 @@ namespace AutoLogout
             textTimer.Text = timeString;
         }
 
-        private void CheckBedtime() {
+        private int CheckBedtime() {
             DateTime now = DateTime.Now;
-            DateTime ninePM = new DateTime(now.Year, now.Month, now.Day, 21, 0, 0);
-
-            if (now > ninePM)
-            {
-                ninePM = ninePM.AddDays(1);  // Move to next day's 9 PM if it's already past 9 PM today
-            }
+            DateTime ninePM = new DateTime(now.Year, now.Month, now.Day, bedtimeH, bedtimeM, 0);
 
             TimeSpan difference = ninePM - now;
-            int differenceInSeconds = (int)difference.TotalSeconds;
+            return (int)difference.TotalSeconds;
+        }
 
-            if(differenceInSeconds < remainingTime) {
+        private void EnforceBedtime() {
+            int differenceInSeconds = CheckBedtime();
+
+            if(differenceInSeconds < 0) {
                 Task.Run(() => {
+                    MessageBox.Show("It's past bedtime! Shutting down in 30 seconds.");
+                    Invoke(() => FocusWindow(null, null));
+                });
+                remainingTime = 30;
+            } else if(differenceInSeconds < remainingTime) {
+                if(Math.Abs(remainingTime - differenceInSeconds) > 60) {
+                    // Only alert if the difference is more than a minute
+                    Task.Run(() => {
+                        MessageBox.Show("Your time has been shortened so it will end with bedtime.");
                         Invoke(() => FocusWindow(null, null));
                     });
+                }
                 remainingTime = differenceInSeconds;
             }
         }
