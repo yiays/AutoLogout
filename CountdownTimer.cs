@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Media;
 using System.Runtime.InteropServices;
 
 namespace AutoLogout
@@ -127,6 +128,22 @@ namespace AutoLogout
                 remainingTime--;
                 EnforceBedtime();
                 UpdateClock();
+                if(remainingTime == 600) {
+                    SoundPlayer player = new SoundPlayer("Resources/alarm.wav");
+                    player.Play();
+                    Task.Run(() => {
+                        MessageBox.Show(
+                            "Your time is up in 10 minutes!", "Time limit warning", MessageBoxButtons.OK, MessageBoxIcon.Warning
+                        );
+                    });
+                }
+                if(remainingTime == 30 && !graceGiven) {
+                    Task.Run(() => {
+                        MessageBox.Show(
+                            "Your time is up in 30 seconds!", "Time limit warning", MessageBoxButtons.OK, MessageBoxIcon.Warning
+                        );
+                    });
+                }
             } else {
                 timer.Stop();
                 if(CheckBedtime() <= 10)
