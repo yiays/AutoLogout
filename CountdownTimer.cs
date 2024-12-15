@@ -56,6 +56,8 @@ namespace AutoLogout
             Controls.Add(textTimer);
             Controls.Add(pauseButton);
 
+            lockoutWindow = new LockoutWindow(this);
+
             notifyIcon = new NotifyIcon() {
                 Icon = new Icon("Resources/icon.ico"),
                 Visible = true,
