@@ -9,6 +9,7 @@ namespace AutoLogout
         private readonly System.Windows.Forms.Timer timer;
         private int remainingTime = 7200;
         private readonly LockoutWindow lockoutWindow;
+        private readonly NotifyIcon notifyIcon;
 
         public CountdownTimer() {
             Text = "Time limit";
@@ -55,12 +56,15 @@ namespace AutoLogout
             Controls.Add(textTimer);
             Controls.Add(pauseButton);
 
-            lockoutWindow = new LockoutWindow();
-            lockoutWindow.Click += ReassertTopMost;
+            notifyIcon = new NotifyIcon() {
+                Icon = new Icon("Resources/icon.ico"),
+                Visible = true,
+                Text = "Show time limit"
+            };
+            notifyIcon.Click += FocusWindow;
         }
 
         private void OnLoad(object? sender, EventArgs e) {
-            TopMost = true;
             timer.Start();
         }
 
@@ -70,9 +74,9 @@ namespace AutoLogout
                 timer.Stop();
                 pauseButton.Text = "Resume";
                 lockoutWindow.Show();
-                ReassertTopMost(null, null);
             } else {
                 lockoutWindow.Hide();
+                TopMost = false;
                 timer.Start();
                 pauseButton.Text = "Pause";
                 remainingTime--;
@@ -118,19 +122,21 @@ namespace AutoLogout
 
             if(differenceInSeconds < remainingTime) {
                 Task.Run(() => {
-                    MessageBox.Show("Your time has been shortened so that it will end with bedtime.");
-                    Invoke(() => ReassertTopMost(null, null));
-                });
-                if(differenceInSeconds > 0)
-                    remainingTime = differenceInSeconds;
-                else remainingTime = 10;
+                        Invoke(() => FocusWindow(null, null));
+                    });
+                remainingTime = differenceInSeconds;
             }
         }
 
-        private void ReassertTopMost(object? sender, EventArgs? e) {
+        public void ReassertTopMost(object? sender, EventArgs? e) {
             TopMost = false;
             TopMost = true;
         }
+
+        public void FocusWindow(object? sender, EventArgs? e) {
+            Activate();
+        }
+
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
