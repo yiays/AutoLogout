@@ -14,11 +14,15 @@ namespace AutoLogout
         private readonly Button logoffButton;
         private readonly Button shutdownButton;
         private readonly System.Windows.Forms.Timer timer;
-        private int remainingTime = 7200;
-        private const int bedtimeH = 23;
-        private const int bedtimeM = 0;
-        private readonly LockoutWindow lockoutWindow;
         private readonly NotifyIcon notifyIcon;
+
+        private int remainingTime = 610;
+        private const int bedtimeH = 0;
+        private const int bedtimeM = 0;
+        private const int waketimeH = 8;
+        private const int waketimeM = 0;
+        private bool graceGiven = false;
+        private readonly LockoutWindow lockoutWindow;
 
         public CountdownTimer() {
             Text = "Time limit";
@@ -159,23 +163,28 @@ namespace AutoLogout
             textTimer.Text = timeString;
         }
 
-        private int CheckBedtime() {
+        private double CheckBedtime() {
             DateTime now = DateTime.Now;
-            DateTime ninePM = new DateTime(now.Year, now.Month, now.Day, bedtimeH, bedtimeM, 0);
+            DateTime sleepTime = new(now.Year, now.Month, now.Day, bedtimeH, bedtimeM, 0);
+            if(bedtimeH < 12) sleepTime = sleepTime.AddDays(1);
+            DateTime wakeTime = new(now.Year, now.Month, now.Day, waketimeH, waketimeM, 0);
 
-            TimeSpan difference = ninePM - now;
-            return (int)difference.TotalSeconds;
+            TimeSpan differenceNight = sleepTime - now;
+            TimeSpan differenceMorning = now - wakeTime;
+            return Math.Min(differenceNight.TotalSeconds, differenceMorning.TotalSeconds);
         }
 
         private void EnforceBedtime() {
-            int differenceInSeconds = CheckBedtime();
+            double differenceInSeconds = CheckBedtime();
 
             if(differenceInSeconds < 0) {
+                if(graceGiven) return;
                 Task.Run(() => {
                     MessageBox.Show("It's past bedtime! Shutting down in 30 seconds.");
                     Invoke(() => FocusWindow(null, null));
                 });
                 remainingTime = 30;
+                graceGiven = true;
             } else if(differenceInSeconds < remainingTime) {
                 if(Math.Abs(remainingTime - differenceInSeconds) > 60) {
                     // Only alert if the difference is more than a minute
@@ -184,7 +193,7 @@ namespace AutoLogout
                         Invoke(() => FocusWindow(null, null));
                     });
                 }
-                remainingTime = differenceInSeconds;
+                remainingTime = (int)differenceInSeconds;
             }
         }
 
@@ -204,7 +213,7 @@ namespace AutoLogout
         }
 
         private void ShutDown(object? sender, EventArgs? e) {
-            Process.Start("shutdown", "/s /f");
+            Process.Start("shutdown", "/p /f");
             remainingTime = 0;
             Application.Exit();
         }
