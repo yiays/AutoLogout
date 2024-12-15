@@ -1,13 +1,21 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace AutoLogout
 {
     public partial class CountdownTimer : Form
     {
+        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+        public static extern IntPtr ExtractIcon(IntPtr hInst, string lpszExeFileName, int nIconIndex);
+
         private readonly Label textTimer;
         private readonly Button pauseButton;
+        private readonly Button logoffButton;
+        private readonly Button shutdownButton;
         private readonly System.Windows.Forms.Timer timer;
         private int remainingTime = 7200;
+        private const int bedtimeH = 23;
+        private const int bedtimeM = 0;
         private readonly LockoutWindow lockoutWindow;
         private readonly NotifyIcon notifyIcon;
 
@@ -47,13 +55,41 @@ namespace AutoLogout
             pauseButton = new Button
             {
                 Location = new Point(10, 44),
-                AutoSize = true,
+                Size = new Size(70, 28),
                 Text = "Pause"
             };
             pauseButton.Click += Pause;
 
+            IntPtr logofficonHandle = ExtractIcon(IntPtr.Zero, "shell32.dll", 44);
+            Icon logoffIcon = Icon.FromHandle(logofficonHandle);
+            Bitmap logoffBitmap = new Bitmap(logoffIcon.ToBitmap(), new Size(24, 24));
+            logoffButton = new Button {
+                Location = new Point(84, 44),
+                Size = new Size(32, 28),
+                Image = logoffBitmap,
+                AccessibleDescription = "Log off"
+            };
+            logoffButton.Click += LogOff;
+            ToolTip logoffHint = new ToolTip();
+            logoffHint.SetToolTip(logoffButton, "Log off");
+
+            IntPtr shutdowniconHandle = ExtractIcon(IntPtr.Zero, "shell32.dll", 27);
+            Icon shutdownIcon = Icon.FromHandle(shutdowniconHandle);
+            Bitmap shutdownBitmap = new Bitmap(shutdownIcon.ToBitmap(), new Size(24, 24));
+            shutdownButton = new Button {
+                Location = new Point(120, 44),
+                Size = new Size(32, 28),
+                Image = shutdownBitmap,
+                AccessibleDescription = "Shutdown"
+            };
+            shutdownButton.Click += ShutDown;
+            ToolTip shutdownHint = new ToolTip();
+            shutdownHint.SetToolTip(shutdownButton, "Shut down");
+
             Controls.Add(textTimer);
             Controls.Add(pauseButton);
+            Controls.Add(logoffButton);
+            Controls.Add(shutdownButton);
 
             lockoutWindow = new LockoutWindow(this);
 
@@ -94,6 +130,9 @@ namespace AutoLogout
             } else {
                 timer.Stop();
                 if(CheckBedtime() <= 10)
+                    ShutDown(null, null);
+                else
+                    LogOff(null, null);
             }
         }
 
@@ -141,6 +180,17 @@ namespace AutoLogout
             Activate();
         }
 
+        private void LogOff(object? sender, EventArgs? e) {
+            Process.Start("shutdown", "/l /f");
+            remainingTime = 0;
+            Application.Exit();
+        }
+
+        private void ShutDown(object? sender, EventArgs? e) {
+            Process.Start("shutdown", "/s /f");
+            remainingTime = 0;
+            Application.Exit();
+        }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
