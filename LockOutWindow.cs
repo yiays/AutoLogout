@@ -11,6 +11,8 @@ namespace AutoLogout
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.Manual;
             BackColor = Color.Black;
+            AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScaleDimensions = new SizeF(125F, 125F);
 
             instructions = new Label {
                 Text = "Timer paused. Click anywhere to show the timer.",

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Media;
 using System.Runtime.InteropServices;
+using Microsoft.Win32;
 
 namespace AutoLogout
 {
@@ -17,10 +18,10 @@ namespace AutoLogout
         private readonly NotifyIcon notifyIcon;
 
         private int remainingTime = 60 * 60 * 2;
-        private const int bedtimeH = 21;
-        private const int bedtimeM = 0;
-        private const int waketimeH = 8;
-        private const int waketimeM = 0;
+        private int bedtimeH = 21;
+        private int bedtimeM = 0;
+        private int waketimeH = 8;
+        private int waketimeM = 0;
         private bool graceGiven = false;
 
         private readonly LockoutWindow lockoutWindow;
@@ -34,13 +35,11 @@ namespace AutoLogout
             Width = 200;
             Height = 130;
             ControlBox = false; // No control buttons
+            AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScaleDimensions = new SizeF(125F, 125F);
 
-            // Calculate the position just offset from the bottom right corner
-            int offset = 0; // Adjust the offset as needed
-            if(Screen.PrimaryScreen != null) {
-                Rectangle workingArea = Screen.PrimaryScreen.WorkingArea;
-                Location = new Point(workingArea.Right - Width - offset, workingArea.Bottom - Height - offset);
-            }
+            Reposition(null, null);
+            SystemEvents.DisplaySettingsChanged += Reposition;
 
             Load += OnLoad;
 
@@ -108,6 +107,14 @@ namespace AutoLogout
                 Text = "Show time limit"
             };
             notifyIcon.Click += FocusWindow;
+        }
+
+        private void Reposition(object? sender, EventArgs? e) {
+            // Calculate the position just offset from the bottom right corner
+            if(Screen.PrimaryScreen != null) {
+                Rectangle workingArea = Screen.PrimaryScreen.WorkingArea;
+                Location = new Point(workingArea.Right - Width, workingArea.Bottom - Height);
+            }
         }
 
         private void OnLoad(object? sender, EventArgs e) {
