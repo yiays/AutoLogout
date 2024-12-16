@@ -16,13 +16,15 @@ namespace AutoLogout
         private readonly System.Windows.Forms.Timer timer;
         private readonly NotifyIcon notifyIcon;
 
-        private int remainingTime = 610;
-        private const int bedtimeH = 0;
+        private int remainingTime = 60 * 60 * 2;
+        private const int bedtimeH = 21;
         private const int bedtimeM = 0;
         private const int waketimeH = 8;
         private const int waketimeM = 0;
         private bool graceGiven = false;
+
         private readonly LockoutWindow lockoutWindow;
+        private readonly AudioControl audioControl;
 
         public CountdownTimer() {
             Text = "Time limit";
@@ -98,6 +100,8 @@ namespace AutoLogout
 
             lockoutWindow = new LockoutWindow(this);
 
+            audioControl = new AudioControl();
+
             notifyIcon = new NotifyIcon() {
                 Icon = new Icon("Resources/icon.ico"),
                 Visible = true,
@@ -116,6 +120,7 @@ namespace AutoLogout
                 timer.Stop();
                 pauseButton.Text = "Resume";
                 lockoutWindow.Show();
+                audioControl.Mute(null, null);
             } else {
                 lockoutWindow.Hide();
                 TopMost = false;
@@ -124,6 +129,7 @@ namespace AutoLogout
                 remainingTime--;
                 EnforceBedtime();
                 UpdateClock();
+                audioControl.Unmute();
             }
         }
 
