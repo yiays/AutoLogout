@@ -18,10 +18,10 @@ namespace AutoLogout
         private readonly NotifyIcon notifyIcon;
 
         private int remainingTime = 60 * 60 * 2;
-        private int bedtimeH = 21;
-        private int bedtimeM = 0;
-        private int waketimeH = 8;
-        private int waketimeM = 0;
+        private readonly int bedtimeH = 21;
+        private readonly int bedtimeM = 0;
+        private readonly int waketimeH = 8;
+        private readonly int waketimeM = 0;
         private bool graceGiven = false;
 
         private readonly LockoutWindow lockoutWindow;
@@ -178,13 +178,19 @@ namespace AutoLogout
 
         private double CheckBedtime() {
             DateTime now = DateTime.Now;
+            // Create sleepTime and wakeTime, assuming both are for today
             DateTime sleepTime = new(now.Year, now.Month, now.Day, bedtimeH, bedtimeM, 0);
-            if(bedtimeH < 12) sleepTime = sleepTime.AddDays(1);
             DateTime wakeTime = new(now.Year, now.Month, now.Day, waketimeH, waketimeM, 0);
 
-            TimeSpan differenceNight = sleepTime - now;
-            TimeSpan differenceMorning = now - wakeTime;
-            return Math.Min(differenceNight.TotalSeconds, differenceMorning.TotalSeconds);
+            // Correct sleepTime and wakeTime based on the current time
+            if(now > wakeTime) {
+                // if sleepTime is before wakeTime, it will next occur tomorrow
+                if(sleepTime < wakeTime) sleepTime = sleepTime.AddDays(1);
+            }else{
+                // sleepTime must be before wakeTime if wakeTime hasn't passed yet
+                if(now < sleepTime) sleepTime = sleepTime.AddDays(-1);
+            }
+            return (sleepTime - now).TotalSeconds;
         }
 
         private void EnforceBedtime() {
