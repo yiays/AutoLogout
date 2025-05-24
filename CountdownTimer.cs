@@ -202,6 +202,21 @@ namespace AutoLogout
 
     private void OnLoad(object? sender, EventArgs e) {
       LoadFromRegistry();
+      if (password == "")
+      {
+        string? newPassword = Prompt.ShowDialog("Enter a new parent password.", "Welcome to AutoLogout");
+        if (newPassword == null)
+        {
+          MessageBox.Show("You must set a password to use this application.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+          remainingTime = 0;
+          Close();
+          return;
+        }
+        password = newPassword;
+        SaveToRegistry();
+        MessageBox.Show("Password set! Open the control panel to set the rules for this account.", "Welcome to AutoLogout", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      }
+
       DateOnly currentDay = DateOnly.FromDateTime(DateTime.Now);
       if (remainingTimeDay != currentDay)
       {
