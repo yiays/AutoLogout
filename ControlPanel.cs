@@ -16,16 +16,12 @@ namespace AutoLogout
       AutoScaleMode = AutoScaleMode.Dpi;
       AutoScaleDimensions = new SizeF(125F, 125F);
       MaximizeBox = false;
-      Width = 1200;
-      Height = 800;
-
-      
     }
 
-    protected override void OnFormClosing(FormClosingEventArgs e)
+    protected override void OnFormClosed(FormClosedEventArgs e)
     {
-      e.Cancel = true;  // Prevents window from closing
-      Hide();  // Hides the form instead of closing it
+      base.OnFormClosed(e);
+      parent.controlPanel = null;
     }
   }
 }

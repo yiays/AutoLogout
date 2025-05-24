@@ -32,7 +32,7 @@ namespace AutoLogout
     private bool graceGiven = false;
 
     private readonly LockoutWindow lockoutWindow;
-    private readonly ControlPanel controlPanel;
+    public ControlPanel? controlPanel;
     private readonly AudioControl audioControl;
 
     public CountdownTimer() {
@@ -137,7 +137,6 @@ namespace AutoLogout
       Controls.Add(buttonPanel);
 
       lockoutWindow = new LockoutWindow(this);
-      controlPanel = new ControlPanel(this);
       audioControl = new AudioControl();
 
       notifyIcon = new NotifyIcon() {
@@ -235,7 +234,11 @@ namespace AutoLogout
       {
         timer.Stop();
         pauseButton.Text = "Resume";
-        controlPanel.Hide();
+        if (controlPanel != null)
+        {
+          controlPanel.Close();
+          controlPanel = null;
+        }
         lockoutWindow.Show();
         audioControl.Mute(null, null);
         settingsButton.Enabled = false;
@@ -253,11 +256,19 @@ namespace AutoLogout
         settingsButton.Enabled = true;
       }
     }
+
+    private void Settings(object? sender, EventArgs e)
+    {
+      if (controlPanel != null) return;
       string? password = Prompt.ShowDialog("Enter the parent password to continue.", "AutoLogout Settings");
       if (password == null) return;
 
       if (password == this.password)
-        controlPanel.Show();
+      {
+        controlPanel = new ControlPanel(this);
+        controlPanel.ShowDialog();
+      }
+      else MessageBox.Show("The password was incorrect", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
     }
 
     private void Timer_Tick(object? sender, EventArgs e)
