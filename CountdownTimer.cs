@@ -149,7 +149,7 @@ namespace AutoLogout
     }
 
     private void LoadFromRegistry() {
-      RegistryKey? key = Registry.CurrentUser.CreateSubKey("AutoLogout", true);
+      RegistryKey? key = Registry.CurrentUser.CreateSubKey("Software\\Yiays\\AutoLogout", true);
       if (key == null)
       {
         MessageBox.Show("Unable to access settings.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -176,7 +176,7 @@ namespace AutoLogout
     }
 
     private void SaveToRegistry() {
-      RegistryKey? key = Registry.CurrentUser.CreateSubKey("AutoLogout");
+      RegistryKey? key = Registry.CurrentUser.CreateSubKey("Software\\Yiays\\AutoLogout");
       if (key != null)
       {
         key.SetValue("password", password);
