@@ -238,9 +238,8 @@ namespace AutoLogout
         settingsButton.Enabled = true;
       }
     }
-    
-    private void Settings(object? sender, EventArgs e) {
-      String password = Prompt.ShowDialog("Enter the parent password to continue.", "AutoLogout Settings");
+      string? password = Prompt.ShowDialog("Enter the parent password to continue.", "AutoLogout Settings");
+      if (password == null) return;
 
       if (password == this.password)
         controlPanel.Show();

@@ -2,7 +2,7 @@ namespace AutoLogout
 {
   public static class Prompt
   {
-    public static string ShowDialog(string text, string caption)
+    public static string? ShowDialog(string text, string caption)
     {
       Form prompt = new()
       {
@@ -25,7 +25,7 @@ namespace AutoLogout
       prompt.Controls.Add(textLabel);
       prompt.AcceptButton = confirmation;
 
-      return prompt.ShowDialog() == DialogResult.OK ? textBox.Text : "";
+      return prompt.ShowDialog() == DialogResult.OK ? textBox.Text : null;
     }
   }
 }
