@@ -22,13 +22,11 @@ namespace AutoLogout
 
     // Config defaults
     private String password = "";
-    private int? dailyTimeLimit;
-    private int? remainingTime;
+    public int dailyTimeLimit;
+    public int remainingTime;
     private DateOnly remainingTimeDay = new(1, 1, 1);
-    private int? bedtimeH;
-    private int? bedtimeM;
-    private int? waketimeH;
-    private int? waketimeM;
+    public TimeOnly bedtime = new(0, 0);
+    public TimeOnly waketime = new(0, 0);
     private bool graceGiven = false;
 
     private readonly LockoutWindow lockoutWindow;
@@ -160,20 +158,14 @@ namespace AutoLogout
       // Load current app state from registry
       password = (string)key.GetValue("password", "");
 
-      bedtimeH = (int?)key.GetValue("bedtimeH", null);
-      if (bedtimeH == -1) bedtimeH = null;
-      bedtimeM = (int?)key.GetValue("bedtimeM", null);
-      if (bedtimeM == -1) bedtimeM = null;
-      waketimeH = (int?)key.GetValue("waketimeH", null);
-      if (waketimeH == -1) waketimeH = null;
-      waketimeM = (int?)key.GetValue("waketimeM", null);
-      if (waketimeM == -1) waketimeM = null;
+      string bedtimeRaw = (string)key.GetValue("bedtime", "0:00");
+      bedtime = TimeOnly.Parse(bedtimeRaw);
+      string waketimeRaw = (string)key.GetValue("waketime", "0:00");
+      waketime = TimeOnly.Parse(waketimeRaw);
 
-      dailyTimeLimit = (int?)key.GetValue("dailyTimeLimit", null);
-      if (dailyTimeLimit == -1) dailyTimeLimit = null;
+      dailyTimeLimit = (int)key.GetValue("dailyTimeLimit", -1);
       remainingTimeDay = DateOnly.Parse((String)key.GetValue("remainingTimeDay", "1/01/0001"));
-      remainingTime = (int?)key.GetValue("remainingTime", null);
-      if (remainingTime == -1) remainingTime = null;
+      remainingTime = (int)key.GetValue("remainingTime", -1);
     }
 
     private void SaveToRegistry() {
@@ -181,13 +173,11 @@ namespace AutoLogout
       if (key != null)
       {
         key.SetValue("password", password);
-        key.SetValue("remainingTimeDay", DateOnly.FromDateTime(DateTime.Now));
-        key.SetValue("dailyTimeLimit", dailyTimeLimit ?? -1);
-        key.SetValue("remainingTime", remainingTime ?? -1);
-        key.SetValue("bedtimeH", bedtimeH ?? -1);
-        key.SetValue("bedtimeM", bedtimeM ?? -1);
-        key.SetValue("waketimeH", waketimeH ?? -1);
-        key.SetValue("waketimeM", waketimeM ?? -1);
+        key.SetValue("remainingTimeDay", DateOnly.FromDateTime(DateTime.Today));
+        key.SetValue("dailyTimeLimit", dailyTimeLimit);
+        key.SetValue("remainingTime", remainingTime);
+        key.SetValue("bedtime", bedtime.ToString());
+        key.SetValue("waketime", waketime.ToString());
       }
     }
 
@@ -249,11 +239,14 @@ namespace AutoLogout
       {
         lockoutWindow.Hide();
         TopMost = false;
-        timer.Start();
         pauseButton.Text = "Pause";
-        remainingTime--;
-        EnforceBedtime();
-        UpdateClock();
+        if (remainingTime >= 0)
+        {
+          timer.Start();
+          if (remainingTime > 0) remainingTime--;
+          EnforceBedtime();
+          UpdateClock();
+        }
         audioControl.Unmute();
         settingsButton.Enabled = true;
       }
@@ -276,7 +269,7 @@ namespace AutoLogout
     private void Timer_Tick(object? sender, EventArgs e)
     {
       UpdateClock();
-      if (remainingTime == null)
+      if (remainingTime == -1) // Unlimited time
         return;
       if (remainingTime > 0)
       {
@@ -322,34 +315,34 @@ namespace AutoLogout
     }
 
     private void UpdateClock() {
-      if (remainingTime == null)
+      if (remainingTime == -1) // Unlimited time
       {
         textTimer.Text = "No limit";
         return;
       }
-      TimeSpan timeSpan = TimeSpan.FromSeconds((long)remainingTime);
+      TimeSpan timeSpan = TimeSpan.FromSeconds(remainingTime);
       string timeString = string.Format("{0:D2}:{1:D2}:{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
       textTimer.Text = timeString;
     }
 
     private double? CheckBedtime() {
-      if (bedtimeH == null || bedtimeM == null || waketimeH == null || waketimeM == null)
+      if (bedtime == waketime)
         return null;
       DateTime now = DateTime.Now;
       // Create sleepTime and wakeTime, assuming both are for today
-      DateTime sleepTime = new(now.Year, now.Month, now.Day, (int)bedtimeH, (int)bedtimeM, 0);
-      if(bedtimeH < 12) sleepTime = sleepTime.AddDays(1);
-      DateTime wakeTime = new(now.Year, now.Month, now.Day, (int)waketimeH, (int)waketimeM, 0);
+      DateTime nextBedTime = new(now.Year, now.Month, now.Day, bedtime.Hour, bedtime.Minute, 0);
+      if(bedtime.Hour < 12) nextBedTime = nextBedTime.AddDays(1);
+      DateTime nextWakeTime = new(now.Year, now.Month, now.Day, waketime.Hour, waketime.Minute, 0);
 
       // Correct sleepTime and wakeTime based on the current time
-      if(now > wakeTime) {
+      if(now > nextWakeTime) {
         // if sleepTime is before wakeTime, it will next occur tomorrow
-        if(sleepTime < wakeTime) sleepTime = sleepTime.AddDays(1);
+        if(nextBedTime < nextWakeTime) nextBedTime = nextBedTime.AddDays(1);
       }else{
         // sleepTime must be before wakeTime if wakeTime hasn't passed yet
-        if(now < sleepTime) sleepTime = sleepTime.AddDays(-1);
+        if(now < nextBedTime) nextBedTime = nextBedTime.AddDays(-1);
       }
-      return (sleepTime - now).TotalSeconds;
+      return (nextBedTime - now).TotalSeconds;
       }
 
     private void EnforceBedtime() {
@@ -367,7 +360,7 @@ namespace AutoLogout
         remainingTime = 30;
         graceGiven = true;
       }
-      else if (remainingTime == null)
+      else if (remainingTime == -1) // Unlimited time
       {
         // No time limit, just bedtime
         remainingTime = (int)differenceInSeconds;
@@ -425,7 +418,7 @@ namespace AutoLogout
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e) {
-      if(remainingTime == null || remainingTime > 0)
+      if(remainingTime == -1 || remainingTime > 0)
         e.Cancel = true;
       }
   }
