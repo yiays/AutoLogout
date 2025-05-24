@@ -152,6 +152,8 @@ namespace AutoLogout
       if (key == null)
       {
         MessageBox.Show("Unable to access settings.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        remainingTime = 0;
+        Close();
         return;
       }
 
