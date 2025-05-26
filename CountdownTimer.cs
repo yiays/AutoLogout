@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Media;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
+using BC = BCrypt.Net;
 
 namespace AutoLogout
 {
@@ -20,7 +21,7 @@ namespace AutoLogout
     private readonly SoundPlayer player = new SoundPlayer("Resources/alarm.wav");
 
     // Config defaults
-    private String password = "";
+    private String hashedPassword = "";
     public int dailyTimeLimit;
     public int remainingTime;
     private DateOnly remainingTimeDay = new(1, 1, 1);
@@ -157,7 +158,7 @@ namespace AutoLogout
       }
 
       // Load current app state from registry
-      password = (string)key.GetValue("password", "");
+      hashedPassword = (string)key.GetValue("password", "");
 
       string bedtimeRaw = (string)key.GetValue("bedtime", "0:00");
       bedtime = TimeOnly.Parse(bedtimeRaw);
@@ -173,7 +174,7 @@ namespace AutoLogout
       RegistryKey? key = Registry.CurrentUser.CreateSubKey("Software\\Yiays\\AutoLogout");
       if (key != null)
       {
-        key.SetValue("password", password);
+        key.SetValue("password", hashedPassword);
         key.SetValue("remainingTimeDay", DateOnly.FromDateTime(DateTime.Today));
         key.SetValue("dailyTimeLimit", dailyTimeLimit);
         key.SetValue("remainingTime", remainingTime);
@@ -194,9 +195,9 @@ namespace AutoLogout
 
     private void OnLoad(object? sender, EventArgs e) {
       LoadFromRegistry();
-      if (password == "")
+      if (hashedPassword == "")
       {
-        string? newPassword = Prompt.ShowDialog("Enter a new parent password.", "Welcome to AutoLogout");
+        string? newPassword = Prompt.ShowDialog("Enter a new parent password.", "Welcome to AutoLogout", true);
         if (newPassword == null)
         {
           MessageBox.Show("You must set a password to use this application.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -204,7 +205,7 @@ namespace AutoLogout
           Close();
           return;
         }
-        password = newPassword;
+        hashedPassword = BC.BCrypt.HashPassword(newPassword);
         SaveToRegistry();
         MessageBox.Show("Password set! Open the control panel to set the rules for this account.", "Welcome to AutoLogout", MessageBoxButtons.OK, MessageBoxIcon.Information);
       }
@@ -256,10 +257,10 @@ namespace AutoLogout
     private void Settings(object? sender, EventArgs e)
     {
       if (controlPanel != null) return;
-      string? password = Prompt.ShowDialog("Enter the parent password to continue.", "AutoLogout Settings");
+      string? password = Prompt.ShowDialog("Enter the parent password to continue.", "AutoLogout Settings", true);
       if (password == null) return;
 
-      if (password == this.password)
+      if (BC.BCrypt.Verify(password, hashedPassword))
       {
         controlPanel = new ControlPanel(this);
         controlPanel.ShowDialog();
