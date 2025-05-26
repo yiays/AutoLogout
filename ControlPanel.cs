@@ -10,13 +10,15 @@ namespace AutoLogout
     {
       this.parent = parent;
       Text = "AutoLogout Settings";
-      FormBorderStyle = FormBorderStyle.FixedToolWindow;
+      FormBorderStyle = FormBorderStyle.FixedDialog;
       ShowInTaskbar = true;
       StartPosition = FormStartPosition.CenterScreen;
       AutoScaleMode = AutoScaleMode.Dpi;
       AutoScaleDimensions = new SizeF(125F, 125F);
+      MinimizeBox = false;
       MaximizeBox = false;
-      Width = 400;
+      BackColor = Color.White;
+      Width = 440;
       Height = 300;
 
       TableLayoutPanel table = new()
@@ -30,7 +32,8 @@ namespace AutoLogout
 
       Label dailylimitLabel = new()
       {
-        Text = "Daily time limit:",
+        Dock = DockStyle.Fill,
+        Text = "Daily time limit (minutes):",
         AutoSize = true,
       };
 
@@ -43,7 +46,8 @@ namespace AutoLogout
 
       Label todaylimitLabel = new()
       {
-        Text = "Today's time limit:",
+        Dock = DockStyle.Fill,
+        Text = "Today's time limit (minutes):",
         AutoSize = true,
       };
 
@@ -67,6 +71,7 @@ namespace AutoLogout
         Format = DateTimePickerFormat.Time,
         ShowUpDown = true,
         Value = wakeDateTime,
+        Width = 150,
       };
 
       Label sleeptimeLabel = new()
@@ -82,6 +87,7 @@ namespace AutoLogout
         Format = DateTimePickerFormat.Time,
         ShowUpDown = true,
         Value = sleepDateTime,
+        Width = 150,
       };
 
       table.Controls.Add(dailylimitLabel, 0, 0);

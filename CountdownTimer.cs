@@ -10,8 +10,6 @@ namespace AutoLogout
     [DllImport("shell32.dll", CharSet = CharSet.Auto)]
     public static extern IntPtr ExtractIcon(IntPtr hInst, string lpszExeFileName, int nIconIndex);
 
-    private readonly Panel mainPanel;
-    private readonly FlowLayoutPanel buttonPanel;
     private readonly Label textTimer;
     private readonly Button pauseButton;
     private readonly Button logoffButton;
@@ -44,6 +42,7 @@ namespace AutoLogout
       AutoScaleMode = AutoScaleMode.Dpi;
       AutoScaleDimensions = new SizeF(125F, 125F);
       MaximizeBox = false;
+      BackColor = Color.White;
 
       // Events
       Reposition(null, null);
@@ -58,16 +57,17 @@ namespace AutoLogout
       timer.Tick += Timer_Tick;
 
       // Form elements
-      mainPanel = new Panel
+      Panel mainPanel = new()
       {
         Dock = DockStyle.Top,
         AutoSize = true,
       };
-      buttonPanel = new FlowLayoutPanel
+      FlowLayoutPanel buttonPanel = new()
       {
         Dock = DockStyle.Bottom,
         FlowDirection = FlowDirection.LeftToRight,
-        AutoSize = true
+        AutoSize = true,
+        BackColor = SystemColors.Control,
       };
 
       textTimer = new Label
