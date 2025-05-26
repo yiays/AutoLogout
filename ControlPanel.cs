@@ -6,6 +6,10 @@ namespace AutoLogout
   public partial class ControlPanel : Form
   {
     private readonly CountdownTimer parent;
+    private readonly NumericUpDown dailylimitPicker;
+    private readonly NumericUpDown todaylimitPicker;
+    private readonly DateTimePicker waketimePicker;
+    private readonly DateTimePicker sleeptimePicker;
     public ControlPanel(CountdownTimer parent)
     {
       this.parent = parent;
@@ -29,6 +33,14 @@ namespace AutoLogout
         RowCount = 2,
         Padding = new Padding(10),
       };
+      FlowLayoutPanel buttonPanel = new()
+      {
+        Dock = DockStyle.Bottom,
+        FlowDirection = FlowDirection.RightToLeft,
+        AutoSize = true,
+        BackColor = SystemColors.Control,
+        Padding = new Padding(8),
+      };
 
       Label dailylimitLabel = new()
       {
@@ -37,7 +49,7 @@ namespace AutoLogout
         AutoSize = true,
       };
 
-      NumericUpDown dailylimitPicker = new()
+      dailylimitPicker = new()
       {
         Minimum = -1,
         Maximum = 1440, // 24 hours in minutes,
@@ -51,7 +63,7 @@ namespace AutoLogout
         AutoSize = true,
       };
 
-      NumericUpDown todaylimitPicker = new()
+      todaylimitPicker = new()
       {
         Minimum = -1,
         Maximum = 1440, // 24 hours in minutes,
@@ -66,7 +78,7 @@ namespace AutoLogout
 
       TimeOnly waketime = parent.waketime;
       DateTime wakeDateTime = DateTime.Today.Add(waketime.ToTimeSpan());
-      DateTimePicker waketimePicker = new()
+      waketimePicker = new()
       {
         Format = DateTimePickerFormat.Time,
         ShowUpDown = true,
@@ -82,7 +94,7 @@ namespace AutoLogout
 
       TimeOnly bedtime = parent.bedtime;
       DateTime sleepDateTime = DateTime.Today.Add(bedtime.ToTimeSpan());
-      DateTimePicker sleeptimePicker = new()
+      sleeptimePicker = new()
       {
         Format = DateTimePickerFormat.Time,
         ShowUpDown = true,
@@ -99,7 +111,25 @@ namespace AutoLogout
       table.Controls.Add(sleeptimeLabel, 0, 3);
       table.Controls.Add(sleeptimePicker, 1, 3);
 
+      Button save = new() { Text = "Save", Width = 100, Height = 32, DialogResult = DialogResult.OK };
+      Button cancel = new() { Text = "Cancel", Width = 100, Height = 32, DialogResult = DialogResult.Cancel };
+      save.Click += Save;
+
+      buttonPanel.Controls.Add(cancel);
+      buttonPanel.Controls.Add(save);
+
       Controls.Add(table);
+      Controls.Add(buttonPanel);
+    }
+
+    private void Save(object? sender, EventArgs e)
+    {
+      parent.dailyTimeLimit = (int)(dailylimitPicker.Value >= 0 ? dailylimitPicker.Value * 60 : -1);
+      parent.remainingTime = (int)(todaylimitPicker.Value >= 0 ? todaylimitPicker.Value * 60 : -1);
+      parent.waketime = new(waketimePicker.Value.Hour, waketimePicker.Value.Minute);
+      parent.bedtime = new(sleeptimePicker.Value.Hour, sleeptimePicker.Value.Minute);
+      parent.SaveToRegistry();
+      parent.UpdateClock();
     }
 
     protected override void OnFormClosed(FormClosedEventArgs e)

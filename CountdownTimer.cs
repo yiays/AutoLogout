@@ -17,6 +17,7 @@ namespace AutoLogout
     private readonly Button settingsButton;
     private readonly System.Windows.Forms.Timer timer;
     private readonly NotifyIcon notifyIcon;
+    private readonly SoundPlayer player = new SoundPlayer("Resources/alarm.wav");
 
     // Config defaults
     private String password = "";
@@ -168,7 +169,7 @@ namespace AutoLogout
       remainingTime = (int)key.GetValue("remainingTime", -1);
     }
 
-    private void SaveToRegistry() {
+    public void SaveToRegistry() {
       RegistryKey? key = Registry.CurrentUser.CreateSubKey("Software\\Yiays\\AutoLogout");
       if (key != null)
       {
@@ -283,7 +284,6 @@ namespace AutoLogout
         EnforceBedtime();
         if (remainingTime == 600)
         {
-          SoundPlayer player = new SoundPlayer("Resources/alarm.wav");
           player.Play();
           Task.Run(() =>
           {
@@ -292,7 +292,11 @@ namespace AutoLogout
             );
           });
         }
-        if (remainingTime == 30 && !graceGiven)
+        else if (remainingTime == 580)
+        {
+          player.Dispose();
+        }
+        else if (remainingTime == 30 && !graceGiven)
         {
           Task.Run(() =>
           {
@@ -314,7 +318,7 @@ namespace AutoLogout
       }
     }
 
-    private void UpdateClock() {
+    public void UpdateClock() {
       if (remainingTime == -1) // Unlimited time
       {
         textTimer.Text = "No limit";
