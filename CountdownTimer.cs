@@ -217,6 +217,14 @@ namespace AutoLogout
         remainingTime = dailyTimeLimit;
         remainingTimeDay = currentDay;
       }
+
+      if (remainingTime < 30)
+      {
+        MessageBox.Show("You're out of time for today. Logging out in 30 seconds.", "You're about to be logged out!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        remainingTime = 30;
+        graceGiven = true;
+      }
+
       UpdateClock();
       EnforceBedtime();
       timer.Start();
