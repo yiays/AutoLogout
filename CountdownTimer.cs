@@ -270,8 +270,10 @@ namespace AutoLogout
 
       if (BC.BCrypt.Verify(password, hashedPassword))
       {
+        timer.Stop();
         controlPanel = new ControlPanel(this);
         controlPanel.ShowDialog();
+        timer.Start();
       }
       else MessageBox.Show("The password was incorrect", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
     }
