@@ -6,10 +6,12 @@ using BC = BCrypt.Net;
 
 namespace AutoLogout
 {
- public partial class CountdownTimer : Form
+  public partial class CountdownTimer : Form
   {
     [DllImport("shell32.dll", CharSet = CharSet.Auto)]
     public static extern IntPtr ExtractIcon(IntPtr hInst, string lpszExeFileName, int nIconIndex);
+
+    public float scaleFactor;
 
     private readonly Label textTimer;
     private readonly Button pauseButton;
@@ -33,18 +35,26 @@ namespace AutoLogout
     public ControlPanel? controlPanel;
     private readonly AudioControl audioControl;
 
-    public CountdownTimer() {
+    public CountdownTimer()
+    {
+      Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
+
       Text = "Time limit";
       FormBorderStyle = FormBorderStyle.FixedToolWindow;
       ShowInTaskbar = false;
       StartPosition = FormStartPosition.Manual;
-      Width = 206;
-      Height = 130;
       ControlBox = false; // No control buttons
-      AutoScaleMode = AutoScaleMode.Dpi;
-      AutoScaleDimensions = new SizeF(125F, 125F);
       MaximizeBox = false;
       BackColor = Color.White;
+      Width = 240;
+      Height = 144;
+
+      AutoScaleMode = AutoScaleMode.Dpi;
+      AutoScaleDimensions = new(96F, 96F);
+
+      Console.WriteLine(AutoScaleFactor);
+
+      Size IconScale = (32 * AutoScaleFactor).ToSize();
 
       // Events
       Reposition(null, null);
@@ -76,25 +86,26 @@ namespace AutoLogout
       {
         Location = new Point(0, -10),
         AutoSize = true,
-        Font = new Font("Segoe UI", 22, FontStyle.Bold)
+        Font = new Font("Segoe UI", 36, FontStyle.Bold)
       };
 
       pauseButton = new Button
       {
         Text = "Pause",
-        Width = 90,
-        Height = 32,
+        AutoSize = true,
+        Font = new Font("Segoe UI", 12)
       };
       pauseButton.Click += Pause;
 
       IntPtr logofficonHandle = ExtractIcon(IntPtr.Zero, "shell32.dll", 44);
       Icon logoffIcon = Icon.FromHandle(logofficonHandle);
-      Bitmap logoffBitmap = new Bitmap(logoffIcon.ToBitmap(), new Size(24, 24));
-      logoffButton = new Button {
+      Bitmap logoffBitmap = new Bitmap(logoffIcon.ToBitmap(), IconScale);
+      logoffButton = new Button
+      {
         Image = logoffBitmap,
         AccessibleDescription = "Log off",
-        Width = 32,
-        Height = 32,
+        Width = pauseButton.PreferredSize.Height,
+        Height = pauseButton.PreferredSize.Height,
       };
       logoffButton.Click += LogOff;
       ToolTip logoffHint = new ToolTip();
@@ -102,12 +113,13 @@ namespace AutoLogout
 
       IntPtr shutdowniconHandle = ExtractIcon(IntPtr.Zero, "shell32.dll", 27);
       Icon shutdownIcon = Icon.FromHandle(shutdowniconHandle);
-      Bitmap shutdownBitmap = new Bitmap(shutdownIcon.ToBitmap(), new Size(24, 24));
-      shutdownButton = new Button {
+      Bitmap shutdownBitmap = new Bitmap(shutdownIcon.ToBitmap(), IconScale);
+      shutdownButton = new Button
+      {
         Image = shutdownBitmap,
         AccessibleDescription = "Shutdown",
-        Width = 32,
-        Height = 32,
+        Width = pauseButton.PreferredSize.Height,
+        Height = pauseButton.PreferredSize.Height,
       };
       shutdownButton.Click += ShutDown;
       ToolTip shutdownHint = new ToolTip();
@@ -115,13 +127,13 @@ namespace AutoLogout
 
       IntPtr settingsiconHandle = ExtractIcon(IntPtr.Zero, "shell32.dll", 21);
       Icon settingsIcon = Icon.FromHandle(settingsiconHandle);
-      Bitmap settingsBitmap = new Bitmap(settingsIcon.ToBitmap(), new Size(24, 24));
+      Bitmap settingsBitmap = new Bitmap(settingsIcon.ToBitmap(), IconScale);
       settingsButton = new Button
       {
         Image = settingsBitmap,
         AccessibleDescription = "Settings",
-        Width = 32,
-        Height = 32,
+        Width = pauseButton.PreferredSize.Height,
+        Height = pauseButton.PreferredSize.Height,
       };
       settingsButton.Click += Settings;
       ToolTip settingsHint = new ToolTip();
@@ -139,7 +151,8 @@ namespace AutoLogout
       lockoutWindow = new LockoutWindow(this);
       audioControl = new AudioControl();
 
-      notifyIcon = new NotifyIcon() {
+      notifyIcon = new NotifyIcon()
+      {
         Icon = new Icon("Resources/icon.ico"),
         Visible = true,
         Text = "Show time limit"
@@ -147,7 +160,8 @@ namespace AutoLogout
       notifyIcon.Click += FocusWindow;
     }
 
-    private void LoadFromRegistry() {
+    private void LoadFromRegistry()
+    {
       RegistryKey? key = Registry.CurrentUser.CreateSubKey("Software\\Yiays\\AutoLogout", true);
       if (key == null)
       {
@@ -170,7 +184,8 @@ namespace AutoLogout
       remainingTime = (int)key.GetValue("remainingTime", -1);
     }
 
-    public void SaveToRegistry() {
+    public void SaveToRegistry()
+    {
       RegistryKey? key = Registry.CurrentUser.CreateSubKey("Software\\Yiays\\AutoLogout");
       if (key != null)
       {
@@ -193,7 +208,8 @@ namespace AutoLogout
       }
     }
 
-    private void OnLoad(object? sender, EventArgs e) {
+    private void OnLoad(object? sender, EventArgs e)
+    {
       LoadFromRegistry();
       if (hashedPassword == "")
       {
@@ -230,7 +246,8 @@ namespace AutoLogout
       timer.Start();
     }
 
-    private void Pause(object? sender, EventArgs e) {
+    private void Pause(object? sender, EventArgs e)
+    {
       // Pause the timer
       if (timer.Enabled)
       {
@@ -329,7 +346,8 @@ namespace AutoLogout
       }
     }
 
-    public void UpdateClock() {
+    public void UpdateClock()
+    {
       if (remainingTime == -1) // Unlimited time
       {
         textTimer.Text = "No limit";
@@ -340,29 +358,34 @@ namespace AutoLogout
       textTimer.Text = timeString;
     }
 
-    private double? CheckBedtime() {
+    private double? CheckBedtime()
+    {
       if (bedtime == waketime)
         return null;
       DateTime now = DateTime.Now;
       // Create sleepTime and wakeTime, assuming both are for today
       DateTime nextBedTime = new(now.Year, now.Month, now.Day, bedtime.Hour, bedtime.Minute, 0);
-      if(bedtime.Hour < 12) nextBedTime = nextBedTime.AddDays(1);
+      if (bedtime.Hour < 12) nextBedTime = nextBedTime.AddDays(1);
       DateTime nextWakeTime = new(now.Year, now.Month, now.Day, waketime.Hour, waketime.Minute, 0);
 
       // Correct sleepTime and wakeTime based on the current time
-      if(now > nextWakeTime) {
+      if (now > nextWakeTime)
+      {
         // if sleepTime is before wakeTime, it will next occur tomorrow
-        if(nextBedTime < nextWakeTime) nextBedTime = nextBedTime.AddDays(1);
-      }else{
+        if (nextBedTime < nextWakeTime) nextBedTime = nextBedTime.AddDays(1);
+      }
+      else
+      {
         // sleepTime must be before wakeTime if wakeTime hasn't passed yet
-        if(now < nextBedTime) nextBedTime = nextBedTime.AddDays(-1);
+        if (now < nextBedTime) nextBedTime = nextBedTime.AddDays(-1);
       }
       return (nextBedTime - now).TotalSeconds;
-      }
+    }
 
-    private void EnforceBedtime() {
+    private void EnforceBedtime()
+    {
       double? differenceInSeconds = CheckBedtime();
-      
+
       if (differenceInSeconds == null) return;
       else if (differenceInSeconds < 0)
       {
@@ -395,16 +418,19 @@ namespace AutoLogout
       }
     }
 
-    public void ReassertTopMost(object? sender, EventArgs? e) {
+    public void ReassertTopMost(object? sender, EventArgs? e)
+    {
       TopMost = false;
       TopMost = true;
     }
 
-    public void FocusWindow(object? sender, EventArgs? e) {
+    public void FocusWindow(object? sender, EventArgs? e)
+    {
       Activate();
     }
 
-    private void LogOff(object? sender, EventArgs? e) {
+    private void LogOff(object? sender, EventArgs? e)
+    {
       SaveToRegistry();
       timer.Stop();
       pauseButton.Enabled = false;
@@ -418,7 +444,8 @@ namespace AutoLogout
       Application.Exit();
     }
 
-    private void ShutDown(object? sender, EventArgs? e) {
+    private void ShutDown(object? sender, EventArgs? e)
+    {
       SaveToRegistry();
       timer.Stop();
       pauseButton.Enabled = false;
@@ -432,9 +459,10 @@ namespace AutoLogout
       Application.Exit();
     }
 
-    protected override void OnFormClosing(FormClosingEventArgs e) {
-      if(remainingTime == -1 || remainingTime > 0)
+    protected override void OnFormClosing(FormClosingEventArgs e)
+    {
+      if (remainingTime == -1 || remainingTime > 0)
         e.Cancel = true;
-      }
+    }
   }
 }

@@ -1,4 +1,3 @@
-
 namespace AutoLogout
 {
   public partial class LockoutWindow : Form
@@ -11,8 +10,9 @@ namespace AutoLogout
       ShowInTaskbar = false;
       StartPosition = FormStartPosition.Manual;
       BackColor = Color.Black;
+      
       AutoScaleMode = AutoScaleMode.Dpi;
-      AutoScaleDimensions = new SizeF(125F, 125F);
+      AutoScaleDimensions = new SizeF(96F, 96F);
 
       instructions = new Label {
         Text = "Timer paused. Click anywhere to show the timer.",

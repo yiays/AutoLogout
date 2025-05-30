@@ -1,6 +1,3 @@
-
-using System.Runtime.InteropServices.Swift;
-
 namespace AutoLogout
 {
   public partial class ControlPanel : Form
@@ -17,13 +14,14 @@ namespace AutoLogout
       FormBorderStyle = FormBorderStyle.FixedDialog;
       ShowInTaskbar = true;
       StartPosition = FormStartPosition.CenterScreen;
-      AutoScaleMode = AutoScaleMode.Dpi;
-      AutoScaleDimensions = new SizeF(125F, 125F);
       MinimizeBox = false;
       MaximizeBox = false;
       BackColor = Color.White;
-      Width = 440;
-      Height = 300;
+      Width = 360;
+      Height = 250;
+
+      AutoScaleMode = AutoScaleMode.Dpi;
+      AutoScaleDimensions = new(96F, 96F);
 
       TableLayoutPanel table = new()
       {
