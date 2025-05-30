@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Media;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
+using Microsoft.Toolkit.Uwp.Notifications;
 using BC = BCrypt.Net;
 
 namespace AutoLogout
@@ -61,6 +62,8 @@ namespace AutoLogout
       SystemEvents.DisplaySettingsChanged += Reposition;
 
       Load += OnLoad;
+
+      ToastNotificationManagerCompat.OnActivated += args => Invoke(() => FocusWindow(null, null));
 
       timer = new System.Windows.Forms.Timer
       {
@@ -236,7 +239,14 @@ namespace AutoLogout
 
       if (remainingTime < 30)
       {
-        MessageBox.Show("You're out of time for today. Logging out in 30 seconds.", "You're about to be logged out!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        Task.Run(() =>
+        {
+          MessageBox.Show(
+            "You're out of time for today. Logging out in 30 seconds.",
+            "You're about to be logged out!",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Warning);
+        });
         remainingTime = 30;
         graceGiven = true;
       }
@@ -313,12 +323,10 @@ namespace AutoLogout
         if (remainingTime == 600)
         {
           player.Play();
-          Task.Run(() =>
-          {
-            MessageBox.Show(
-            "Your time is up in 10 minutes!", "Time limit warning", MessageBoxButtons.OK, MessageBoxIcon.Warning
-            );
-          });
+          new ToastContentBuilder()
+            .AddText("Time limit warning")
+            .AddText("Your time is up in 10 minutes!")
+            .Show();
         }
         else if (remainingTime == 580)
         {
@@ -326,12 +334,10 @@ namespace AutoLogout
         }
         else if (remainingTime == 30 && !graceGiven)
         {
-          Task.Run(() =>
-          {
-            MessageBox.Show(
-            "Your time is up in 30 seconds!", "Time limit warning", MessageBoxButtons.OK, MessageBoxIcon.Warning
-            );
-          });
+          new ToastContentBuilder()
+            .AddText("Time limit warning")
+            .AddText("Your time is up in 30 seconds!")
+            .Show();
           graceGiven = true;
         }
       }
@@ -408,11 +414,10 @@ namespace AutoLogout
         if (Math.Abs((decimal)remainingTime - (decimal)differenceInSeconds) > 60)
         {
           // Only alert if the difference is more than a minute
-          Task.Run(() =>
-          {
-            MessageBox.Show("Your time has been shortened so it will end with bedtime.");
-            Invoke(() => FocusWindow(null, null));
-          });
+          new ToastContentBuilder()
+            .AddText("Time limit warning")
+            .AddText("Your time has been shortened so it will end with bedtime.")
+            .Show();
         }
         remainingTime = (int)differenceInSeconds;
       }
