@@ -53,6 +53,7 @@ namespace AutoLogout
         Controls.Add(buttonPanel);
 
         AcceptButton = confirmation;
+        CancelButton = cancel;
       }
     }
 

@@ -118,6 +118,9 @@ namespace AutoLogout
 
       Controls.Add(table);
       Controls.Add(buttonPanel);
+
+      AcceptButton = save;
+      CancelButton = cancel;
     }
 
     private void Save(object? sender, EventArgs e)
