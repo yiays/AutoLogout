@@ -1,5 +1,65 @@
+
+using Microsoft.Win32;
+
 namespace AutoLogout
 {
+  public static class State
+  {
+    // Config defaults
+    public static String hashedPassword = "";
+    public static int dailyTimeLimit;
+    public static int remainingTime;
+    public static DateOnly remainingTimeDay = new(1, 1, 1);
+    public static TimeOnly bedtime = new(0, 0);
+    public static TimeOnly waketime = new(0, 0);
+    public static bool graceGiven = false;
+
+    public static int LoadFromRegistry()
+    {
+      RegistryKey? key = Registry.CurrentUser.CreateSubKey("Software\\Yiays\\AutoLogout", true);
+      if (key == null)
+      {
+        MessageBox.Show("Unable to access settings.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        remainingTime = 0;
+        return -1;
+      }
+
+      // Load current app state from registry
+      hashedPassword = (string)key.GetValue("password", "");
+
+      string bedtimeRaw = (string)key.GetValue("bedtime", "0:00");
+      bedtime = TimeOnly.Parse(bedtimeRaw);
+      string waketimeRaw = (string)key.GetValue("waketime", "0:00");
+      waketime = TimeOnly.Parse(waketimeRaw);
+
+      dailyTimeLimit = (int)key.GetValue("dailyTimeLimit", -1);
+      remainingTimeDay = DateOnly.Parse((String)key.GetValue("remainingTimeDay", "1/01/0001"));
+      remainingTime = (int)key.GetValue("remainingTime", -1);
+
+      return 0;
+    }
+
+    public static int SaveToRegistry()
+    {
+      RegistryKey? key = Registry.CurrentUser.CreateSubKey("Software\\Yiays\\AutoLogout");
+      if (key == null)
+      {
+        MessageBox.Show("Unable to save settings.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        remainingTime = 0;
+        return -1;
+      }
+
+      key.SetValue("password", hashedPassword);
+      key.SetValue("remainingTimeDay", DateOnly.FromDateTime(DateTime.Today));
+      key.SetValue("dailyTimeLimit", dailyTimeLimit);
+      key.SetValue("remainingTime", remainingTime);
+      key.SetValue("bedtime", bedtime.ToString());
+      key.SetValue("waketime", waketime.ToString());
+
+      return 0;
+    }
+  }
+
   public static class Prompt
   {
     private partial class PromptForm : Form
