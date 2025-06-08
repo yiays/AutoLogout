@@ -237,7 +237,11 @@ namespace AutoLogout
         if (State.remainingTime >= 0)
         {
           timer.Start();
-          if (State.remainingTime > 0) State.remainingTime--;
+          if (State.remainingTime > 0)
+          {
+            State.remainingTime--;
+            State.usedTime++;
+          }
           EnforceBedtime();
           UpdateClock();
         }
@@ -270,6 +274,7 @@ namespace AutoLogout
       if (State.remainingTime > 0)
       {
         State.remainingTime--;
+        State.usedTime++;
         if (State.remainingTime % 10 == 0)
         {
           // Save to the registry every 10 seconds

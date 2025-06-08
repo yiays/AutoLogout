@@ -6,9 +6,10 @@ namespace AutoLogout
   public static class State
   {
     // Config defaults
-    public static String hashedPassword = "";
+    public static string hashedPassword = "";
     public static int dailyTimeLimit;
     public static int remainingTime;
+    public static int usedTime = 0;
     public static DateOnly remainingTimeDay = new(1, 1, 1);
     public static TimeOnly bedtime = new(0, 0);
     public static TimeOnly waketime = new(0, 0);
@@ -35,6 +36,7 @@ namespace AutoLogout
       dailyTimeLimit = (int)key.GetValue("dailyTimeLimit", -1);
       remainingTimeDay = DateOnly.Parse((String)key.GetValue("remainingTimeDay", "1/01/0001"));
       remainingTime = (int)key.GetValue("remainingTime", -1);
+      usedTime = (int)key.GetValue("usedTime", 0);
 
       return 0;
     }
@@ -53,6 +55,7 @@ namespace AutoLogout
       key.SetValue("remainingTimeDay", DateOnly.FromDateTime(DateTime.Today));
       key.SetValue("dailyTimeLimit", dailyTimeLimit);
       key.SetValue("remainingTime", remainingTime);
+      key.SetValue("usedTime", usedTime);
       key.SetValue("bedtime", bedtime.ToString());
       key.SetValue("waketime", waketime.ToString());
 
