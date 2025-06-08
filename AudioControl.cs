@@ -6,21 +6,25 @@ namespace AutoLogout
 	{
 		private MMDeviceEnumerator deviceEnumerator;
 		private MMDevice defaultDevice;
-        private readonly System.Windows.Forms.Timer timer;
 		private bool? previousState = null;
+		public readonly System.Windows.Forms.Timer timer;
 
 		public AudioControl() {
 			// Initialize the CoreAudio components
 			deviceEnumerator = new MMDeviceEnumerator();
 			defaultDevice = deviceEnumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
 			timer = new System.Windows.Forms.Timer
-            {
-                Interval = 1000
-            };
-            timer.Tick += Mute;
+			{
+				Interval = 1000
+			};
+			timer.Tick += Mute;
 		}
 
 		public void Mute(object? sender, EventArgs? e)
+		{
+			Mute();
+		}
+		public void Mute()
 		{
 			if(previousState == null) {
 				defaultDevice = deviceEnumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);

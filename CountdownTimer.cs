@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Win32;
 using Microsoft.Toolkit.Uwp.Notifications;
 using BC = BCrypt.Net;
+using Microsoft.VisualBasic.Logging;
 
 namespace AutoLogout
 {
@@ -24,6 +25,9 @@ namespace AutoLogout
     private readonly LockoutWindow lockoutWindow;
     public ControlPanel? controlPanel;
     private readonly AudioControl audioControl;
+
+    private bool sessionswitch_restoreMainTimer = false;
+    private bool sessionswitch_restoreAudioTimer = false;
 
     public CountdownTimer()
     {
@@ -47,12 +51,11 @@ namespace AutoLogout
       Size IconScale = (32 * AutoScaleFactor).ToSize();
 
       // Events
-      Reposition(null, null);
+      Reposition();
       SystemEvents.DisplaySettingsChanged += Reposition;
-
+      SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
+      ToastNotificationManagerCompat.OnActivated += FocusWindow;
       Load += OnLoad;
-
-      ToastNotificationManagerCompat.OnActivated += args => Invoke(() => FocusWindow(null, null));
 
       timer = new System.Windows.Forms.Timer
       {
@@ -154,6 +157,10 @@ namespace AutoLogout
 
     private void Reposition(object? sender, EventArgs? e)
     {
+      Reposition();
+    }
+    private void Reposition()
+    {
       // Calculate the position just offset from the bottom right corner
       if (Screen.PrimaryScreen != null)
       {
@@ -218,7 +225,7 @@ namespace AutoLogout
           controlPanel = null;
         }
         lockoutWindow.Show();
-        audioControl.Mute(null, null);
+        audioControl.Mute();
         settingsButton.Enabled = false;
       }
       else
@@ -307,11 +314,43 @@ namespace AutoLogout
         timer.Stop();
         double? remainingTime = CheckBedtime();
         if (remainingTime != null && remainingTime <= 10)
-          ShutDown(null, null);
+          ShutDown();
         else
-          LogOff(null, null);
+          LogOff();
       }
       UpdateClock();
+    }
+
+    private void SystemEvents_SessionSwitch(object sender, Microsoft.Win32.SessionSwitchEventArgs e)
+    {
+      if (e.Reason == SessionSwitchReason.SessionLock)
+      {
+        // The session was locked (Win+L or switch user)
+        if (timer.Enabled)
+        {
+          timer.Stop();
+          sessionswitch_restoreMainTimer = true;
+        }
+        if (audioControl.timer.Enabled)
+        {
+          audioControl.Unmute();
+          sessionswitch_restoreAudioTimer = true;
+        }
+      }
+      else if (e.Reason == SessionSwitchReason.SessionUnlock)
+      {
+        // The session was unlocked
+        if (sessionswitch_restoreMainTimer)
+        {
+          timer.Start();
+          sessionswitch_restoreMainTimer = false;
+        }
+        if (sessionswitch_restoreAudioTimer)
+        {
+          audioControl.Mute();
+          sessionswitch_restoreAudioTimer = false;
+        }
+      }
     }
 
     public void UpdateClock()
@@ -361,7 +400,7 @@ namespace AutoLogout
         Task.Run(() =>
         {
           MessageBox.Show("It's past bedtime! Shutting down in 30 seconds.");
-          Invoke(() => FocusWindow(null, null));
+          Invoke(FocusWindow);
         });
         State.remainingTime = 30;
         State.graceGiven = true;
@@ -373,7 +412,7 @@ namespace AutoLogout
       }
       else if (differenceInSeconds < State.remainingTime)
       {
-        if (Math.Abs((decimal)State.remainingTime - (decimal)differenceInSeconds) > 60)
+        if (Math.Abs(State.remainingTime - (decimal)differenceInSeconds) > 60)
         {
           // Only alert if the difference is more than a minute
           new ToastContentBuilder()
@@ -391,12 +430,24 @@ namespace AutoLogout
       TopMost = true;
     }
 
+    public void FocusWindow(ToastNotificationActivatedEventArgsCompat? args)
+    {
+      FocusWindow();
+    }
     public void FocusWindow(object? sender, EventArgs? e)
+    {
+      FocusWindow();
+    }
+    public void FocusWindow()
     {
       Activate();
     }
 
     private void LogOff(object? sender, EventArgs? e)
+    {
+      LogOff();
+    }
+    private void LogOff()
     {
       State.SaveToRegistry();
       timer.Stop();
@@ -412,6 +463,10 @@ namespace AutoLogout
     }
 
     private void ShutDown(object? sender, EventArgs? e)
+    {
+      ShutDown();
+    }
+    private void ShutDown()
     {
       State.SaveToRegistry();
       timer.Stop();
@@ -430,6 +485,12 @@ namespace AutoLogout
     {
       if (State.remainingTime == -1 || State.remainingTime > 0)
         e.Cancel = true;
+      else
+      {
+        SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
+        SystemEvents.DisplaySettingsChanged -= Reposition;
+        ToastNotificationManagerCompat.OnActivated -= FocusWindow;
+      }
     }
   }
 }
