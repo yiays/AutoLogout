@@ -186,14 +186,6 @@ namespace AutoLogout
         MessageBox.Show("Password set! Open the control panel to set the rules for this account.", "Welcome to AutoLogout", MessageBoxButtons.OK, MessageBoxIcon.Information);
       }
 
-      DateOnly currentDay = DateOnly.FromDateTime(DateTime.Now);
-      if (State.remainingTimeDay != currentDay)
-      {
-        // If the day is different, reset the remaining time
-        State.remainingTime = State.dailyTimeLimit;
-        State.remainingTimeDay = currentDay;
-      }
-
       if (State.remainingTime < 30)
       {
         Task.Run(() =>
@@ -268,7 +260,14 @@ namespace AutoLogout
 
     private void Timer_Tick(object? sender, EventArgs e)
     {
-      UpdateClock();
+      DateOnly currentDay = DateOnly.FromDateTime(DateTime.Now);
+      if (State.remainingTimeDay != currentDay)
+      {
+        // If the day is different, reset the remaining time
+        State.remainingTime = State.dailyTimeLimit;
+        State.usedTime = 0;
+        State.remainingTimeDay = currentDay;
+      }
       if (State.remainingTime == -1) // Unlimited time
         return;
       if (State.remainingTime > 0)
@@ -312,6 +311,7 @@ namespace AutoLogout
         else
           LogOff(null, null);
       }
+      UpdateClock();
     }
 
     public void UpdateClock()
