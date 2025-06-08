@@ -15,11 +15,8 @@ There is a password-protected parental dashboard to control the time given each 
 - The time-restricted accounts shouldn't be Administrator accounts.
 - The entire program runs within userspace, meaning it is possible for a technical user to find and kill the process, or prevent it from starting automatically.
   - You can protect files using permissions in Windows, however.
-- Sleeping the computer pauses the timer in an unintended way.
 - While the timer is paused, the computer will not shut down past bedtime.
 - The pause feature is not intended for multiple monitor setups.
-- AutoLogout will continue to run in the background if you switch users, which can have unintended consequences.
-  - It is best to log out whenever you want to switch users.
 
 ## Instalation
 
