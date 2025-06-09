@@ -4,7 +4,7 @@ namespace AutoLogout
 {
 	public class AudioControl
 	{
-		private MMDeviceEnumerator deviceEnumerator;
+		private readonly MMDeviceEnumerator deviceEnumerator;
 		private MMDevice defaultDevice;
 		private bool? previousState = null;
 		public readonly System.Windows.Forms.Timer timer;

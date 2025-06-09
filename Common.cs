@@ -1,4 +1,3 @@
-
 using Microsoft.Win32;
 
 namespace AutoLogout
@@ -6,6 +5,7 @@ namespace AutoLogout
   public static class State
   {
     // Config defaults
+    public static Guid guid = Guid.Empty;
     public static string hashedPassword = "";
     public static int dailyTimeLimit;
     public static int remainingTime;
@@ -14,6 +14,16 @@ namespace AutoLogout
     public static TimeOnly bedtime = new(0, 0);
     public static TimeOnly waketime = new(0, 0);
     public static bool graceGiven = false;
+
+    private static readonly HttpClient httpClient = new()
+    {
+      Timeout = TimeSpan.FromSeconds(10)
+    };
+
+    public static void NewGuid()
+    {
+      guid = Guid.NewGuid();
+    }
 
     public static int LoadFromRegistry()
     {
@@ -26,6 +36,9 @@ namespace AutoLogout
       }
 
       // Load current app state from registry
+      string? rawGuid = (string?)key.GetValue("guid", null);
+      guid = rawGuid is null? Guid.Empty: new Guid(rawGuid);
+
       hashedPassword = (string)key.GetValue("password", "");
 
       string bedtimeRaw = (string)key.GetValue("bedtime", "0:00");
@@ -34,7 +47,7 @@ namespace AutoLogout
       waketime = TimeOnly.Parse(waketimeRaw);
 
       dailyTimeLimit = (int)key.GetValue("dailyTimeLimit", -1);
-      remainingTimeDay = DateOnly.Parse((String)key.GetValue("remainingTimeDay", "1/01/0001"));
+      remainingTimeDay = DateOnly.Parse((string)key.GetValue("remainingTimeDay", "1/01/0001"));
       remainingTime = (int)key.GetValue("remainingTime", -1);
       usedTime = (int)key.GetValue("usedTime", 0);
 
@@ -51,6 +64,7 @@ namespace AutoLogout
         return -1;
       }
 
+      key.SetValue("guid", guid);
       key.SetValue("password", hashedPassword);
       key.SetValue("remainingTimeDay", DateOnly.FromDateTime(DateTime.Today));
       key.SetValue("dailyTimeLimit", dailyTimeLimit);
@@ -60,6 +74,47 @@ namespace AutoLogout
       key.SetValue("waketime", waketime.ToString());
 
       return 0;
+    }
+
+    public static async Task Sync()
+    {
+      // Convert state to JSON and share with online service
+      try
+      {
+        string json = System.Text.Json.JsonSerializer.Serialize(new
+        {
+          hashedPassword,
+          dailyTimeLimit,
+          remainingTime,
+          usedTime,
+          remainingTimeDay,
+          bedtime,
+          waketime,
+          graceGiven
+        });
+
+        Console.WriteLine("Syncing state: " + json);
+
+        HttpResponseMessage response = await httpClient.PostAsync(
+          "https://timelimit.yiays.com/api/sync",
+          new StringContent(json, System.Text.Encoding.UTF8,
+          "application/json")
+        );
+
+        if (!response.IsSuccessStatusCode)
+        {
+          Console.WriteLine($"Sync failed: {response.StatusCode} - {response.ReasonPhrase}");
+        }
+        else
+        {
+          string responseBody = await response.Content.ReadAsStringAsync();
+          Console.WriteLine("Sync successful: " + responseBody);
+        }
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine($"Failed to sync state: {ex.Message}");
+      }
     }
   }
 

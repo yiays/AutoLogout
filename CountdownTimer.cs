@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 using Microsoft.Win32;
 using Microsoft.Toolkit.Uwp.Notifications;
 using BC = BCrypt.Net;
-using Microsoft.VisualBasic.Logging;
 
 namespace AutoLogout
 {
@@ -20,7 +19,7 @@ namespace AutoLogout
     private readonly Button settingsButton;
     private readonly System.Windows.Forms.Timer timer;
     private readonly NotifyIcon notifyIcon;
-    private readonly SoundPlayer player = new SoundPlayer("Resources/alarm.wav");
+    private readonly SoundPlayer player = new("Resources/alarm.wav");
 
     private readonly LockoutWindow lockoutWindow;
     public ControlPanel? controlPanel;
@@ -45,8 +44,6 @@ namespace AutoLogout
 
       AutoScaleMode = AutoScaleMode.Dpi;
       AutoScaleDimensions = new(96F, 96F);
-
-      Console.WriteLine(AutoScaleFactor);
 
       Size IconScale = (32 * AutoScaleFactor).ToSize();
 
@@ -103,12 +100,12 @@ namespace AutoLogout
         Height = pauseButton.PreferredSize.Height,
       };
       logoffButton.Click += LogOff;
-      ToolTip logoffHint = new ToolTip();
+      ToolTip logoffHint = new();
       logoffHint.SetToolTip(logoffButton, "Log off");
 
       IntPtr shutdowniconHandle = ExtractIcon(IntPtr.Zero, "shell32.dll", 27);
       Icon shutdownIcon = Icon.FromHandle(shutdowniconHandle);
-      Bitmap shutdownBitmap = new Bitmap(shutdownIcon.ToBitmap(), IconScale);
+      Bitmap shutdownBitmap = new(shutdownIcon.ToBitmap(), IconScale);
       shutdownButton = new Button
       {
         Image = shutdownBitmap,
@@ -117,12 +114,12 @@ namespace AutoLogout
         Height = pauseButton.PreferredSize.Height,
       };
       shutdownButton.Click += ShutDown;
-      ToolTip shutdownHint = new ToolTip();
+      ToolTip shutdownHint = new();
       shutdownHint.SetToolTip(shutdownButton, "Shut down");
 
       IntPtr settingsiconHandle = ExtractIcon(IntPtr.Zero, "shell32.dll", 21);
       Icon settingsIcon = Icon.FromHandle(settingsiconHandle);
-      Bitmap settingsBitmap = new Bitmap(settingsIcon.ToBitmap(), IconScale);
+      Bitmap settingsBitmap = new(settingsIcon.ToBitmap(), IconScale);
       settingsButton = new Button
       {
         Image = settingsBitmap,
@@ -131,7 +128,7 @@ namespace AutoLogout
         Height = pauseButton.PreferredSize.Height,
       };
       settingsButton.Click += Settings;
-      ToolTip settingsHint = new ToolTip();
+      ToolTip settingsHint = new();
       settingsHint.SetToolTip(settingsButton, "Settings");
 
       mainPanel.Controls.Add(textTimer);
@@ -178,8 +175,9 @@ namespace AutoLogout
         Close();
         return;
       }
-      if (State.hashedPassword == "")
+      if (State.guid == Guid.Empty)
       {
+        State.guid = Guid.NewGuid();
         string? newPassword = Prompt.ShowDialog("Enter a new parent password.", "Welcome to AutoLogout", true);
         if (newPassword == null)
         {
@@ -283,9 +281,9 @@ namespace AutoLogout
         State.usedTime++;
         if (State.remainingTime % 10 == 0)
         {
-          // Save to the registry every 10 seconds
+          // Save to the registry and sync every 10 seconds
           State.SaveToRegistry();
-          Console.WriteLine("Writing to registry...");
+          Task.Run(State.Sync);
         }
         EnforceBedtime();
         if (State.remainingTime == 600)
