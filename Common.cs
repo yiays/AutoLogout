@@ -70,8 +70,8 @@ namespace AutoLogout
       key.SetValue("dailyTimeLimit", dailyTimeLimit);
       key.SetValue("remainingTime", remainingTime);
       key.SetValue("usedTime", usedTime);
-      key.SetValue("bedtime", bedtime.ToString());
-      key.SetValue("waketime", waketime.ToString());
+      key.SetValue("bedtime", bedtime);
+      key.SetValue("waketime", waketime);
 
       return 0;
     }
