@@ -1,6 +1,6 @@
 import { fromHono } from "chanfana";
 import { Hono } from "hono";
-import { StateCreateUpdate } from "./endpoints/stateCreateUpdate";
+import { StateSync } from "./endpoints/stateSync";
 import { StateFetch } from "./endpoints/stateFetch";
 
 // Start a Hono app
@@ -10,7 +10,7 @@ const app = new Hono<{ Bindings: Env }>({}).basePath("");
 const openapi = fromHono(app, { docs_url: "/" });
 
 // Register OpenAPI endpoints
-openapi.post("/api/:uuid", StateCreateUpdate);
+openapi.post("/api/sync", StateSync);
 openapi.get("/api/:uuid", StateFetch);
 
 // You may also register routes for non OpenAPI directly on Hono
