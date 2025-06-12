@@ -12,6 +12,8 @@ namespace AutoLogout
     [DllImport("shell32.dll", CharSet = CharSet.Auto)]
     public static extern IntPtr ExtractIcon(IntPtr hInst, string lpszExeFileName, int nIconIndex);
 
+    public State state = new();
+
     private readonly Label textTimer;
     private readonly Button pauseButton;
     private readonly Button logoffButton;
@@ -59,6 +61,8 @@ namespace AutoLogout
         Interval = 1000
       };
       timer.Tick += Timer_Tick;
+
+      state.StateChanged += UpdateClock;
 
       // Form elements
       Panel mainPanel = new()
@@ -168,30 +172,30 @@ namespace AutoLogout
 
     private void OnLoad(object? sender, EventArgs e)
     {
-      int result = State.LoadFromRegistry();
+      int result = state.FromRegistry();
       if (result < 0)
       {
-        State.remainingTime = 0;
+        state.remainingTime = 0;
         Close();
         return;
       }
-      if (State.guid == Guid.Empty)
+      if (state.uuid == Guid.Empty)
       {
-        State.guid = Guid.NewGuid();
+        state.uuid = Guid.NewGuid();
         string? newPassword = Prompt.ShowDialog("Enter a new parent password.", "Welcome to AutoLogout", true);
         if (newPassword == null)
         {
           MessageBox.Show("You must set a password to use this application.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-          State.remainingTime = 0;
+          state.remainingTime = 0;
           Close();
           return;
         }
-        State.hashedPassword = BC.BCrypt.HashPassword(newPassword);
-        State.SaveToRegistry();
+        state.hashedPassword = BC.BCrypt.HashPassword(newPassword);
+        state.SaveToRegistry();
         MessageBox.Show("Password set! Open the control panel to set the rules for this account.", "Welcome to AutoLogout", MessageBoxButtons.OK, MessageBoxIcon.Information);
       }
 
-      if (State.remainingTime < 30)
+      if (state.remainingTime < 30)
       {
         Task.Run(() =>
         {
@@ -201,12 +205,13 @@ namespace AutoLogout
             MessageBoxButtons.OK,
             MessageBoxIcon.Warning);
         });
-        State.remainingTime = 30;
-        State.graceGiven = true;
+        state.remainingTime = 30;
+        state.graceGiven = true;
       }
 
       UpdateClock();
       EnforceBedtime();
+      Task.Run(state.Sync);
       timer.Start();
     }
 
@@ -231,13 +236,13 @@ namespace AutoLogout
         lockoutWindow.Hide();
         TopMost = false;
         pauseButton.Text = "Pause";
-        if (State.remainingTime >= 0)
+        if (state.remainingTime >= 0)
         {
           timer.Start();
-          if (State.remainingTime > 0)
+          if (state.remainingTime > 0)
           {
-            State.remainingTime--;
-            State.usedTime++;
+            state.remainingTime--;
+            state.usedTime++;
           }
           EnforceBedtime();
           UpdateClock();
@@ -253,7 +258,7 @@ namespace AutoLogout
       string? password = Prompt.ShowDialog("Enter the parent password to continue.", "AutoLogout Settings", true);
       if (password == null) return;
 
-      if (BC.BCrypt.Verify(password, State.hashedPassword))
+      if (BC.BCrypt.Verify(password, state.hashedPassword))
       {
         timer.Stop();
         controlPanel = new ControlPanel(this);
@@ -266,27 +271,27 @@ namespace AutoLogout
     private void Timer_Tick(object? sender, EventArgs e)
     {
       DateOnly currentDay = DateOnly.FromDateTime(DateTime.Now);
-      if (State.remainingTimeDay != currentDay)
+      if (state.remainingTimeDay != currentDay)
       {
         // If the day is different, reset the remaining time
-        State.remainingTime = State.dailyTimeLimit;
-        State.usedTime = 0;
-        State.remainingTimeDay = currentDay;
+        state.remainingTime = state.dailyTimeLimit;
+        state.usedTime = 0;
+        state.remainingTimeDay = currentDay;
       }
-      if (State.remainingTime == -1) // Unlimited time
+      if (state.remainingTime == -1) // Unlimited time
         return;
-      if (State.remainingTime > 0)
+      if (state.remainingTime > 0)
       {
-        State.remainingTime--;
-        State.usedTime++;
-        if (State.remainingTime % 10 == 0)
+        state.remainingTime--;
+        state.usedTime++;
+        if (state.remainingTime % 10 == 0)
         {
           // Save to the registry and sync every 10 seconds
-          State.SaveToRegistry();
-          Task.Run(State.Sync);
+          state.SaveToRegistry();
+          Task.Run(state.Sync);
         }
         EnforceBedtime();
-        if (State.remainingTime == 600)
+        if (state.remainingTime == 600)
         {
           player.Play();
           new ToastContentBuilder()
@@ -294,17 +299,17 @@ namespace AutoLogout
             .AddText("Your time is up in 10 minutes!")
             .Show();
         }
-        else if (State.remainingTime == 580)
+        else if (state.remainingTime == 580)
         {
           player.Dispose();
         }
-        else if (State.remainingTime == 30 && !State.graceGiven)
+        else if (state.remainingTime == 30 && !state.graceGiven)
         {
           new ToastContentBuilder()
             .AddText("Time limit warning")
             .AddText("Your time is up in 30 seconds!")
             .Show();
-          State.graceGiven = true;
+          state.graceGiven = true;
         }
       }
       else
@@ -353,25 +358,25 @@ namespace AutoLogout
 
     public void UpdateClock()
     {
-      if (State.remainingTime == -1) // Unlimited time
+      if (state.remainingTime == -1) // Unlimited time
       {
         textTimer.Text = "No limit";
         return;
       }
-      TimeSpan timeSpan = TimeSpan.FromSeconds(State.remainingTime);
+      TimeSpan timeSpan = TimeSpan.FromSeconds(state.remainingTime);
       string timeString = string.Format("{0:D2}:{1:D2}:{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
       textTimer.Text = timeString;
     }
 
     private double? CheckBedtime()
     {
-      if (State.bedtime == State.waketime)
+      if (state.bedtime == state.waketime)
         return null;
       DateTime now = DateTime.Now;
       // Create sleepTime and wakeTime, assuming both are for today
-      DateTime nextBedTime = new(now.Year, now.Month, now.Day, State.bedtime.Hour, State.bedtime.Minute, 0);
-      if (State.bedtime.Hour < 12) nextBedTime = nextBedTime.AddDays(1);
-      DateTime nextWakeTime = new(now.Year, now.Month, now.Day, State.waketime.Hour, State.waketime.Minute, 0);
+      DateTime nextBedTime = new(now.Year, now.Month, now.Day, state.bedtime.Hour, state.bedtime.Minute, 0);
+      if (state.bedtime.Hour < 12) nextBedTime = nextBedTime.AddDays(1);
+      DateTime nextWakeTime = new(now.Year, now.Month, now.Day, state.waketime.Hour, state.waketime.Minute, 0);
 
       // Correct sleepTime and wakeTime based on the current time
       if (now > nextWakeTime)
@@ -394,23 +399,23 @@ namespace AutoLogout
       if (differenceInSeconds == null) return;
       else if (differenceInSeconds < 0)
       {
-        if (State.graceGiven) return;
+        if (state.graceGiven) return;
         Task.Run(() =>
         {
           MessageBox.Show("It's past bedtime! Shutting down in 30 seconds.");
           Invoke(FocusWindow);
         });
-        State.remainingTime = 30;
-        State.graceGiven = true;
+        state.remainingTime = 30;
+        state.graceGiven = true;
       }
-      else if (State.remainingTime == -1) // Unlimited time
+      else if (state.remainingTime == -1) // Unlimited time
       {
         // No time limit, just bedtime
-        State.remainingTime = (int)differenceInSeconds;
+        state.remainingTime = (int)differenceInSeconds;
       }
-      else if (differenceInSeconds < State.remainingTime)
+      else if (differenceInSeconds < state.remainingTime)
       {
-        if (Math.Abs(State.remainingTime - (decimal)differenceInSeconds) > 60)
+        if (Math.Abs(state.remainingTime - (decimal)differenceInSeconds) > 60)
         {
           // Only alert if the difference is more than a minute
           new ToastContentBuilder()
@@ -418,7 +423,7 @@ namespace AutoLogout
             .AddText("Your time has been shortened so it will end with bedtime.")
             .Show();
         }
-        State.remainingTime = (int)differenceInSeconds;
+        state.remainingTime = (int)differenceInSeconds;
       }
     }
 
@@ -447,10 +452,10 @@ namespace AutoLogout
     }
     private void LogOff()
     {
-      State.SaveToRegistry();
+      state.SaveToRegistry();
       timer.Stop();
       pauseButton.Enabled = false;
-      State.remainingTime = 0;
+      state.remainingTime = 0;
       if (Debugger.IsAttached)
       {
         MessageBox.Show("Log off");
@@ -466,10 +471,10 @@ namespace AutoLogout
     }
     private void ShutDown()
     {
-      State.SaveToRegistry();
+      state.SaveToRegistry();
       timer.Stop();
       pauseButton.Enabled = false;
-      State.remainingTime = 0;
+      state.remainingTime = 0;
       if (Debugger.IsAttached)
       {
         MessageBox.Show("Shut down");
@@ -481,7 +486,7 @@ namespace AutoLogout
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
-      if (State.remainingTime == -1 || State.remainingTime > 0)
+      if (state.remainingTime == -1 || state.remainingTime > 0)
         e.Cancel = true;
       else
       {

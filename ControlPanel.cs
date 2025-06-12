@@ -51,7 +51,7 @@ namespace AutoLogout
       {
         Minimum = -1,
         Maximum = 1440, // 24 hours in minutes,
-        Value = State.dailyTimeLimit >= 0 ? State.dailyTimeLimit / 60 : -1,
+        Value = parent.state.dailyTimeLimit >= 0 ? parent.state.dailyTimeLimit / 60 : -1,
       };
 
       Label todaylimitLabel = new()
@@ -65,7 +65,7 @@ namespace AutoLogout
       {
         Minimum = -1,
         Maximum = 1440, // 24 hours in minutes,
-        Value = State.remainingTime >= 0 ? State.remainingTime / 60 : -1,
+        Value = parent.state.remainingTime >= 0 ? parent.state.remainingTime / 60 : -1,
       };
 
       Label waketimeLabel = new()
@@ -74,7 +74,7 @@ namespace AutoLogout
         AutoSize = true,
       };
 
-      TimeOnly waketime = State.waketime;
+      TimeOnly waketime = parent.state.waketime;
       DateTime wakeDateTime = DateTime.Today.Add(waketime.ToTimeSpan());
       waketimePicker = new()
       {
@@ -90,7 +90,7 @@ namespace AutoLogout
         AutoSize = true,
       };
 
-      TimeOnly bedtime = State.bedtime;
+      TimeOnly bedtime = parent.state.bedtime;
       DateTime sleepDateTime = DateTime.Today.Add(bedtime.ToTimeSpan());
       sleeptimePicker = new()
       {
@@ -125,11 +125,11 @@ namespace AutoLogout
 
     private void Save(object? sender, EventArgs e)
     {
-      State.dailyTimeLimit = (int)(dailylimitPicker.Value >= 0 ? dailylimitPicker.Value * 60 : -1);
-      State.remainingTime = (int)(todaylimitPicker.Value >= 0 ? todaylimitPicker.Value * 60 : -1);
-      State.waketime = new(waketimePicker.Value.Hour, waketimePicker.Value.Minute);
-      State.bedtime = new(sleeptimePicker.Value.Hour, sleeptimePicker.Value.Minute);
-      State.SaveToRegistry();
+      parent.state.dailyTimeLimit = (int)(dailylimitPicker.Value >= 0 ? dailylimitPicker.Value * 60 : -1);
+      parent.state.remainingTime = (int)(todaylimitPicker.Value >= 0 ? todaylimitPicker.Value * 60 : -1);
+      parent.state.waketime = new(waketimePicker.Value.Hour, waketimePicker.Value.Minute);
+      parent.state.bedtime = new(sleeptimePicker.Value.Hour, sleeptimePicker.Value.Minute);
+      parent.state.SaveToRegistry();
       parent.UpdateClock();
     }
 

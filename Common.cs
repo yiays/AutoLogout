@@ -1,31 +1,63 @@
+using System.Diagnostics;
 using Microsoft.Win32;
 
 namespace AutoLogout
 {
-  public static class State
+  public class SyncResult
   {
-    // Config defaults
-    public static Guid guid = Guid.Empty;
-    public static string hashedPassword = "";
-    public static int dailyTimeLimit;
-    public static int remainingTime;
-    public static int usedTime = 0;
-    public static DateOnly remainingTimeDay = new(1, 1, 1);
-    public static TimeOnly bedtime = new(0, 0);
-    public static TimeOnly waketime = new(0, 0);
-    public static bool graceGiven = false;
+    public bool accepted { get; set; }
+    public string? error { get; set; }
+    public BaseState? diff { get; set; }
+  }
+
+  public class BaseState
+  {
+    public Guid? authKey { get; set; }
+    public Guid? uuid { get; set; }
+    public string? hashedPassword { get; set; }
+    public int? dailyTimeLimit { get; set; }
+    public int? remainingTime { get; set; }
+    public int? usedTime { get; set; }
+    public DateOnly? remainingTimeDay { get; set; }
+    public TimeOnly? bedtime { get; set; }
+    public TimeOnly? waketime { get; set; }
+    public bool? graceGiven { get; set; }
+    public Guid? syncAuthor { get; set; }
+    // syncAuthor tracks the last client that modified the state
+    // This should be null whenever this client is modifying the state
+  }
+
+  public class State
+  {
+    private static string SyncUrl {
+      get => Debugger.IsAttached?"http://localhost:8787/api/sync" :"https://timelimit.yiays.com/api/sync";
+    }
+
+    public Guid authKey = Guid.Empty;
+    public Guid uuid = Guid.Empty;
+    public string hashedPassword = "";
+    public int dailyTimeLimit = -1;
+    public int remainingTime = -1;
+    public int usedTime = 0;
+    public DateOnly remainingTimeDay = DateOnly.FromDateTime(DateTime.Today);
+    public TimeOnly bedtime = new TimeOnly(0, 0);
+    public TimeOnly waketime = new TimeOnly(0, 0);
+    public bool graceGiven = false;
+    public Guid? syncAuthor = null;
+
+    public event Action? StateChanged;
 
     private static readonly HttpClient httpClient = new()
     {
       Timeout = TimeSpan.FromSeconds(10)
     };
 
-    public static void NewGuid()
+    public void NewGuid()
     {
-      guid = Guid.NewGuid();
+      uuid = Guid.NewGuid();
     }
 
-    public static int LoadFromRegistry()
+    public int FromRegistry()
     {
       RegistryKey? key = Registry.CurrentUser.CreateSubKey("Software\\Yiays\\AutoLogout", true);
       if (key == null)
@@ -36,8 +68,11 @@ namespace AutoLogout
       }
 
       // Load current app state from registry
+      string? rawAuthKey = (string?)key.GetValue("authKey", null);
+      authKey = rawAuthKey is null ? Guid.Empty : new Guid(rawAuthKey);
+
       string? rawGuid = (string?)key.GetValue("guid", null);
-      guid = rawGuid is null? Guid.Empty: new Guid(rawGuid);
+      uuid = rawGuid is null ? Guid.Empty : new Guid(rawGuid);
 
       hashedPassword = (string)key.GetValue("password", "");
 
@@ -54,7 +89,7 @@ namespace AutoLogout
       return 0;
     }
 
-    public static int SaveToRegistry()
+    public int SaveToRegistry()
     {
       RegistryKey? key = Registry.CurrentUser.CreateSubKey("Software\\Yiays\\AutoLogout");
       if (key == null)
@@ -64,7 +99,8 @@ namespace AutoLogout
         return -1;
       }
 
-      key.SetValue("guid", guid);
+      key.SetValue("authKey", authKey);
+      key.SetValue("guid", uuid);
       key.SetValue("password", hashedPassword);
       key.SetValue("remainingTimeDay", DateOnly.FromDateTime(DateTime.Today));
       key.SetValue("dailyTimeLimit", dailyTimeLimit);
@@ -76,13 +112,28 @@ namespace AutoLogout
       return 0;
     }
 
-    public static async Task Sync()
+    private void AcceptDiff(BaseState diff)
+    {
+      // Update local state with server response
+      dailyTimeLimit = diff.dailyTimeLimit ?? dailyTimeLimit;
+      remainingTime = diff.remainingTime ?? remainingTime;
+      usedTime = diff.usedTime ?? usedTime;
+      remainingTimeDay = diff.remainingTimeDay ?? remainingTimeDay;
+      bedtime = diff.bedtime ?? bedtime;
+      waketime = diff.waketime ?? waketime;
+      graceGiven = diff.graceGiven ?? graceGiven;
+      syncAuthor = diff.syncAuthor;
+    }
+
+    public async Task Sync()
     {
       // Convert state to JSON and share with online service
       try
       {
         string json = System.Text.Json.JsonSerializer.Serialize(new
         {
+          authKey,
+          uuid,
           hashedPassword,
           dailyTimeLimit,
           remainingTime,
@@ -90,25 +141,57 @@ namespace AutoLogout
           remainingTimeDay,
           bedtime,
           waketime,
-          graceGiven
+          graceGiven,
+          syncAuthor
         });
+
+        // Clear syncAuthor as we only need to acknowledge serverside changes once
+        syncAuthor = null;
 
         Console.WriteLine("Syncing state: " + json);
 
         HttpResponseMessage response = await httpClient.PostAsync(
-          "https://timelimit.yiays.com/api/sync",
+          SyncUrl,
           new StringContent(json, System.Text.Encoding.UTF8,
           "application/json")
         );
 
-        if (!response.IsSuccessStatusCode)
+        if (response.IsSuccessStatusCode)
         {
-          Console.WriteLine($"Sync failed: {response.StatusCode} - {response.ReasonPhrase}");
+          string responseBody = await response.Content.ReadAsStringAsync();
+          SyncResult? result = System.Text.Json.JsonSerializer.Deserialize<SyncResult>(responseBody);
+          if (result == null)
+          {
+            Console.WriteLine("Failed to deserialize sync result.");
+          }
+          else if (result.accepted)
+          {
+            // Sync was successful, no changes needed
+            if (result.diff != null)
+            {
+              // Server must have provided us with an authKey
+              authKey = result.diff.authKey ?? authKey;
+              SaveToRegistry();
+              Console.WriteLine("Recieved new authKey");
+            }
+          }
+          else
+          {
+            // Sync was rejected
+            if (result.error != null)
+            {
+              Console.WriteLine($"Sync failed: {result.error}");
+            }
+            else if (result.diff != null)
+            {
+              AcceptDiff(result.diff);
+              StateChanged?.Invoke();
+            }
+          }
         }
         else
         {
-          string responseBody = await response.Content.ReadAsStringAsync();
-          Console.WriteLine("Sync successful: " + responseBody);
+          Console.WriteLine($"Sync failed: {response.StatusCode} - {response.ReasonPhrase}");
         }
       }
       catch (Exception ex)
