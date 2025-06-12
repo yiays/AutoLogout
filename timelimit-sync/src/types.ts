@@ -19,6 +19,7 @@ export const BaseState = z.object({
 	waketime: Str({ example: "22:00:00" })
 		.regex(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/, { message: "Invalid time format, expected HH:MM" }),
 	graceGiven: Bool({ example: false }),
+	syncAuthor: Str().uuid(),
 })
 
 // States when syncing with the client
@@ -27,6 +28,7 @@ export const SyncState = z.object({
 	uuid: BaseState.shape.uuid.optional(),
 	hashedPassword: BaseState.shape.hashedPassword.optional(),
 	authKey: Str().uuid().optional(),
+	syncAuthor: BaseState.shape.syncAuthor.optional().nullable(),
 });
 
 // States including security information that is kept on the server
