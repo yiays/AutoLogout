@@ -30,9 +30,13 @@ namespace AutoLogout
 
   public class State
   {
-    private static string SyncUrl {
-      get => Debugger.IsAttached?"http://localhost:8787/api/sync/" :"https://timelimit.yiays.com/api/sync/";
+    // API related constants
+    private static string SyncUrl
+    {
+      get => Debugger.IsAttached ? "http://localhost:8787/api/sync/" : "https://timelimit.yiays.com/api/sync/";
     }
+    private static readonly string SupportedAPIVersion = "1";
+    private static bool UpdateWarned = false;
 
     public Guid authKey = Guid.Empty;
     public Guid uuid = Guid.Empty;
@@ -155,6 +159,29 @@ namespace AutoLogout
           new StringContent(json, System.Text.Encoding.UTF8,
           "application/json")
         );
+
+        if (response.Headers.TryGetValues("X-Api-Version", out var apiVersionHeaders))
+        {
+          string apiVersion = apiVersionHeaders.FirstOrDefault() ?? "";
+          if (apiVersion != SupportedAPIVersion)
+          {
+            if (!UpdateWarned)
+            {
+              Console.WriteLine($"It appears this client is out of date. Expected API version: {SupportedAPIVersion}, got: {apiVersion}");
+              UpdateWarned = true;
+              _ = Task.Run(() =>
+              {
+                MessageBox.Show(
+                  "Please update to the latest version to ensure online features work.",
+                  "AutoLogout is out of date",
+                  MessageBoxButtons.OK,
+                  MessageBoxIcon.Warning
+                );
+              });
+            }
+            return;
+          }
+        }
 
         if (response.IsSuccessStatusCode)
         {
