@@ -7,11 +7,12 @@ namespace AutoLogout
   {
     public bool accepted { get; set; }
     public string? error { get; set; }
-    public BaseState? diff { get; set; }
+    public SyncState? diff { get; set; }
   }
 
-  public class BaseState
+  public class SyncState
   {
+    // State as it appears when returned from the server
     public Guid? authKey { get; set; }
     public Guid? uuid { get; set; }
     public string? hashedPassword { get; set; }
@@ -30,7 +31,7 @@ namespace AutoLogout
   public class State
   {
     private static string SyncUrl {
-      get => Debugger.IsAttached?"http://localhost:8787/api/sync" :"https://timelimit.yiays.com/api/sync";
+      get => Debugger.IsAttached?"http://localhost:8787/api/sync/" :"https://timelimit.yiays.com/api/sync/";
     }
 
     public Guid authKey = Guid.Empty;
@@ -112,7 +113,7 @@ namespace AutoLogout
       return 0;
     }
 
-    private void AcceptDiff(BaseState diff)
+    private void AcceptDiff(SyncState diff)
     {
       // Update local state with server response
       dailyTimeLimit = diff.dailyTimeLimit ?? dailyTimeLimit;
@@ -133,7 +134,6 @@ namespace AutoLogout
         string json = System.Text.Json.JsonSerializer.Serialize(new
         {
           authKey,
-          uuid,
           hashedPassword,
           dailyTimeLimit,
           remainingTime,
@@ -151,7 +151,7 @@ namespace AutoLogout
         Console.WriteLine("Syncing state: " + json);
 
         HttpResponseMessage response = await httpClient.PostAsync(
-          SyncUrl,
+          SyncUrl + uuid,
           new StringContent(json, System.Text.Encoding.UTF8,
           "application/json")
         );
