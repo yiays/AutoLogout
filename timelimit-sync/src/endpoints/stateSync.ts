@@ -1,5 +1,5 @@
-import { Bool, OpenAPIRoute } from "chanfana";
-import { z } from "zod";
+import { Bool, OpenAPIRoute, Str } from "chanfana";
+import { z, } from "zod";
 import { type AppContext, SecureState, SyncState } from "../types";
 
 export class StateSync extends OpenAPIRoute {
@@ -7,6 +7,9 @@ export class StateSync extends OpenAPIRoute {
 		tags: [],
 		summary: "Create or update the client's state",
 		request: {
+			params: z.object({
+				uuid: Str({ description: "Target client UUID" }).uuid(),
+			}),
 			query: z.object({
 				parentMode: z.coerce.boolean({
 					description: "Overrides values even if they are different from what you expected."
@@ -55,16 +58,17 @@ export class StateSync extends OpenAPIRoute {
 		const data = await this.getValidatedData<typeof this.schema>();
 
 		// Retrieve request parameters
+		const { uuid } = data.params;
 		const { parentMode } = data.query;
 
 		// Retrieve the validated request body
-		const { authKey, syncAuthor, ...newState} = data.body;
+		const { uuid:_, authKey, syncAuthor, ...newState} = data.body;
 
 		const stateType = z.object(SyncState.shape);
 		const secureStateType = z.object(SecureState.shape);
 		
 		// Retrieve existing state
-		let rawState: string | null = await c.env.timelimit.get(newState.uuid);
+		let rawState: string | null = await c.env.timelimit.get(uuid);
 		if (rawState) {
 			// State exists
 			const parsedState = secureStateType.parse(JSON.parse(rawState));

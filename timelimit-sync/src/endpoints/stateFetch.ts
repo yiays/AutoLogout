@@ -8,8 +8,10 @@ export class StateFetch extends OpenAPIRoute {
 		summary: "Get a client's state by uuid",
 		request: {
 			params: z.object({
-				uuid: Str({ description: "Client uuid" }).uuid(),
-				authKey: Str({ description: "Client auth key" }).uuid(),
+				uuid: Str({ description: "Target client UUID" }).uuid(),
+			}),
+			query: z.object({
+				authKey: Str({ description: "Your auth key" }).uuid(),
 			}),
 		},
 		responses: {
@@ -35,7 +37,7 @@ export class StateFetch extends OpenAPIRoute {
 						schema: z.object({
 							series: z.object({
 								success: Bool(),
-								error: z.string(),
+								error: Str(),
 							}),
 						}),
 					},
@@ -61,10 +63,14 @@ export class StateFetch extends OpenAPIRoute {
 		// Get validated data
 		const data = await this.getValidatedData<typeof this.schema>();
 
-		// Retrieve the validated slug
+		// Create type for secure state
 		const secureStateType = z.object(SecureState.shape);
 
-		const { uuid, authKey } = data.params;
+		// Handle request parameters
+		const { uuid } = data.params;
+		const { authKey } = data.query;
+
+		// Retrieve state if it exists
 		let rawState: string | null = await c.env.timelimit.get(uuid);
 		if (rawState) {
 			// State exists
@@ -94,15 +100,12 @@ export class StateFetch extends OpenAPIRoute {
 				},
 			};
 		} else {
-			return Response.json(
-				{
+			return c.json({
+				series: {
 					success: false,
-					error: "Object not found",
-				},
-				{
-					status: 404,
-				},
-			);
+					error: "Client not found",
+				}
+			}, 404);
 		}
 	}
 }
