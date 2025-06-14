@@ -77,10 +77,41 @@ export class StateSync extends OpenAPIRoute {
 		let rawState: string | null = await c.env.timelimit.get(uuid);
 		if (rawState) {
 			// State exists
-			const parsedState = secureStateType.parse(JSON.parse(rawState));
+			const oldState = secureStateType.parse(JSON.parse(rawState));
 
 			// Check if the client is authenticated
-			if (!(authKey && parsedState.authKeys.includes(authKey))) {
+			if (authKey && oldState.authKeys.includes(authKey)) {
+				if(parentMode || [authKey, syncAuthor].includes(oldState.syncAuthor)) {
+					// Client already knows or doesn't need to know about old state
+					// Update existing state
+					const state = {
+						...oldState,
+						...newState,
+						syncAuthor: authKey,
+					}
+					await c.env.timelimit.put(state.uuid, JSON.stringify(state));
+
+					// Inform client the changes were accepted
+					return {
+						accepted: true,
+					}
+				} else {
+					// Client is not yet aware of changes made by another client
+					return {
+						accepted: false,
+						diff: {
+							dailyTimeLimit: oldState.dailyTimeLimit,
+							remainingTime: oldState.remainingTime,
+							usedTime: oldState.usedTime,
+							remainingTimeDay: oldState.remainingTimeDay,
+							bedtime: oldState.bedtime,
+							waketime: oldState.waketime,
+							graceGiven: oldState.graceGiven,
+							syncAuthor: oldState.syncAuthor,
+						}
+					}
+				}
+			} else {
 				return c.json({
 					series: {
 						accepted: false,
@@ -88,40 +119,6 @@ export class StateSync extends OpenAPIRoute {
 					},
 				}, 401);
 			}
-
-			if(
-				!parentMode &&
-				authKey != parsedState.syncAuthor &&
-				syncAuthor != parsedState.syncAuthor
-			) {
-				// Client is not yet aware of changes made by another client
-				return {
-					accepted: false,
-					diff: {
-						dailyTimeLimit: parsedState.dailyTimeLimit,
-						remainingTime: parsedState.remainingTime,
-						usedTime: parsedState.usedTime,
-						remainingTimeDay: parsedState.remainingTimeDay,
-						bedtime: parsedState.bedtime,
-						waketime: parsedState.waketime,
-						graceGiven: parsedState.graceGiven,
-						syncAuthor: parsedState.syncAuthor,
-					}
-				}
-			}
-
-			// Update existing state
-			const state = {
-				...parsedState,
-				...newState,
-				syncAuthor: authKey,
-			}
-			await c.env.timelimit.put(state.uuid, JSON.stringify(state));
-
-			// return the updated State
-			return {
-				accepted: true,
-			};
 		} else {
 			// Create new state
 			const {authKey: _, ...parsedState} = stateType.parse(newState);
