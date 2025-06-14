@@ -6,6 +6,9 @@ export class StateSync extends OpenAPIRoute {
 	schema = {
 		tags: [],
 		summary: "Create or update the client's state",
+    security: [
+      { authKey: [] }
+    ],
 		request: {
 			params: z.object({
 				uuid: Str({ description: "Target client UUID" }).uuid(),
@@ -14,9 +17,6 @@ export class StateSync extends OpenAPIRoute {
 				parentMode: z.coerce.boolean({
 					description: "Overrides values even if they are different from what you expected."
 				}).optional().default(false),
-			}),
-			headers: z.object({
-				Authorization: Str({ description: "Your auth key as a bearer token" }).optional(),
 			}),
 			body: {
 				content: {
@@ -34,7 +34,7 @@ export class StateSync extends OpenAPIRoute {
 						schema: z.object({
 							series: z.object({
 								accepted: Bool(),
-								diff: SyncState.partial().optional(),
+								delta: SyncState.partial().optional(),
 							}),
 						}),
 					},
@@ -63,9 +63,10 @@ export class StateSync extends OpenAPIRoute {
 		// Retrieve request parameters
 		const { uuid } = data.params;
 		const { parentMode } = data.query;
-		const authKey = data.headers.Authorization?.startsWith("Bearer ")
-			? data.headers.Authorization.split(" ")[1]
-			: data.headers.Authorization;
+		const authHeader = c.req.header('Authorization');
+		const authKey = authHeader?.startsWith("Bearer ")
+			? authHeader.split(" ")[1]
+			: authHeader;
 
 		// Retrieve the validated request body
 		const { uuid:_, syncAuthor, ...newState} = data.body;
@@ -99,7 +100,7 @@ export class StateSync extends OpenAPIRoute {
 					// Client is not yet aware of changes made by another client
 					return {
 						accepted: false,
-						diff: {
+						delta: {
 							dailyTimeLimit: oldState.dailyTimeLimit,
 							remainingTime: oldState.remainingTime,
 							usedTime: oldState.usedTime,
@@ -133,7 +134,7 @@ export class StateSync extends OpenAPIRoute {
 			// return the created State
 			return {
 				accepted: true,
-				diff: {
+				delta: {
 					authKey: newAuthKey,
 				},
 			}
