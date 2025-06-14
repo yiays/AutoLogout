@@ -82,7 +82,7 @@ export class ClientAuthorize extends OpenAPIRoute {
           ...state,
           authKeys: [...state.authKeys, newAuthKey],
         };
-        await c.env.timelimit.put(state.uuid, JSON.stringify(state));
+        await c.env.timelimit.put(state.uuid, JSON.stringify(newState));
         
         return c.json({
           series: {
