@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { StateSync } from "./endpoints/stateSync";
 import { StateFetch } from "./endpoints/stateFetch";
 import { ClientAuthorize } from "./endpoints/clientAuthorize";
+import { ClientDeauthorize } from "./endpoints/clientDeauthorize";
 
 // Constants
 const API_VERSION = "1";
@@ -22,6 +23,7 @@ const openapi = fromHono(app, { docs_url: "/" });
 // Register OpenAPI endpoints
 openapi.get("/api/get/:uuid", StateFetch);
 openapi.get("/api/auth/:uuid", ClientAuthorize);
+openapi.get("/api/deauth/:uuid", ClientDeauthorize);
 openapi.post("/api/sync/:uuid", StateSync);
 
 // You may also register routes for non OpenAPI directly on Hono
