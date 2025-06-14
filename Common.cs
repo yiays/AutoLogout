@@ -28,16 +28,148 @@ namespace AutoLogout
     // This should be null whenever this client is modifying the state
   }
 
-  public class State
+  public class API
   {
-    // API related constants
-    private static string SyncUrl
+    // Constants
+    private string SyncUrl
     {
       get => Debugger.IsAttached ? "http://localhost:8787/api/sync/" : "https://timelimit.yiays.com/api/sync/";
     }
-    private static readonly string SupportedAPIVersion = "1";
-    private static bool UpdateWarned = false;
+    private readonly string SupportedAPIVersion = "1";
+    private bool UpdateWarned = false;
+    private readonly HttpClient httpClient = new()
+    {
+      Timeout = TimeSpan.FromSeconds(10),
+      DefaultRequestHeaders =
+      {
+        { "User-Agent", "AutoLogoutClient/1.0" },
+        { "Accept", "application/json" }
+      }
+    };
 
+    private async Task<HttpResponseMessage> ApiCall(
+      string endpoint, HttpMethod method, StringContent? content, Guid? authKey
+    )
+    {
+      if (authKey is not null && authKey != Guid.Empty)
+      {
+        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authKey.ToString());
+      }
+      else
+      {
+        httpClient.DefaultRequestHeaders.Remove("Authorization");
+      }
+
+      HttpResponseMessage response;
+      try
+      {
+        response = await httpClient.SendAsync(
+          new HttpRequestMessage(method, SyncUrl + endpoint)
+          {
+            Content = content is null ? null : content
+          }
+        );
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine($"Failed to sync state: {ex.Message}");
+        throw;
+      }
+
+      if (!response.IsSuccessStatusCode)
+      {
+        Console.WriteLine($"Sync failed: {response.StatusCode} - {response.ReasonPhrase}");
+      }
+
+      if (response.Headers.TryGetValues("X-Api-Version", out var apiVersionHeaders))
+      {
+        string apiVersion = apiVersionHeaders.FirstOrDefault() ?? "";
+        if (apiVersion != SupportedAPIVersion)
+        {
+          if (!UpdateWarned)
+          {
+            Console.WriteLine($"It appears this client is out of date. Expected API version: {SupportedAPIVersion}, got: {apiVersion}");
+            UpdateWarned = true;
+            _ = Task.Run(() =>
+            {
+              MessageBox.Show(
+                "Please update to the latest version to ensure online features work.",
+                "AutoLogout is out of date",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+              );
+            });
+          }
+        }
+      }
+
+      return response;
+    }
+
+    public async Task Sync(State state)
+    {
+      // Convert state to JSON and share with online service
+      string json = System.Text.Json.JsonSerializer.Serialize(new
+      {
+        state.authKey,
+        state.hashedPassword,
+        state.dailyTimeLimit,
+        state.remainingTime,
+        state.usedTime,
+        state.remainingTimeDay,
+        state.bedtime,
+        state.waketime,
+        state.graceGiven,
+        state.syncAuthor
+      });
+
+      // Clear syncAuthor as we only need to acknowledge serverside changes once
+      state.syncAuthor = null;
+
+      HttpResponseMessage response = await ApiCall(
+        state.uuid.ToString(), HttpMethod.Post,
+        new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
+        state.authKey
+      );
+
+      if (response.IsSuccessStatusCode)
+      {
+        string responseBody = await response.Content.ReadAsStringAsync();
+        SyncResult? result = System.Text.Json.JsonSerializer.Deserialize<SyncResult>(responseBody);
+        if (result == null)
+        {
+          Console.WriteLine("Failed to deserialize sync result.");
+        }
+        else if (result.accepted)
+        {
+          // Sync was successful, no changes needed
+          if (result.diff != null)
+          {
+            // Server must have provided us with an authKey
+            state.authKey = result.diff.authKey ?? state.authKey;
+            state.SaveToRegistry();
+            Console.WriteLine("Recieved new authKey");
+          }
+        }
+        else
+        {
+          // Sync was rejected
+          if (result.error != null)
+          {
+            Console.WriteLine($"Sync failed: {result.error}");
+          }
+          else if (result.diff != null)
+          {
+            state.AcceptDiff(result.diff);
+            state.TriggerStateChanged();
+          }
+        }
+      }
+    }
+  }
+
+  public class State
+  {
     public Guid authKey = Guid.Empty;
     public Guid uuid = Guid.Empty;
     public string hashedPassword = "";
@@ -52,14 +184,16 @@ namespace AutoLogout
 
     public event Action? StateChanged;
 
-    private static readonly HttpClient httpClient = new()
-    {
-      Timeout = TimeSpan.FromSeconds(10)
-    };
+    public API api = new();
 
     public void NewGuid()
     {
       uuid = Guid.NewGuid();
+    }
+
+    public void TriggerStateChanged()
+    {
+      StateChanged?.Invoke();
     }
 
     public int FromRegistry()
@@ -117,7 +251,7 @@ namespace AutoLogout
       return 0;
     }
 
-    private void AcceptDiff(SyncState diff)
+    public void AcceptDiff(SyncState diff)
     {
       // Update local state with server response
       dailyTimeLimit = diff.dailyTimeLimit ?? dailyTimeLimit;
@@ -130,101 +264,9 @@ namespace AutoLogout
       syncAuthor = diff.syncAuthor;
     }
 
-    public async Task Sync()
+    public async void Sync()
     {
-      // Convert state to JSON and share with online service
-      try
-      {
-        string json = System.Text.Json.JsonSerializer.Serialize(new
-        {
-          authKey,
-          hashedPassword,
-          dailyTimeLimit,
-          remainingTime,
-          usedTime,
-          remainingTimeDay,
-          bedtime,
-          waketime,
-          graceGiven,
-          syncAuthor
-        });
-
-        // Clear syncAuthor as we only need to acknowledge serverside changes once
-        syncAuthor = null;
-
-        Console.WriteLine("Syncing state: " + json);
-
-        HttpResponseMessage response = await httpClient.PostAsync(
-          SyncUrl + uuid,
-          new StringContent(json, System.Text.Encoding.UTF8,
-          "application/json")
-        );
-
-        if (response.Headers.TryGetValues("X-Api-Version", out var apiVersionHeaders))
-        {
-          string apiVersion = apiVersionHeaders.FirstOrDefault() ?? "";
-          if (apiVersion != SupportedAPIVersion)
-          {
-            if (!UpdateWarned)
-            {
-              Console.WriteLine($"It appears this client is out of date. Expected API version: {SupportedAPIVersion}, got: {apiVersion}");
-              UpdateWarned = true;
-              _ = Task.Run(() =>
-              {
-                MessageBox.Show(
-                  "Please update to the latest version to ensure online features work.",
-                  "AutoLogout is out of date",
-                  MessageBoxButtons.OK,
-                  MessageBoxIcon.Warning
-                );
-              });
-            }
-            return;
-          }
-        }
-
-        if (response.IsSuccessStatusCode)
-        {
-          string responseBody = await response.Content.ReadAsStringAsync();
-          SyncResult? result = System.Text.Json.JsonSerializer.Deserialize<SyncResult>(responseBody);
-          if (result == null)
-          {
-            Console.WriteLine("Failed to deserialize sync result.");
-          }
-          else if (result.accepted)
-          {
-            // Sync was successful, no changes needed
-            if (result.diff != null)
-            {
-              // Server must have provided us with an authKey
-              authKey = result.diff.authKey ?? authKey;
-              SaveToRegistry();
-              Console.WriteLine("Recieved new authKey");
-            }
-          }
-          else
-          {
-            // Sync was rejected
-            if (result.error != null)
-            {
-              Console.WriteLine($"Sync failed: {result.error}");
-            }
-            else if (result.diff != null)
-            {
-              AcceptDiff(result.diff);
-              StateChanged?.Invoke();
-            }
-          }
-        }
-        else
-        {
-          Console.WriteLine($"Sync failed: {response.StatusCode} - {response.ReasonPhrase}");
-        }
-      }
-      catch (Exception ex)
-      {
-        Console.WriteLine($"Failed to sync state: {ex.Message}");
-      }
+      await api.Sync(this);
     }
   }
 
