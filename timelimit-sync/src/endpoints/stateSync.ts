@@ -15,6 +15,9 @@ export class StateSync extends OpenAPIRoute {
 					description: "Overrides values even if they are different from what you expected."
 				}).optional().default(false),
 			}),
+			headers: z.object({
+				Authorization: Str({ description: "Your auth key as a bearer token" }).optional(),
+			}),
 			body: {
 				content: {
 					"application/json": {
@@ -60,9 +63,12 @@ export class StateSync extends OpenAPIRoute {
 		// Retrieve request parameters
 		const { uuid } = data.params;
 		const { parentMode } = data.query;
+		const authKey = data.headers.Authorization?.startsWith("Bearer ")
+			? data.headers.Authorization.split(" ")[1]
+			: data.headers.Authorization;
 
 		// Retrieve the validated request body
-		const { uuid:_, authKey, syncAuthor, ...newState} = data.body;
+		const { uuid:_, syncAuthor, ...newState} = data.body;
 
 		const stateType = z.object(SyncState.shape);
 		const secureStateType = z.object(SecureState.shape);

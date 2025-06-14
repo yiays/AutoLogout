@@ -10,8 +10,8 @@ export class StateFetch extends OpenAPIRoute {
 			params: z.object({
 				uuid: Str({ description: "Target client UUID" }).uuid(),
 			}),
-			query: z.object({
-				authKey: Str({ description: "Your auth key" }).uuid(),
+			headers: z.object({
+				Authorization: Str({ description: "Your auth key as a bearer token" }),
 			}),
 		},
 		responses: {
@@ -68,7 +68,9 @@ export class StateFetch extends OpenAPIRoute {
 
 		// Handle request parameters
 		const { uuid } = data.params;
-		const { authKey } = data.query;
+		const authKey = data.headers.Authorization.startsWith("Bearer ")
+			? data.headers.Authorization.split(" ")[1]
+			: data.headers.Authorization;
 
 		// Retrieve state if it exists
 		let rawState: string | null = await c.env.timelimit.get(uuid);
