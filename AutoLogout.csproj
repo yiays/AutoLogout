@@ -18,7 +18,7 @@
     <None Update="Resources\Startup Apps for profile.lnk">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-</ItemGroup>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
@@ -26,5 +26,13 @@
     <PackageReference Include="NAudio" Version="2.2.1" />
   </ItemGroup>
 
+  <Target Name="MoveDependencies" AfterTargets="Build">
+    <ItemGroup>
+      <LibFiles Include="$(OutputPath)*.dll" Exclude="$(OutputPath)$(AssemblyName).dll" />
+      <LibFiles Include="$(OutputPath)*.pdb" Exclude="$(OutputPath)$(AssemblyName).pdb" />
+    </ItemGroup>
+    <MakeDir Directories="$(OutputPath)Libraries" />
+    <Move SourceFiles="@(LibFiles)" DestinationFolder="$(OutputPath)Libraries\" />
+  </Target>
 
 </Project>
