@@ -3,7 +3,6 @@ using System.Media;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 using Microsoft.Toolkit.Uwp.Notifications;
-using BC = BCrypt.Net;
 
 namespace AutoLogout
 {
@@ -15,10 +14,10 @@ namespace AutoLogout
     public State state = new();
 
     private readonly Label textTimer;
-    private readonly Button pauseButton;
-    private readonly Button logoffButton;
-    private readonly Button shutdownButton;
-    private readonly Button settingsButton;
+    private readonly Button PauseButton;
+    private readonly Button LogoffButton;
+    private readonly Button ShutdownButton;
+    private readonly Button SettingsButton;
     private readonly System.Windows.Forms.Timer timer;
     private readonly NotifyIcon notifyIcon;
     private readonly SoundPlayer player = new("Resources/alarm.wav");
@@ -62,7 +61,7 @@ namespace AutoLogout
       };
       timer.Tick += Timer_Tick;
 
-      state.StateChanged += UpdateClock;
+      state.Changed += OnStateChanged;
 
       // Form elements
       Panel mainPanel = new()
@@ -85,61 +84,61 @@ namespace AutoLogout
         Font = new Font("Segoe UI", 36, FontStyle.Bold)
       };
 
-      pauseButton = new Button
+      PauseButton = new Button
       {
         Text = "Pause",
         AutoSize = true,
         Font = new Font("Segoe UI", 12)
       };
-      pauseButton.Click += Pause;
+      PauseButton.Click += PauseButton_Click;
 
       IntPtr logofficonHandle = ExtractIcon(IntPtr.Zero, "shell32.dll", 44);
       Icon logoffIcon = Icon.FromHandle(logofficonHandle);
       Bitmap logoffBitmap = new Bitmap(logoffIcon.ToBitmap(), IconScale);
-      logoffButton = new Button
+      LogoffButton = new Button
       {
         Image = logoffBitmap,
         AccessibleDescription = "Log off",
-        Width = pauseButton.PreferredSize.Height,
-        Height = pauseButton.PreferredSize.Height,
+        Width = PauseButton.PreferredSize.Height,
+        Height = PauseButton.PreferredSize.Height,
       };
-      logoffButton.Click += LogOff;
+      LogoffButton.Click += LogOff;
       ToolTip logoffHint = new();
-      logoffHint.SetToolTip(logoffButton, "Log off");
+      logoffHint.SetToolTip(LogoffButton, "Log off");
 
       IntPtr shutdowniconHandle = ExtractIcon(IntPtr.Zero, "shell32.dll", 27);
       Icon shutdownIcon = Icon.FromHandle(shutdowniconHandle);
       Bitmap shutdownBitmap = new(shutdownIcon.ToBitmap(), IconScale);
-      shutdownButton = new Button
+      ShutdownButton = new Button
       {
         Image = shutdownBitmap,
         AccessibleDescription = "Shutdown",
-        Width = pauseButton.PreferredSize.Height,
-        Height = pauseButton.PreferredSize.Height,
+        Width = PauseButton.PreferredSize.Height,
+        Height = PauseButton.PreferredSize.Height,
       };
-      shutdownButton.Click += ShutDown;
+      ShutdownButton.Click += ShutDown;
       ToolTip shutdownHint = new();
-      shutdownHint.SetToolTip(shutdownButton, "Shut down");
+      shutdownHint.SetToolTip(ShutdownButton, "Shut down");
 
       IntPtr settingsiconHandle = ExtractIcon(IntPtr.Zero, "shell32.dll", 21);
       Icon settingsIcon = Icon.FromHandle(settingsiconHandle);
       Bitmap settingsBitmap = new(settingsIcon.ToBitmap(), IconScale);
-      settingsButton = new Button
+      SettingsButton = new Button
       {
         Image = settingsBitmap,
         AccessibleDescription = "Settings",
-        Width = pauseButton.PreferredSize.Height,
-        Height = pauseButton.PreferredSize.Height,
+        Width = PauseButton.PreferredSize.Height,
+        Height = PauseButton.PreferredSize.Height,
       };
-      settingsButton.Click += Settings;
+      SettingsButton.Click += SettingsButton_Click;
       ToolTip settingsHint = new();
-      settingsHint.SetToolTip(settingsButton, "Settings");
+      settingsHint.SetToolTip(SettingsButton, "Settings");
 
       mainPanel.Controls.Add(textTimer);
-      buttonPanel.Controls.Add(pauseButton);
-      buttonPanel.Controls.Add(logoffButton);
-      buttonPanel.Controls.Add(shutdownButton);
-      buttonPanel.Controls.Add(settingsButton);
+      buttonPanel.Controls.Add(PauseButton);
+      buttonPanel.Controls.Add(LogoffButton);
+      buttonPanel.Controls.Add(ShutdownButton);
+      buttonPanel.Controls.Add(SettingsButton);
 
       Controls.Add(mainPanel);
       Controls.Add(buttonPanel);
@@ -170,6 +169,7 @@ namespace AutoLogout
       }
     }
 
+    // Events
     private void OnLoad(object? sender, EventArgs e)
     {
       int result = state.FromRegistry();
@@ -182,20 +182,19 @@ namespace AutoLogout
       if (state.uuid == Guid.Empty)
       {
         state.uuid = Guid.NewGuid();
-        string? newPassword = Prompt.ShowDialog("Enter a new parent password.", "Welcome to AutoLogout", true);
-        if (newPassword == null)
+        if (state.NewPassword())
+        {
+          MessageBox.Show("Password set! Open the control panel to set the rules for this account.", "Welcome to AutoLogout", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        else
         {
           MessageBox.Show("You must set a password to use this application.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
           state.remainingTime = 0;
           Close();
-          return;
         }
-        state.hashedPassword = BC.BCrypt.HashPassword(newPassword);
-        state.SaveToRegistry();
-        MessageBox.Show("Password set! Open the control panel to set the rules for this account.", "Welcome to AutoLogout", MessageBoxButtons.OK, MessageBoxIcon.Information);
       }
 
-      if (state.remainingTime < 30)
+      if (state.remainingTime < 30 && state.remainingTime != -1)
       {
         Task.Run(() =>
         {
@@ -214,14 +213,24 @@ namespace AutoLogout
       Task.Run(state.Sync);
       timer.Start();
     }
-
-    private void Pause(object? sender, EventArgs e)
+    private void OnStateChanged()
+    {
+      if (InvokeRequired)
+      {
+        Invoke(UpdateClock);
+      }
+      else
+      {
+        UpdateClock();
+      }
+    }
+    private void PauseButton_Click(object? sender, EventArgs e)
     {
       // Pause the timer
-      if (timer.Enabled)
+      if (!state.Paused)
       {
-        timer.Stop();
-        pauseButton.Text = "Resume";
+        state.Paused = true;
+        PauseButton.Text = "Resume";
         if (controlPanel != null)
         {
           controlPanel.Close();
@@ -229,16 +238,16 @@ namespace AutoLogout
         }
         lockoutWindow.Show();
         audioControl.Mute();
-        settingsButton.Enabled = false;
+        SettingsButton.Enabled = false;
       }
-      else
+      else // Unpause
       {
         lockoutWindow.Hide();
         TopMost = false;
-        pauseButton.Text = "Pause";
+        PauseButton.Text = "Pause";
         if (state.remainingTime >= 0)
         {
-          timer.Start();
+          state.Paused = false;
           if (state.remainingTime > 0)
           {
             state.remainingTime--;
@@ -248,26 +257,20 @@ namespace AutoLogout
           UpdateClock();
         }
         audioControl.Unmute();
-        settingsButton.Enabled = true;
+        SettingsButton.Enabled = true;
       }
     }
-
-    private void Settings(object? sender, EventArgs e)
+    private void SettingsButton_Click(object? sender, EventArgs e)
     {
       if (controlPanel != null) return;
-      string? password = Prompt.ShowDialog("Enter the parent password to continue.", "AutoLogout Settings", true);
-      if (password == null) return;
-
-      if (BC.BCrypt.Verify(password, state.hashedPassword))
+      if (state.CheckPassword())
       {
-        timer.Stop();
+        state.Paused = true;
         controlPanel = new ControlPanel(this);
         controlPanel.ShowDialog();
-        timer.Start();
+        state.Paused = false;
       }
-      else MessageBox.Show("The password was incorrect", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
     }
-
     private void Timer_Tick(object? sender, EventArgs e)
     {
       DateOnly currentDay = DateOnly.FromDateTime(DateTime.Now);
@@ -278,18 +281,31 @@ namespace AutoLogout
         state.usedTime = 0;
         state.remainingTimeDay = currentDay;
       }
+
+      if (state.Paused)
+      {
+        if (textTimer.Visible) textTimer.Visible = false;
+        else textTimer.Visible = true;
+        return;
+      }
+      else
+      {
+        textTimer.Visible = true;
+      }
+
+      state.usedTime++;
+      // Save to the registry and sync every 10 seconds
+      if (state.usedTime % 10 == 0)
+      {
+        state.SaveToRegistry();
+        Task.Run(state.Sync);
+      }
+
       if (state.remainingTime == -1) // Unlimited time
         return;
       if (state.remainingTime > 0)
       {
         state.remainingTime--;
-        state.usedTime++;
-        if (state.remainingTime % 10 == 0)
-        {
-          // Save to the registry and sync every 10 seconds
-          state.SaveToRegistry();
-          Task.Run(state.Sync);
-        }
         EnforceBedtime();
         if (state.remainingTime == 600)
         {
@@ -314,7 +330,6 @@ namespace AutoLogout
       }
       else
       {
-        timer.Stop();
         double? remainingTime = CheckBedtime();
         if (remainingTime != null && remainingTime <= 10)
           ShutDown();
@@ -323,7 +338,6 @@ namespace AutoLogout
       }
       UpdateClock();
     }
-
     private void SystemEvents_SessionSwitch(object sender, Microsoft.Win32.SessionSwitchEventArgs e)
     {
       if (e.Reason == SessionSwitchReason.SessionLock)
@@ -361,11 +375,14 @@ namespace AutoLogout
       if (state.remainingTime == -1) // Unlimited time
       {
         textTimer.Text = "No limit";
-        return;
       }
-      TimeSpan timeSpan = TimeSpan.FromSeconds(state.remainingTime);
-      string timeString = string.Format("{0:D2}:{1:D2}:{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
-      textTimer.Text = timeString;
+      else
+      {
+        TimeSpan timeSpan = TimeSpan.FromSeconds(state.remainingTime);
+        string timeString = string.Format("{0:D2}:{1:D2}:{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
+        textTimer.Text = timeString;
+      }
+      textTimer.Update();
     }
 
     private double? CheckBedtime()
@@ -394,6 +411,8 @@ namespace AutoLogout
 
     private void EnforceBedtime()
     {
+      if (state.remainingTime == -1) return;
+
       double? differenceInSeconds = CheckBedtime();
 
       if (differenceInSeconds == null) return;
@@ -454,7 +473,7 @@ namespace AutoLogout
     {
       state.SaveToRegistry();
       timer.Stop();
-      pauseButton.Enabled = false;
+      PauseButton.Enabled = false;
       state.remainingTime = 0;
       if (Debugger.IsAttached)
       {
@@ -473,7 +492,7 @@ namespace AutoLogout
     {
       state.SaveToRegistry();
       timer.Stop();
-      pauseButton.Enabled = false;
+      PauseButton.Enabled = false;
       state.remainingTime = 0;
       if (Debugger.IsAttached)
       {

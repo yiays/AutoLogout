@@ -1,12 +1,16 @@
+using System.Diagnostics;
+
 namespace AutoLogout
 {
   public partial class ControlPanel : Form
   {
     private readonly CountdownTimer parent;
+    private readonly Label usedTimeIndicator;
     private readonly NumericUpDown dailylimitPicker;
     private readonly NumericUpDown todaylimitPicker;
     private readonly DateTimePicker waketimePicker;
     private readonly DateTimePicker sleeptimePicker;
+    private Button DeauthButton;
     public ControlPanel(CountdownTimer parent)
     {
       this.parent = parent;
@@ -18,26 +22,49 @@ namespace AutoLogout
       MaximizeBox = false;
       BackColor = Color.White;
       Width = 360;
-      Height = 250;
+      Height = 300;
 
       AutoScaleMode = AutoScaleMode.Dpi;
       AutoScaleDimensions = new(96F, 96F);
 
-      TableLayoutPanel table = new()
+      TableLayoutPanel mainTable = new()
       {
         Dock = DockStyle.Top,
+        AutoSize = true,
+        ColumnCount = 1,
+        RowCount = 2,
+      };
+      TableLayoutPanel table = new()
+      {
         AutoSize = true,
         ColumnCount = 2,
         RowCount = 2,
         Padding = new Padding(10),
       };
+      FlowLayoutPanel optionsPanel = new()
+      {
+        AutoSize = true,
+      };
       FlowLayoutPanel buttonPanel = new()
       {
         Dock = DockStyle.Bottom,
-        FlowDirection = FlowDirection.RightToLeft,
         AutoSize = true,
         BackColor = SystemColors.Control,
         Padding = new Padding(8),
+      };
+
+      Label usedTimeLabel = new()
+      {
+        Dock = DockStyle.Fill,
+        Text = "Time used today:",
+        AutoSize = true,
+      };
+
+      usedTimeIndicator = new()
+      {
+        Dock = DockStyle.Fill,
+        Text = "Loading...",
+        AutoSize = true,
       };
 
       Label dailylimitLabel = new()
@@ -50,8 +77,7 @@ namespace AutoLogout
       dailylimitPicker = new()
       {
         Minimum = -1,
-        Maximum = 1440, // 24 hours in minutes,
-        Value = parent.state.dailyTimeLimit >= 0 ? parent.state.dailyTimeLimit / 60 : -1,
+        Maximum = 1440, // 24 hours in minutes
       };
 
       Label todaylimitLabel = new()
@@ -64,8 +90,7 @@ namespace AutoLogout
       todaylimitPicker = new()
       {
         Minimum = -1,
-        Maximum = 1440, // 24 hours in minutes,
-        Value = parent.state.remainingTime >= 0 ? parent.state.remainingTime / 60 : -1,
+        Maximum = 1440, // 24 hours in minutes
       };
 
       Label waketimeLabel = new()
@@ -74,13 +99,10 @@ namespace AutoLogout
         AutoSize = true,
       };
 
-      TimeOnly waketime = parent.state.waketime;
-      DateTime wakeDateTime = DateTime.Today.Add(waketime.ToTimeSpan());
       waketimePicker = new()
       {
         Format = DateTimePickerFormat.Time,
         ShowUpDown = true,
-        Value = wakeDateTime,
         Width = 150,
       };
 
@@ -90,51 +112,123 @@ namespace AutoLogout
         AutoSize = true,
       };
 
-      TimeOnly bedtime = parent.state.bedtime;
-      DateTime sleepDateTime = DateTime.Today.Add(bedtime.ToTimeSpan());
       sleeptimePicker = new()
       {
         Format = DateTimePickerFormat.Time,
         ShowUpDown = true,
-        Value = sleepDateTime,
         Width = 150,
       };
 
-      table.Controls.Add(dailylimitLabel, 0, 0);
-      table.Controls.Add(dailylimitPicker, 1, 0);
-      table.Controls.Add(todaylimitLabel, 0, 1);
-      table.Controls.Add(todaylimitPicker, 1, 1);
-      table.Controls.Add(waketimeLabel, 0, 2);
-      table.Controls.Add(waketimePicker, 1, 2);
-      table.Controls.Add(sleeptimeLabel, 0, 3);
-      table.Controls.Add(sleeptimePicker, 1, 3);
+      table.Controls.Add(usedTimeLabel);
+      table.Controls.Add(usedTimeIndicator);
+      table.Controls.Add(dailylimitLabel);
+      table.Controls.Add(dailylimitPicker);
+      table.Controls.Add(todaylimitLabel);
+      table.Controls.Add(todaylimitPicker);
+      table.Controls.Add(waketimeLabel);
+      table.Controls.Add(waketimePicker);
+      table.Controls.Add(sleeptimeLabel);
+      table.Controls.Add(sleeptimePicker);
 
-      Button save = new() { Text = "Save", Width = 100, Height = 32, DialogResult = DialogResult.OK };
-      Button cancel = new() { Text = "Cancel", Width = 100, Height = 32, DialogResult = DialogResult.Cancel };
-      save.Click += Save;
+      Button AuthButton = new() { Text = "Connect to your phone", AutoSize = true };
+      AuthButton.Click += AuthButton_Click;
+      DeauthButton = new() { Text = "Sign out all devices", AutoSize = true };
+      DeauthButton.Click += DeauthButton_Click;
+      Button ChangePasswordButton = new() { Text = "Change password", AutoSize = true };
+      ChangePasswordButton.Click += ChangePasswordButton_Click;
+      Button SaveButton = new() { Text = "Save", DialogResult = DialogResult.OK, AutoSize = true };
+      Button CancelButton = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, AutoSize = true };
+      SaveButton.Click += SaveButton_Click;
 
-      buttonPanel.Controls.Add(cancel);
-      buttonPanel.Controls.Add(save);
+      if (Debugger.IsAttached)
+      {
+        optionsPanel.Controls.Add(AuthButton);
+        optionsPanel.Controls.Add(DeauthButton);
+      }
+      optionsPanel.Controls.Add(ChangePasswordButton);
+      buttonPanel.Controls.Add(SaveButton);
+      buttonPanel.Controls.Add(CancelButton);
 
-      Controls.Add(table);
+      mainTable.Controls.Add(table);
+      mainTable.Controls.Add(optionsPanel);
+
+      Controls.Add(mainTable);
       Controls.Add(buttonPanel);
 
-      AcceptButton = save;
-      CancelButton = cancel;
+      AcceptButton = SaveButton;
+      base.CancelButton = CancelButton;
+
+      // Initialize controls with current state
+      OnStateChanged();
+      // Subscribe to future state changes
+      parent.state.Changed += OnStateChanged;
     }
 
-    private void Save(object? sender, EventArgs e)
+    private void OnStateChanged()
+    {
+      // Update all controls that are affected by the state
+
+      // If the event came from another thread, send it to the correct thread
+      if (InvokeRequired)
+      {
+        Invoke(OnStateChanged);
+        return;
+      }
+
+      TimeSpan timeSpan = TimeSpan.FromSeconds(parent.state.usedTime);
+      string timeString = string.Format("{0:D2}:{1:D2}:{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
+      usedTimeIndicator.Text = timeString;
+
+      dailylimitPicker.Value = parent.state.dailyTimeLimit >= 0 ? parent.state.dailyTimeLimit / 60 : -1;
+
+      todaylimitPicker.Value = parent.state.remainingTime >= 0 ? parent.state.remainingTime / 60 : -1;
+
+      TimeOnly waketime = parent.state.waketime;
+      DateTime wakeDateTime = DateTime.Today.Add(waketime.ToTimeSpan());
+      waketimePicker.Value = wakeDateTime;
+
+      TimeOnly bedtime = parent.state.bedtime;
+      DateTime sleepDateTime = DateTime.Today.Add(bedtime.ToTimeSpan());
+      sleeptimePicker.Value = sleepDateTime;
+
+      DeauthButton.Enabled = parent.state.OnlineMode;
+    }
+
+    private void AuthButton_Click(object? sender, EventArgs e)
+    {
+      if (!parent.state.OnlineMode)
+      {
+        parent.state.OnlineMode = true;
+        Task.Run(parent.state.Sync);
+        parent.state.TriggerStateChanged();
+      }
+      MessageBox.Show("Soon, you will be able to connect your phone to AutoLogout and manage computers remotely.", "Coming soon");
+    }
+    private void DeauthButton_Click(object? sender, EventArgs e)
+    {
+      if (MessageBox.Show("Are you sure you want delete all your online data and sign out all devices?", "AutoLogout", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+      {
+        Task.Run(parent.state.Deauth);
+      }
+    }
+    private void ChangePasswordButton_Click(object? sender, EventArgs e)
+    {
+      if (parent.state.NewPassword())
+        MessageBox.Show("Password changed successfully.", "AutoLogout", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+    private void SaveButton_Click(object? sender, EventArgs e)
     {
       parent.state.dailyTimeLimit = (int)(dailylimitPicker.Value >= 0 ? dailylimitPicker.Value * 60 : -1);
       parent.state.remainingTime = (int)(todaylimitPicker.Value >= 0 ? todaylimitPicker.Value * 60 : -1);
       parent.state.waketime = new(waketimePicker.Value.Hour, waketimePicker.Value.Minute);
       parent.state.bedtime = new(sleeptimePicker.Value.Hour, sleeptimePicker.Value.Minute);
       parent.state.SaveToRegistry();
-      parent.UpdateClock();
+      parent.state.TriggerStateChanged();
     }
 
     protected override void OnFormClosed(FormClosedEventArgs e)
     {
+      parent.state.Changed -= OnStateChanged;
       base.OnFormClosed(e);
       parent.controlPanel = null;
     }

@@ -1,39 +1,16 @@
+using System.Configuration;
 using System.Diagnostics;
 using Microsoft.Win32;
+using BC = BCrypt.Net;
 
 namespace AutoLogout
 {
-  public class SyncResult
-  {
-    public bool accepted { get; set; }
-    public string? error { get; set; }
-    public SyncState? diff { get; set; }
-  }
-
-  public class SyncState
-  {
-    // State as it appears when returned from the server
-    public Guid? authKey { get; set; }
-    public Guid? uuid { get; set; }
-    public string? hashedPassword { get; set; }
-    public int? dailyTimeLimit { get; set; }
-    public int? remainingTime { get; set; }
-    public int? usedTime { get; set; }
-    public DateOnly? remainingTimeDay { get; set; }
-    public TimeOnly? bedtime { get; set; }
-    public TimeOnly? waketime { get; set; }
-    public bool? graceGiven { get; set; }
-    public Guid? syncAuthor { get; set; }
-    // syncAuthor tracks the last client that modified the state
-    // This should be null whenever this client is modifying the state
-  }
-
   public class API
   {
     // Constants
-    private string SyncUrl
+    private string Url
     {
-      get => Debugger.IsAttached ? "http://localhost:8787/api/sync/" : "https://timelimit.yiays.com/api/sync/";
+      get => Debugger.IsAttached ? "http://localhost:8787/api/" : "https://timelimit.yiays.com/api/";
     }
     private readonly string SupportedAPIVersion = "1";
     private bool UpdateWarned = false;
@@ -47,7 +24,43 @@ namespace AutoLogout
       }
     };
 
-    private async Task<HttpResponseMessage> ApiCall(
+    // Response models
+    private struct ApiResult<T>
+    {
+      public bool success { get; set; }
+      public HttpResponseMessage response { get; set; }
+      public T? result { get; set; }
+    }
+    private struct SyncResult
+    {
+      public bool accepted { get; set; }
+      public string? error { get; set; }
+      public Delta? delta { get; set; }
+    }
+    private struct DeauthResult
+    {
+      public bool success { get; set; }
+      public string? error { get; set; }
+    }
+    public struct Delta
+    {
+      // State as it appears when returned from the server
+      public Guid? authKey { get; set; }
+      public Guid? uuid { get; set; }
+      public string? hashedPassword { get; set; }
+      public int? dailyTimeLimit { get; set; }
+      public int? remainingTime { get; set; }
+      public int? usedTime { get; set; }
+      public DateOnly? remainingTimeDay { get; set; }
+      public TimeOnly? bedtime { get; set; }
+      public TimeOnly? waketime { get; set; }
+      public bool? graceGiven { get; set; }
+      public Guid? syncAuthor { get; set; }
+      // syncAuthor tracks the last client that modified the state
+      // This should be null whenever this client is modifying the state
+    }
+
+    private async Task<ApiResult<T>> ApiCall<T>(
       string endpoint, HttpMethod method, StringContent? content, Guid? authKey
     )
     {
@@ -64,21 +77,16 @@ namespace AutoLogout
       try
       {
         response = await httpClient.SendAsync(
-          new HttpRequestMessage(method, SyncUrl + endpoint)
+          new HttpRequestMessage(method, Url + endpoint)
           {
-            Content = content is null ? null : content
+            Content = content
           }
         );
       }
       catch (Exception ex)
       {
-        Console.WriteLine($"Failed to sync state: {ex.Message}");
+        Console.WriteLine($"Failed to call {endpoint}: {ex.Message}");
         throw;
-      }
-
-      if (!response.IsSuccessStatusCode)
-      {
-        Console.WriteLine($"Sync failed: {response.StatusCode} - {response.ReasonPhrase}");
       }
 
       if (response.Headers.TryGetValues("X-Api-Version", out var apiVersionHeaders))
@@ -103,7 +111,24 @@ namespace AutoLogout
         }
       }
 
-      return response;
+      if (!response.IsSuccessStatusCode)
+      {
+        Console.WriteLine($"API call '{endpoint}' failed: {response.StatusCode} - {response.ReasonPhrase}");
+        return new ApiResult<T> { success = false, response = response, result = default };
+      }
+
+      if (response.IsSuccessStatusCode)
+      {
+        string responseBody = await response.Content.ReadAsStringAsync();
+        T? result = System.Text.Json.JsonSerializer.Deserialize<T>(responseBody);
+        if (result == null)
+        {
+          Console.WriteLine("Failed to deserialize api result.");
+          return new ApiResult<T> { success = false, response = response, result = default };
+        }
+        return new ApiResult<T> { success = true, response = response, result = result };
+      }
+      return new ApiResult<T> { success = false, response = response, result = default };
     }
 
     public async Task Sync(State state)
@@ -111,7 +136,6 @@ namespace AutoLogout
       // Convert state to JSON and share with online service
       string json = System.Text.Json.JsonSerializer.Serialize(new
       {
-        state.authKey,
         state.hashedPassword,
         state.dailyTimeLimit,
         state.remainingTime,
@@ -126,27 +150,21 @@ namespace AutoLogout
       // Clear syncAuthor as we only need to acknowledge serverside changes once
       state.syncAuthor = null;
 
-      HttpResponseMessage response = await ApiCall(
-        state.uuid.ToString(), HttpMethod.Post,
+      var apiResponse = await ApiCall<SyncResult>(
+        "sync/" + state.uuid.ToString(), HttpMethod.Post,
         new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
         state.authKey
       );
 
-      if (response.IsSuccessStatusCode)
+      if (apiResponse.success)
       {
-        string responseBody = await response.Content.ReadAsStringAsync();
-        SyncResult? result = System.Text.Json.JsonSerializer.Deserialize<SyncResult>(responseBody);
-        if (result == null)
-        {
-          Console.WriteLine("Failed to deserialize sync result.");
-        }
-        else if (result.accepted)
+        if (apiResponse.result.accepted)
         {
           // Sync was successful, no changes needed
-          if (result.diff != null)
+          if (apiResponse.result.delta != null)
           {
             // Server must have provided us with an authKey
-            state.authKey = result.diff.authKey ?? state.authKey;
+            state.authKey = apiResponse.result.delta?.authKey ?? state.authKey;
             state.SaveToRegistry();
             Console.WriteLine("Recieved new authKey");
           }
@@ -154,22 +172,55 @@ namespace AutoLogout
         else
         {
           // Sync was rejected
-          if (result.error != null)
+          if (apiResponse.result.error != null)
           {
-            Console.WriteLine($"Sync failed: {result.error}");
+            Console.WriteLine($"Sync failed: {apiResponse.result.error}");
           }
-          else if (result.diff != null)
+          else if (apiResponse.result.delta != null)
           {
-            state.AcceptDiff(result.diff);
+            Console.WriteLine("Accepting alternative state from server");
+            state.AcceptDelta(apiResponse.result.delta?? new Delta());
             state.TriggerStateChanged();
           }
         }
+      }
+    }
+
+    public async Task<bool> Deauth(State state)
+    {
+      // Request the server deletes all client data
+      var apiResult = await ApiCall<DeauthResult>(
+        "deauth/" + state.uuid.ToString(), HttpMethod.Delete, null, state.authKey
+      );
+      if (apiResult.success)
+      {
+        state.authKey = Guid.Empty;
+        state.SaveToRegistry();
+        MessageBox.Show(
+          "All devices which control this computer have been signed out.",
+          "Success",
+          MessageBoxButtons.OK,
+          MessageBoxIcon.Information
+        );
+        return true;
+      }
+      else
+      {
+        MessageBox.Show(
+          "Failed to sign all users out. Please try again later.",
+          "Error",
+          MessageBoxButtons.OK,
+          MessageBoxIcon.Error
+        );
+        return false;
       }
     }
   }
 
   public class State
   {
+    public bool OnlineMode = false;
+    public bool Paused = false;
     public Guid authKey = Guid.Empty;
     public Guid uuid = Guid.Empty;
     public string hashedPassword = "";
@@ -182,7 +233,7 @@ namespace AutoLogout
     public bool graceGiven = false;
     public Guid? syncAuthor = null;
 
-    public event Action? StateChanged;
+    public event Action? Changed;
 
     public API api = new();
 
@@ -193,7 +244,7 @@ namespace AutoLogout
 
     public void TriggerStateChanged()
     {
-      StateChanged?.Invoke();
+      Changed?.Invoke();
     }
 
     public int FromRegistry()
@@ -202,11 +253,12 @@ namespace AutoLogout
       if (key == null)
       {
         MessageBox.Show("Unable to access settings.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        remainingTime = 0;
         return -1;
       }
 
       // Load current app state from registry
+      OnlineMode = bool.Parse((string)key.GetValue("OnlineMode", "false"));
+
       string? rawAuthKey = (string?)key.GetValue("authKey", null);
       authKey = rawAuthKey is null ? Guid.Empty : new Guid(rawAuthKey);
 
@@ -238,6 +290,7 @@ namespace AutoLogout
         return -1;
       }
 
+      key.SetValue("OnlineMode", OnlineMode);
       key.SetValue("authKey", authKey);
       key.SetValue("guid", uuid);
       key.SetValue("password", hashedPassword);
@@ -251,22 +304,62 @@ namespace AutoLogout
       return 0;
     }
 
-    public void AcceptDiff(SyncState diff)
+    public void AcceptDelta(API.Delta delta)
     {
       // Update local state with server response
-      dailyTimeLimit = diff.dailyTimeLimit ?? dailyTimeLimit;
-      remainingTime = diff.remainingTime ?? remainingTime;
-      usedTime = diff.usedTime ?? usedTime;
-      remainingTimeDay = diff.remainingTimeDay ?? remainingTimeDay;
-      bedtime = diff.bedtime ?? bedtime;
-      waketime = diff.waketime ?? waketime;
-      graceGiven = diff.graceGiven ?? graceGiven;
-      syncAuthor = diff.syncAuthor;
+      dailyTimeLimit = delta.dailyTimeLimit ?? dailyTimeLimit;
+      remainingTime = delta.remainingTime ?? remainingTime;
+      usedTime = delta.usedTime ?? usedTime;
+      remainingTimeDay = delta.remainingTimeDay ?? remainingTimeDay;
+      bedtime = delta.bedtime ?? bedtime;
+      waketime = delta.waketime ?? waketime;
+      graceGiven = delta.graceGiven ?? graceGiven;
+      syncAuthor = delta.syncAuthor;
     }
 
-    public async void Sync()
+    public bool NewPassword()
     {
-      await api.Sync(this);
+      string? newPassword = Prompt.ShowDialog("Enter a new parent password.", "AutoLogout", true);
+      if (newPassword == null)
+      {
+        return false;
+      }
+      hashedPassword = BC.BCrypt.HashPassword(newPassword);
+      SaveToRegistry();
+      return true;
+    }
+    public bool CheckPassword()
+    {
+      string? password = Prompt.ShowDialog("Enter the parent password to continue.", "AutoLogout Settings", true);
+      if (password == null) return false;
+      if (BC.BCrypt.Verify(password, hashedPassword)) return true;
+      else
+      {
+        MessageBox.Show("The password was incorrect", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        return false;
+      }
+    }
+
+    // API methods
+    public async Task Sync()
+    {
+      if (OnlineMode)
+      {
+        await api.Sync(this);
+      }
+    }
+    public async Task Deauth()
+    {
+      OnlineMode = false;
+      if (!await api.Deauth(this))
+      {
+        OnlineMode = true;
+      }
+      else
+      {
+        Changed?.Invoke();
+      }
+      SaveToRegistry();
     }
   }
 
@@ -298,7 +391,6 @@ namespace AutoLogout
         FlowLayoutPanel buttonPanel = new()
         {
           Dock = DockStyle.Bottom,
-          FlowDirection = FlowDirection.RightToLeft,
           AutoSize = true,
           BackColor = SystemColors.Control,
           Padding = new Padding(8),
@@ -309,15 +401,15 @@ namespace AutoLogout
         textBox = new() { Width = 300 };
         if (sensitive) textBox.PasswordChar = '*';
 
-        Button confirmation = new() { Text = "Ok", Width = 100, Height = 32, DialogResult = DialogResult.OK };
-        Button cancel = new() { Text = "Cancel", Width = 100, Height = 32, DialogResult = DialogResult.Cancel };
-        confirmation.Click += (sender, e) => { Close(); };
-
         mainPanel.Controls.Add(textLabel);
         mainPanel.Controls.Add(textBox);
 
-        buttonPanel.Controls.Add(cancel);
+        Button confirmation = new() { Text = "Ok", AutoSize = true, DialogResult = DialogResult.OK };
+        Button cancel = new() { Text = "Cancel", AutoSize = true, DialogResult = DialogResult.Cancel };
+        confirmation.Click += (sender, e) => { Close(); };
+
         buttonPanel.Controls.Add(confirmation);
+        buttonPanel.Controls.Add(cancel);
 
         Controls.Add(mainPanel);
         Controls.Add(buttonPanel);
