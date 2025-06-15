@@ -21,10 +21,8 @@ export class ClientAuthorize extends OpenAPIRoute {
         content: {
           "application/json": {
             schema: z.object({
-              series: z.object({
-                success: Bool(),
-                authKey: Str(),
-              })
+              success: Bool(),
+              authKey: Str(),
             })
           }
         }
@@ -34,10 +32,8 @@ export class ClientAuthorize extends OpenAPIRoute {
 				content: {
 					"application/json": {
 						schema: z.object({
-							series: z.object({
-								success: Bool(),
-								error: Str(),
-							}),
+              success: Bool(),
+              error: Str(),
 						}),
 					},
 				},
@@ -47,10 +43,8 @@ export class ClientAuthorize extends OpenAPIRoute {
 				content: {
 					"application/json": {
 						schema: z.object({
-							series: z.object({
-								success: Bool(),
-								error: Str(),
-							}),
+              success: Bool(),
+              error: Str(),
 						}),
 					},
 				},
@@ -82,7 +76,7 @@ export class ClientAuthorize extends OpenAPIRoute {
           ...state,
           authKeys: [...state.authKeys, newAuthKey],
         };
-        await c.env.timelimit.put(state.uuid, JSON.stringify(newState));
+        await c.env.timelimit.put(uuid, JSON.stringify(newState));
         
         return c.json({
           series: {

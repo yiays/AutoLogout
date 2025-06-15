@@ -32,10 +32,8 @@ export class StateSync extends OpenAPIRoute {
 				content: {
 					"application/json": {
 						schema: z.object({
-							series: z.object({
-								accepted: Bool(),
-								delta: SyncState.partial().optional(),
-							}),
+							accepted: Bool(),
+							delta: SyncState.partial().optional(),
 						}),
 					},
 				},
@@ -45,10 +43,8 @@ export class StateSync extends OpenAPIRoute {
 				content: {
 					"application/json": {
 						schema: z.object({
-							series: z.object({
-								accepted: Bool(),
-								error: z.string(),
-							}),
+							accepted: Bool(),
+							error: z.string(),
 						}),
 					},
 				},
@@ -69,7 +65,7 @@ export class StateSync extends OpenAPIRoute {
 			: authHeader;
 
 		// Retrieve the validated request body
-		const { uuid:_, syncAuthor, ...newState} = data.body;
+		const { syncAuthor, ...newState} = data.body;
 
 		const stateType = z.object(SyncState.shape);
 		const secureStateType = z.object(SecureState.shape);
@@ -90,7 +86,7 @@ export class StateSync extends OpenAPIRoute {
 						...newState,
 						syncAuthor: authKey,
 					}
-					await c.env.timelimit.put(state.uuid, JSON.stringify(state));
+					await c.env.timelimit.put(uuid, JSON.stringify(state));
 
 					// Inform client the changes were accepted
 					return {
@@ -122,14 +118,14 @@ export class StateSync extends OpenAPIRoute {
 			}
 		} else {
 			// Create new state
-			const {authKey: _, ...parsedState} = stateType.parse(newState);
+			const parsedState = stateType.parse(newState);
 			const newAuthKey = crypto.randomUUID();
 			const state = {
 				...parsedState,
 				authKeys: [newAuthKey],
 				syncAuthor: newAuthKey,
 			}
-			await c.env.timelimit.put(state.uuid, JSON.stringify(state));
+			await c.env.timelimit.put(uuid, JSON.stringify(state));
 
 			// return the created State
 			return {

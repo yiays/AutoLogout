@@ -20,12 +20,8 @@ export class StateFetch extends OpenAPIRoute {
 				content: {
 					"application/json": {
 						schema: z.object({
-							series: z.object({
-								success: Bool(),
-								result: z.object({
-									state: SyncState,
-								}),
-							}),
+							success: Bool(),
+							state: SyncState,
 						}),
 					},
 				},
@@ -35,10 +31,8 @@ export class StateFetch extends OpenAPIRoute {
 				content: {
 					"application/json": {
 						schema: z.object({
-							series: z.object({
-								success: Bool(),
-								error: Str(),
-							}),
+							success: Bool(),
+							error: Str(),
 						}),
 					},
 				},
@@ -48,10 +42,8 @@ export class StateFetch extends OpenAPIRoute {
 				content: {
 					"application/json": {
 						schema: z.object({
-							series: z.object({
-								success: Bool(),
-								error: Str(),
-							}),
+							success: Bool(),
+							error: Str(),
 						}),
 					},
 				},
@@ -92,6 +84,7 @@ export class StateFetch extends OpenAPIRoute {
 						bedtime: state.bedtime,
 						waketime: state.waketime,
 						graceGiven: state.graceGiven,
+						syncAuthor: state.syncAuthor,
 					},
 				}
 			} else {
