@@ -78,9 +78,9 @@ export class StateFetch extends OpenAPIRoute {
 					success: true,
 					state: {
 						dailyTimeLimit: state.dailyTimeLimit,
-						remainingTime: state.remainingTime,
+						todayTimeLimit: state.todayTimeLimit,
 						usedTime: state.usedTime,
-						remainingTimeDay: state.remainingTimeDay,
+						usageDate: state.usageDate,
 						bedtime: state.bedtime,
 						waketime: state.waketime,
 						graceGiven: state.graceGiven,

@@ -6,7 +6,7 @@ import { ClientAuthorize } from "./endpoints/clientAuthorize";
 import { ClientDeauthorize } from "./endpoints/clientDeauthorize";
 
 // Constants
-const API_VERSION = "1";
+const API_VERSION = "2";
 
 // Start a Hono app
 const app = new Hono<{ Bindings: Env }>({}).basePath("");

@@ -98,9 +98,9 @@ export class StateSync extends OpenAPIRoute {
 						accepted: false,
 						delta: {
 							dailyTimeLimit: oldState.dailyTimeLimit,
-							remainingTime: oldState.remainingTime,
+							todayTimeLimit: oldState.todayTimeLimit,
 							usedTime: oldState.usedTime,
-							remainingTimeDay: oldState.remainingTimeDay,
+							usageDate: oldState.usageDate,
 							bedtime: oldState.bedtime,
 							waketime: oldState.waketime,
 							graceGiven: oldState.graceGiven,
