@@ -195,7 +195,7 @@ namespace AutoLogout
         }
       }
 
-      if (state.remainingTime >= 30 && state.remainingTime != -1)
+      if (state.remainingTime <= 30 && state.remainingTime != -1)
       {
         Task.Run(() =>
         {
@@ -205,12 +205,12 @@ namespace AutoLogout
             MessageBoxButtons.OK,
             MessageBoxIcon.Warning);
         });
-        state.todayTime = state.usedTime + 30;
+        state.tempTimeLimit = state.usedTime + 30;
         state.graceGiven = true;
       }
 
-      UpdateClock();
       EnforceBedtime();
+      UpdateClock();
       Task.Run(state.Sync);
       timer.Start();
     }
@@ -218,10 +218,11 @@ namespace AutoLogout
     {
       if (InvokeRequired)
       {
-        Invoke(UpdateClock);
+        Invoke(OnStateChanged);
       }
       else
       {
+        state.tempTimeLimit = -1;
         UpdateClock();
       }
     }
@@ -263,7 +264,7 @@ namespace AutoLogout
       if (state.usageDate != currentDay)
       {
         // If the day is different, reset the remaining time
-        state.todayTime = state.dailyTimeLimit;
+        state.todayTimeLimit = state.dailyTimeLimit;
         state.usedTime = 0;
         state.usageDate = currentDay;
       }
@@ -400,7 +401,12 @@ namespace AutoLogout
     {
       double? differenceInSeconds = CheckBedtime();
 
-      if (differenceInSeconds == null) return;
+      if (differenceInSeconds == null)
+      {
+        state.bedtimeTimeLimit = -1;
+        UpdateClock();
+        return;
+      }
       else if (differenceInSeconds < 0)
       {
         if (state.graceGiven) return;
@@ -409,13 +415,13 @@ namespace AutoLogout
           MessageBox.Show("It's past bedtime! Shutting down in 30 seconds.");
           Invoke(FocusWindow);
         });
-        state.todayTime = state.usedTime + 30;
+        state.bedtimeTimeLimit = state.usedTime + 30;
         state.graceGiven = true;
       }
-      else if (state.remainingTime == -1) // Unlimited time
+      else if (state.todayTimeLimit == -1) // Unlimited time
       {
         // No time limit, just bedtime
-        state.todayTime = state.usedTime + (int)differenceInSeconds;
+        state.bedtimeTimeLimit = state.usedTime + (int)differenceInSeconds;
       }
       else if (differenceInSeconds < state.remainingTime)
       {
@@ -427,7 +433,11 @@ namespace AutoLogout
             .AddText("Your time has been shortened so it will end with bedtime.")
             .Show();
         }
-        state.todayTime = state.usedTime + (int)differenceInSeconds;
+        state.bedtimeTimeLimit = state.usedTime + (int)differenceInSeconds;
+      }
+      else
+      {
+        state.bedtimeTimeLimit = -1;
       }
     }
 
@@ -494,6 +504,7 @@ namespace AutoLogout
         e.Cancel = true;
       else
       {
+        audioControl.Unmute();
         SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
         SystemEvents.DisplaySettingsChanged -= Reposition;
         ToastNotificationManagerCompat.OnActivated -= FocusWindow;

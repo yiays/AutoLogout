@@ -181,7 +181,7 @@ namespace AutoLogout
 
       dailylimitPicker.Value = parent.state.dailyTimeLimit >= 0 ? parent.state.dailyTimeLimit / 60 : -1;
 
-      todaylimitPicker.Value = parent.state.todayTime >= 0 ? parent.state.todayTime / 60 : -1;
+      todaylimitPicker.Value = parent.state.todayTimeLimit >= 0 ? parent.state.todayTimeLimit / 60 : -1;
 
       TimeOnly waketime = parent.state.waketime;
       DateTime wakeDateTime = DateTime.Today.Add(waketime.ToTimeSpan());
@@ -219,7 +219,10 @@ namespace AutoLogout
     private void SaveButton_Click(object? sender, EventArgs e)
     {
       parent.state.dailyTimeLimit = (int)(dailylimitPicker.Value >= 0 ? dailylimitPicker.Value * 60 : -1);
-      parent.state.todayTime = (int)(todaylimitPicker.Value >= 0 ? todaylimitPicker.Value * 60 : -1);
+      parent.state.todayTimeLimit = (int)(todaylimitPicker.Value >= 0 ? todaylimitPicker.Value * 60 : -1);
+      // Give parents some time to correct their mistake if they set the time limit too low
+      if (parent.state.remainingTime == 0)
+        parent.state.todayTimeLimit = parent.state.usedTime + 30;
       parent.state.waketime = new(waketimePicker.Value.Hour, waketimePicker.Value.Minute);
       parent.state.bedtime = new(sleeptimePicker.Value.Hour, sleeptimePicker.Value.Minute);
       parent.state.SaveToRegistry();

@@ -1,3 +1,4 @@
+using System.Numerics;
 using Microsoft.Win32;
 using BC = BCrypt.Net;
 
@@ -5,6 +6,7 @@ namespace AutoLogout
 {
   public class State
   {
+    const int BIG = (int)1e9;
     public bool OnlineMode = false;
     public bool ExitIntent = false;
     public bool Paused = false;
@@ -12,8 +14,11 @@ namespace AutoLogout
     public Guid uuid = Guid.Empty;
     public string hashedPassword = "";
     public int dailyTimeLimit = -1;
-    public int todayTime = -1;
-    public int remainingTime { get => todayTime == -1? -1 : Math.Max(todayTime - usedTime, 0); }
+    public int todayTimeLimit = -1;
+    public int tempTimeLimit = -1; // This stores temporary overrides to the time limit. Takes priority over bedtime
+    public int bedtimeTimeLimit = -1; // This stores bedtime-related overrides to the time limit
+    private int realTimeLimit { get => tempTimeLimit != -1? tempTimeLimit: bedtimeTimeLimit != -1 ? bedtimeTimeLimit : todayTimeLimit; }
+    public int remainingTime { get => realTimeLimit == -1 ? -1 : Math.Max(realTimeLimit - usedTime, 0); }
     public int usedTime = 0;
     public DateOnly usageDate = DateOnly.FromDateTime(DateTime.Today);
     public TimeOnly bedtime = new TimeOnly(0, 0);
@@ -62,7 +67,7 @@ namespace AutoLogout
 
       dailyTimeLimit = (int)key.GetValue("dailyTimeLimit", -1);
       usageDate = DateOnly.Parse((string)key.GetValue("usageDate", "1/01/0001"));
-      todayTime = (int)key.GetValue("todayTime", -1);
+      todayTimeLimit = (int)key.GetValue("todayTimeLimit", -1);
       usedTime = (int)key.GetValue("usedTime", 0);
 
       return 0;
@@ -84,7 +89,7 @@ namespace AutoLogout
       key.SetValue("password", hashedPassword);
       key.SetValue("usageDate", DateOnly.FromDateTime(DateTime.Today));
       key.SetValue("dailyTimeLimit", dailyTimeLimit);
-      key.SetValue("todayTime", todayTime);
+      key.SetValue("todayTimeLimit", todayTimeLimit);
       key.SetValue("usedTime", usedTime);
       key.SetValue("bedtime", bedtime);
       key.SetValue("waketime", waketime);
@@ -96,7 +101,7 @@ namespace AutoLogout
     {
       // Update local state with server response
       dailyTimeLimit = delta.dailyTimeLimit ?? dailyTimeLimit;
-      todayTime = delta.todayTime ?? todayTime;
+      todayTimeLimit = delta.todayTimeLimit ?? todayTimeLimit;
       usedTime = delta.usedTime ?? usedTime;
       usageDate = delta.usageDate ?? usageDate;
       bedtime = delta.bedtime ?? bedtime;

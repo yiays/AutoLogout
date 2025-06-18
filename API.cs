@@ -46,7 +46,7 @@ namespace AutoLogout
       public Guid? uuid { get; set; }
       public string? hashedPassword { get; set; }
       public int? dailyTimeLimit { get; set; }
-      public int? todayTime { get; set; }
+      public int? todayTimeLimit { get; set; }
       public int? usedTime { get; set; }
       public DateOnly? usageDate { get; set; }
       public TimeOnly? bedtime { get; set; }
