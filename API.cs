@@ -110,7 +110,12 @@ namespace AutoLogout
 
       if (!response.IsSuccessStatusCode)
       {
-        Console.WriteLine($"API call '{endpoint}' failed: {response.StatusCode} - {response.ReasonPhrase}");
+        Console.WriteLine($"API call '{endpoint}' failed: {response.ReasonPhrase}");
+        if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+        {
+          string responseBody = await response.Content.ReadAsStringAsync();
+          Console.Write(responseBody);
+        }
         return new ApiResult<T> { success = false, response = response, result = default };
       }
 
@@ -135,7 +140,7 @@ namespace AutoLogout
       {
         state.hashedPassword,
         state.dailyTimeLimit,
-        state.remainingTime,
+        state.todayTimeLimit,
         state.usedTime,
         state.usageDate,
         state.bedtime,
