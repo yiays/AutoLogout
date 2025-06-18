@@ -6,14 +6,16 @@ namespace AutoLogout
   public class State
   {
     public bool OnlineMode = false;
+    public bool ExitIntent = false;
     public bool Paused = false;
     public Guid authKey = Guid.Empty;
     public Guid uuid = Guid.Empty;
     public string hashedPassword = "";
     public int dailyTimeLimit = -1;
-    public int remainingTime = -1;
+    public int todayTime = -1;
+    public int remainingTime { get => todayTime == -1? -1 : Math.Max(todayTime - usedTime, 0); }
     public int usedTime = 0;
-    public DateOnly remainingTimeDay = DateOnly.FromDateTime(DateTime.Today);
+    public DateOnly usageDate = DateOnly.FromDateTime(DateTime.Today);
     public TimeOnly bedtime = new TimeOnly(0, 0);
     public TimeOnly waketime = new TimeOnly(0, 0);
     public bool graceGiven = false;
@@ -59,8 +61,8 @@ namespace AutoLogout
       waketime = TimeOnly.Parse(waketimeRaw);
 
       dailyTimeLimit = (int)key.GetValue("dailyTimeLimit", -1);
-      remainingTimeDay = DateOnly.Parse((string)key.GetValue("remainingTimeDay", "1/01/0001"));
-      remainingTime = (int)key.GetValue("remainingTime", -1);
+      usageDate = DateOnly.Parse((string)key.GetValue("usageDate", "1/01/0001"));
+      todayTime = (int)key.GetValue("todayTime", -1);
       usedTime = (int)key.GetValue("usedTime", 0);
 
       return 0;
@@ -72,7 +74,7 @@ namespace AutoLogout
       if (key == null)
       {
         MessageBox.Show("Unable to save settings.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        remainingTime = 0;
+        ExitIntent = true;
         return -1;
       }
 
@@ -80,9 +82,9 @@ namespace AutoLogout
       key.SetValue("authKey", authKey);
       key.SetValue("guid", uuid);
       key.SetValue("password", hashedPassword);
-      key.SetValue("remainingTimeDay", DateOnly.FromDateTime(DateTime.Today));
+      key.SetValue("usageDate", DateOnly.FromDateTime(DateTime.Today));
       key.SetValue("dailyTimeLimit", dailyTimeLimit);
-      key.SetValue("remainingTime", remainingTime);
+      key.SetValue("todayTime", todayTime);
       key.SetValue("usedTime", usedTime);
       key.SetValue("bedtime", bedtime);
       key.SetValue("waketime", waketime);
@@ -94,9 +96,9 @@ namespace AutoLogout
     {
       // Update local state with server response
       dailyTimeLimit = delta.dailyTimeLimit ?? dailyTimeLimit;
-      remainingTime = delta.remainingTime ?? remainingTime;
+      todayTime = delta.todayTime ?? todayTime;
       usedTime = delta.usedTime ?? usedTime;
-      remainingTimeDay = delta.remainingTimeDay ?? remainingTimeDay;
+      usageDate = delta.usageDate ?? usageDate;
       bedtime = delta.bedtime ?? bedtime;
       waketime = delta.waketime ?? waketime;
       graceGiven = delta.graceGiven ?? graceGiven;

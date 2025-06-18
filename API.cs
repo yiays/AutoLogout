@@ -9,7 +9,7 @@ namespace AutoLogout
     {
       get => Debugger.IsAttached ? "http://localhost:8787/api/" : "https://timelimit.yiays.com/api/";
     }
-    private readonly string SupportedAPIVersion = "1";
+    private readonly string SupportedAPIVersion = "2";
     private bool UpdateWarned = false;
     private readonly HttpClient httpClient = new()
     {
@@ -46,9 +46,9 @@ namespace AutoLogout
       public Guid? uuid { get; set; }
       public string? hashedPassword { get; set; }
       public int? dailyTimeLimit { get; set; }
-      public int? remainingTime { get; set; }
+      public int? todayTime { get; set; }
       public int? usedTime { get; set; }
-      public DateOnly? remainingTimeDay { get; set; }
+      public DateOnly? usageDate { get; set; }
       public TimeOnly? bedtime { get; set; }
       public TimeOnly? waketime { get; set; }
       public bool? graceGiven { get; set; }
@@ -137,7 +137,7 @@ namespace AutoLogout
         state.dailyTimeLimit,
         state.remainingTime,
         state.usedTime,
-        state.remainingTimeDay,
+        state.usageDate,
         state.bedtime,
         state.waketime,
         state.graceGiven,
