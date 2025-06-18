@@ -1,4 +1,4 @@
-using System.Numerics;
+using System.Diagnostics;
 using Microsoft.Win32;
 using BC = BCrypt.Net;
 
@@ -6,7 +6,7 @@ namespace AutoLogout
 {
   public class State
   {
-    const int BIG = (int)1e9;
+    private static string REGKEY { get => Debugger.IsAttached ? "Software\\Yiays\\AutoLogout-Preview" : "Software\\Yiays\\AutoLogout"; }
     public bool OnlineMode = false;
     public bool ExitIntent = false;
     public bool Paused = false;
@@ -42,7 +42,7 @@ namespace AutoLogout
 
     public int FromRegistry()
     {
-      RegistryKey? key = Registry.CurrentUser.CreateSubKey("Software\\Yiays\\AutoLogout", true);
+      RegistryKey? key = Registry.CurrentUser.CreateSubKey(REGKEY, true);
       if (key == null)
       {
         MessageBox.Show("Unable to access settings.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -75,7 +75,7 @@ namespace AutoLogout
 
     public int SaveToRegistry()
     {
-      RegistryKey? key = Registry.CurrentUser.CreateSubKey("Software\\Yiays\\AutoLogout");
+      RegistryKey? key = Registry.CurrentUser.CreateSubKey(REGKEY);
       if (key == null)
       {
         MessageBox.Show("Unable to save settings.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
