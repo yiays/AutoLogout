@@ -19,10 +19,7 @@ export class StateFetch extends OpenAPIRoute {
 				description: "Returns state for uuid if found",
 				content: {
 					"application/json": {
-						schema: z.object({
-							success: Bool(),
-							state: SyncState,
-						}),
+						schema: SyncState,
 					},
 				},
 			},
@@ -31,7 +28,6 @@ export class StateFetch extends OpenAPIRoute {
 				content: {
 					"application/json": {
 						schema: z.object({
-							success: Bool(),
 							error: Str(),
 						}),
 					},
@@ -42,7 +38,6 @@ export class StateFetch extends OpenAPIRoute {
 				content: {
 					"application/json": {
 						schema: z.object({
-							success: Bool(),
 							error: Str(),
 						}),
 					},
@@ -75,17 +70,14 @@ export class StateFetch extends OpenAPIRoute {
 			if (authKey && state.authKeys.includes(authKey)) {
 				// Return the state
 				return {
-					success: true,
-					state: {
-						dailyTimeLimit: state.dailyTimeLimit,
-						todayTimeLimit: state.todayTimeLimit,
-						usedTime: state.usedTime,
-						usageDate: state.usageDate,
-						bedtime: state.bedtime,
-						waketime: state.waketime,
-						graceGiven: state.graceGiven,
-						syncAuthor: state.syncAuthor,
-					},
+					dailyTimeLimit: state.dailyTimeLimit,
+					todayTimeLimit: state.todayTimeLimit,
+					usedTime: state.usedTime,
+					usageDate: state.usageDate,
+					bedtime: state.bedtime,
+					waketime: state.waketime,
+					graceGiven: state.graceGiven,
+					syncAuthor: state.syncAuthor,
 				}
 			} else {
 				return c.json({
