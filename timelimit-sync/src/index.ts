@@ -35,7 +35,7 @@ openapi.get("/api/auth/:uuid", ClientAuthorize);
 openapi.delete("/api/deauth/:uuid", ClientDeauthorize);
 openapi.post("/api/sync/:uuid", StateSync);
 
-const spec = openapi.registry.registerComponent('securitySchemes', 'authKey', {
+openapi.registry.registerComponent('securitySchemes', 'authKey', {
   type: 'http',
   scheme: 'bearer',
   bearerFormat: 'UUID',

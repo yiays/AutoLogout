@@ -1,6 +1,6 @@
 import { Bool, OpenAPIRoute, Str } from "chanfana";
 import { z } from "zod";
-import { type AppContext, SecureState, SyncState } from "../types";
+import { type AppContext, SecureState } from "../types";
 import bcrypt from "bcryptjs";
 
 export class ClientAuthorize extends OpenAPIRoute {

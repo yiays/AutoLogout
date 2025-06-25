@@ -1,6 +1,6 @@
 import { Bool, OpenAPIRoute, Str } from "chanfana";
 import { z } from "zod";
-import { type AppContext, SecureState, SyncState } from "../types";
+import { type AppContext, SecureState } from "../types";
 
 export class ClientDeauthorize extends OpenAPIRoute {
   schema = {
