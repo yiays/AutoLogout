@@ -79,25 +79,19 @@ export class ClientAuthorize extends OpenAPIRoute {
         await c.env.timelimit.put(uuid, JSON.stringify(newState));
         
         return c.json({
-          series: {
-            success: true,
-            authKey: newAuthKey,
-          }
+          success: true,
+          authKey: newAuthKey,
         });
       } else {
         return c.json({
-          series: {
-            success: false,
-            error: "Password does not match password set on the managed computer",
-          }
+          success: false,
+          error: "Password does not match password set on the managed computer",
         }, 401);
       }
     } else {
 			return c.json({
-				series: {
-					success: false,
-					error: "Client not found",
-				}
+        success: false,
+        error: "Client not found",
 			}, 404);
 		}
   }

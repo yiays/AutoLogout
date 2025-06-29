@@ -110,10 +110,8 @@ export class StateSync extends OpenAPIRoute {
 				}
 			} else {
 				return c.json({
-					series: {
-						accepted: false,
-						error: "Unauthorized",
-					},
+					accepted: false,
+					error: "Unauthorized",
 				}, 401);
 			}
 		} else {

@@ -75,24 +75,18 @@ export class ClientDeauthorize extends OpenAPIRoute {
         await c.env.timelimit.delete(uuid);
         
         return c.json({
-          series: {
-            success: true,
-          }
+          success: true,
         });
       } else {
         return c.json({
-          series: {
-            success: false,
-            error: "Unauthorized",
-          }
+          success: false,
+          error: "Unauthorized",
         }, 401);
       }
     } else {
 			return c.json({
-				series: {
-					success: false,
-					error: "Client not found",
-				}
+        success: false,
+        error: "Client not found",
 			}, 404);
 		}
   }

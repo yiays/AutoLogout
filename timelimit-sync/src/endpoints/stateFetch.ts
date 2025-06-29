@@ -81,18 +81,14 @@ export class StateFetch extends OpenAPIRoute {
 				}
 			} else {
 				return c.json({
-					series: {
-						success: false,
-						error: "Unauthorized",
-					},
+					success: false,
+					error: "Unauthorized",
 				}, 401);
 			}
 		} else {
 			return c.json({
-				series: {
-					success: false,
-					error: "Client not found",
-				}
+				success: false,
+				error: "Client not found",
 			}, 404);
 		}
 	}
