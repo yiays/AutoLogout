@@ -1,5 +1,6 @@
 import { fromHono } from "chanfana";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { StateSync } from "./endpoints/stateSync";
 import { StateFetch } from "./endpoints/stateFetch";
 import { ClientAuthorize } from "./endpoints/clientAuthorize";
@@ -11,14 +12,18 @@ const API_VERSION = "2";
 // Start a Hono app
 const app = new Hono<{ Bindings: Env }>({}).basePath("");
 
-// Middleware for some universal headers
+// Declare the API version in all responses
 app.use("*", async (c, next) => {
   await next();
-  // Declare the API version in all responses
   c.header("X-API-Version", API_VERSION);
-  c.header("Access-Control-Allow-Origin", "http://localhost:8081");
-  c.header("Access-Control-Allow-Methods", "GET,POST,DELETE");
 });
+
+// Declare CORS
+app.use("*", cors({
+  origin: "http://localhost:8081",
+  allowMethods: ["GET", "POST", "DELETE"],
+  allowHeaders: ["Authorization", "Content-Type"]
+}));
 
 // Setup OpenAPI registry
 const openapi = fromHono(app, {
