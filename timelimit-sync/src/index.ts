@@ -11,10 +11,13 @@ const API_VERSION = "2";
 // Start a Hono app
 const app = new Hono<{ Bindings: Env }>({}).basePath("");
 
-// Declare the API version in all responses
+// Middleware for some universal headers
 app.use("*", async (c, next) => {
   await next();
+  // Declare the API version in all responses
   c.header("X-API-Version", API_VERSION);
+  c.header("Access-Control-Allow-Origin", "http://localhost:8081");
+  c.header("Access-Control-Allow-Methods", "GET,POST,DELETE");
 });
 
 // Setup OpenAPI registry
