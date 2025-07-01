@@ -7,7 +7,7 @@ namespace AutoLogout
     // Constants
     private string Url
     {
-      get => Debugger.IsAttached ? "http://localhost:8787/api/" : "https://timelimit.yiays.com/api/";
+      get => Debugger.IsAttached ? "http://localhost:8787/api/" : "https://autologout.yiays.com/api/";
     }
     private readonly string SupportedAPIVersion = "2";
     private bool UpdateWarned = false;
