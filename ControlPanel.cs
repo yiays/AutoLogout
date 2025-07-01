@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using QRCoder;
 
 namespace AutoLogout
 {
@@ -202,7 +203,31 @@ namespace AutoLogout
         Task.Run(parent.state.Sync);
         parent.state.TriggerStateChanged();
       }
-      MessageBox.Show("Soon, you will be able to connect your phone to AutoLogout and manage computers remotely.", "Coming soon");
+
+      // Generate a QR code for the user to scan with their phone
+      string qrContent = $"https://autologout.yiays.com/app/?uuid={parent.state.uuid}";
+
+      using var qrGenerator = new QRCodeGenerator();
+      using var qrData = qrGenerator.CreateQrCode(qrContent, QRCodeGenerator.ECCLevel.Q);
+      using var qrCode = new QRCode(qrData);
+      using var qrBitmap = qrCode.GetGraphic(20);
+
+      // Show QR in a simple dialog
+      Form qrForm = new Form
+      {
+        Text = "Scan this QR code with your phone",
+        ClientSize = new Size(600, 600),
+        FormBorderStyle = FormBorderStyle.SizableToolWindow,
+        StartPosition = FormStartPosition.CenterParent
+      };
+      PictureBox pb = new PictureBox
+      {
+        Dock = DockStyle.Fill,
+        Image = new Bitmap(qrBitmap),
+        SizeMode = PictureBoxSizeMode.Zoom
+      };
+      qrForm.Controls.Add(pb);
+      qrForm.ShowDialog(this);
     }
     private void DeauthButton_Click(object? sender, EventArgs e)
     {
