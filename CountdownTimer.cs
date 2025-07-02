@@ -35,6 +35,7 @@ namespace AutoLogout
       Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
 
       Text = "Time limit";
+      Icon = new Icon("Resources/icon-light.ico");
       FormBorderStyle = FormBorderStyle.FixedToolWindow;
       ShowInTaskbar = false;
       StartPosition = FormStartPosition.Manual;

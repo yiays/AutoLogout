@@ -16,6 +16,7 @@ namespace AutoLogout
     {
       this.parent = parent;
       Text = "AutoLogout Settings";
+      Icon = new Icon("Resources/icon-light.ico");
       FormBorderStyle = FormBorderStyle.FixedDialog;
       ShowInTaskbar = true;
       StartPosition = FormStartPosition.CenterScreen;
@@ -205,7 +206,7 @@ namespace AutoLogout
       }
 
       // Generate a QR code for the user to scan with their phone
-      string qrContent = $"https://autologout.yiays.com/app/?uuid={parent.state.uuid}";
+      string qrContent = $"https://autologout.yiays.com/app/addAccount?uuid={parent.state.uuid}";
 
       using var qrGenerator = new QRCodeGenerator();
       using var qrData = qrGenerator.CreateQrCode(qrContent, QRCodeGenerator.ECCLevel.Q);

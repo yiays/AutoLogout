@@ -6,6 +6,7 @@ namespace AutoLogout
 
     public LockoutWindow(CountdownTimer parent) {
       Text = "Pause screen";
+      Icon = new Icon("Resources/icon-light.ico");
       FormBorderStyle = FormBorderStyle.None;
       ShowInTaskbar = false;
       StartPosition = FormStartPosition.Manual;

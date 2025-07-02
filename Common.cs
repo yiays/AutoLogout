@@ -165,6 +165,7 @@ namespace AutoLogout
       {
         FormBorderStyle = FormBorderStyle.FixedDialog;
         Text = caption;
+        Icon = new Icon("Resources/icon-light.ico");
         StartPosition = FormStartPosition.CenterScreen;
         MinimizeBox = false;
         MaximizeBox = false;
