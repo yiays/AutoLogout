@@ -142,11 +142,8 @@ namespace AutoLogout
       Button CancelButton = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, AutoSize = true };
       SaveButton.Click += SaveButton_Click;
 
-      if (Debugger.IsAttached)
-      {
-        optionsPanel.Controls.Add(AuthButton);
-        optionsPanel.Controls.Add(DeauthButton);
-      }
+      optionsPanel.Controls.Add(AuthButton);
+      optionsPanel.Controls.Add(DeauthButton);
       optionsPanel.Controls.Add(ChangePasswordButton);
       buttonPanel.Controls.Add(SaveButton);
       buttonPanel.Controls.Add(CancelButton);
