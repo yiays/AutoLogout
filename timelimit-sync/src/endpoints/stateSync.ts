@@ -21,7 +21,7 @@ export class StateSync extends OpenAPIRoute {
 			body: {
 				content: {
 					"application/json": {
-						schema: SyncState,
+						schema: SyncState.partial(),
 					},
 				},
 			},
