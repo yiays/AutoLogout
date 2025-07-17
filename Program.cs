@@ -25,11 +25,12 @@ static class Program
     {
       if (key is null) LocalRegistry = false;
     }
-    bool GlobalRegistry = true;
+    bool GlobalRegistry = false;
     using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(
       @"Software\Microsoft\Windows\CurrentVersion\Run"))
     {
-      if (key?.GetValue("AutoLogout") is null) GlobalRegistry = false;
+      string regValue = (string)(key?.GetValue("AutoLogout") ?? "");
+      if (regValue.Contains(Common.exePath)) GlobalRegistry = true;
     }
 
     // Handle special parameters
