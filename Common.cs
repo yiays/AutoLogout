@@ -4,9 +4,70 @@ using BC = BCrypt.Net;
 
 namespace AutoLogout
 {
+  public static class Common
+  {
+    public static void Relaunch(string args)
+    {
+      var exeName = Process.GetCurrentProcess().MainModule?.FileName;
+      if (exeName is null) throw new Exception("Unable to get current executable name.");
+      var startInfo = new ProcessStartInfo(exeName)
+      {
+        UseShellExecute = true,
+        Arguments = args
+      };
+      try
+      {
+        Process.Start(startInfo);
+      }
+      catch
+      {
+        // User cancelled UAC
+      }
+    }
+    public static void RelaunchAsAdmin(string args)
+    {
+      var exeName = Process.GetCurrentProcess().MainModule?.FileName;
+      if (exeName is null) throw new Exception("Unable to get current executable name.");
+      var startInfo = new ProcessStartInfo(exeName)
+      {
+        UseShellExecute = true,
+        Verb = "runas",
+        Arguments = args
+      };
+      try
+      {
+        Process.Start(startInfo);
+      }
+      catch
+      {
+        // User cancelled UAC
+      }
+    }
+
+    public static void RegisterStartup(bool enable)
+    {
+      string appName = "AutoLogout";
+      var exePath = Process.GetCurrentProcess().MainModule?.FileName;
+      if (exePath is null) throw new Exception("Unable to get current executable name.");
+      using RegistryKey? key = Registry.LocalMachine.OpenSubKey(
+        @"Software\Microsoft\Windows\CurrentVersion\Run", true);
+      if (key is null) throw new Exception("System startup registry doesn't exist!");
+      if (enable)
+      {
+        key.SetValue(appName, $"\"{exePath}\" --service");
+        MessageBox.Show("AutoLogout has been configured to start on login.", "AutoLogout");
+      }
+      else
+      {
+        key.DeleteValue(appName, false);
+        MessageBox.Show("AutoLogout will no longer start on login.", "AutoLogout");
+      }
+    }
+  }
+
   public class State
   {
-    private static string REGKEY { get => Debugger.IsAttached ? "Software\\Yiays\\AutoLogout-Preview" : "Software\\Yiays\\AutoLogout"; }
+    public static string REGKEY { get => Debugger.IsAttached ? "Software\\Yiays\\AutoLogout-Preview" : "Software\\Yiays\\AutoLogout"; }
     public bool OnlineMode = false;
     public bool ExitIntent = false;
     public bool Paused = false;
@@ -17,7 +78,7 @@ namespace AutoLogout
     public int todayTimeLimit = -1;
     public int tempTimeLimit = -1; // This stores temporary overrides to the time limit. Takes priority over bedtime
     public int bedtimeTimeLimit = -1; // This stores bedtime-related overrides to the time limit
-    private int realTimeLimit { get => tempTimeLimit != -1? tempTimeLimit: bedtimeTimeLimit != -1 ? bedtimeTimeLimit : todayTimeLimit; }
+    private int realTimeLimit { get => tempTimeLimit != -1 ? tempTimeLimit : bedtimeTimeLimit != -1 ? bedtimeTimeLimit : todayTimeLimit; }
     public int remainingTime { get => realTimeLimit == -1 ? -1 : Math.Max(realTimeLimit - usedTime, 0); }
     public int usedTime = 0;
     public DateOnly usageDate = DateOnly.FromDateTime(DateTime.Today);
