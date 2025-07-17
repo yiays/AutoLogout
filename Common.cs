@@ -6,11 +6,17 @@ namespace AutoLogout
 {
   public static class Common
   {
+    public static string exePath
+    {
+      get
+      {
+        return Process.GetCurrentProcess().MainModule?.FileName
+          ?? throw new Exception("Unable to get current executable name.");
+      }
+    }
     public static void Relaunch(string args)
     {
-      var exeName = Process.GetCurrentProcess().MainModule?.FileName;
-      if (exeName is null) throw new Exception("Unable to get current executable name.");
-      var startInfo = new ProcessStartInfo(exeName)
+      var startInfo = new ProcessStartInfo(exePath)
       {
         UseShellExecute = true,
         Arguments = args
@@ -26,9 +32,7 @@ namespace AutoLogout
     }
     public static void RelaunchAsAdmin(string args)
     {
-      var exeName = Process.GetCurrentProcess().MainModule?.FileName;
-      if (exeName is null) throw new Exception("Unable to get current executable name.");
-      var startInfo = new ProcessStartInfo(exeName)
+      var startInfo = new ProcessStartInfo(exePath)
       {
         UseShellExecute = true,
         Verb = "runas",
@@ -47,10 +51,9 @@ namespace AutoLogout
     public static void RegisterStartup(bool enable)
     {
       string appName = "AutoLogout";
-      var exePath = Process.GetCurrentProcess().MainModule?.FileName;
-      if (exePath is null) throw new Exception("Unable to get current executable name.");
       using RegistryKey? key = Registry.LocalMachine.OpenSubKey(
-        @"Software\Microsoft\Windows\CurrentVersion\Run", true);
+        @"Software\Microsoft\Windows\CurrentVersion\Run", true
+      );
       if (key is null) throw new Exception("System startup registry doesn't exist!");
       if (enable)
       {

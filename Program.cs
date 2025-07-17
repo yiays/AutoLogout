@@ -26,7 +26,7 @@ static class Program
       if (key is null) LocalRegistry = false;
     }
     bool GlobalRegistry = true;
-    using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(
+    using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(
       @"Software\Microsoft\Windows\CurrentVersion\Run"))
     {
       if (key?.GetValue("AutoLogout") is null) GlobalRegistry = false;
