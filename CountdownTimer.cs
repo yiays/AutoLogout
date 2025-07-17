@@ -477,12 +477,12 @@ namespace AutoLogout
       timer.Stop();
       PauseButton.Enabled = false;
       state.ExitIntent = true;
-      if (Debugger.IsAttached)
-      {
-        MessageBox.Show("Log off");
-        return;
-      }
+#if DEBUG
+      MessageBox.Show("Log off");
+      state.ExitIntent = true;
+#else
       Process.Start("shutdown", "/l /f");
+#endif
       Application.Exit();
     }
 
@@ -496,12 +496,11 @@ namespace AutoLogout
       timer.Stop();
       PauseButton.Enabled = false;
       state.ExitIntent = true;
-      if (Debugger.IsAttached)
-      {
-        MessageBox.Show("Shut down");
-        return;
-      }
+#if DEBUG
+      MessageBox.Show("Shut down");
+#else
       Process.Start("shutdown", "/p /f");
+#endif
       Application.Exit();
     }
 

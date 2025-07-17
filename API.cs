@@ -5,10 +5,11 @@ namespace AutoLogout
   public class API
   {
     // Constants
-    private string Url
-    {
-      get => Debugger.IsAttached ? "http://localhost:8787/api/" : "https://autologout.yiays.com/api/";
-    }
+#if DEBUG
+    private string Url = "http://localhost:8787/api/";
+#else
+    private string Url = "https://autologout.yiays.com/api/";
+#endif
     private readonly string SupportedAPIVersion = "2";
     private bool UpdateWarned = false;
     private readonly HttpClient httpClient = new()

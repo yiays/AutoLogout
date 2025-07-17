@@ -67,7 +67,11 @@ namespace AutoLogout
 
   public class State
   {
-    public static string REGKEY { get => Debugger.IsAttached ? "Software\\Yiays\\AutoLogout-Preview" : "Software\\Yiays\\AutoLogout"; }
+#if DEBUG
+    public static string REGKEY = "Software\\Yiays\\AutoLogout-Preview";
+#else
+    public static string REGKEY = "Software\\Yiays\\AutoLogout";
+#endif
     public bool OnlineMode = false;
     public bool ExitIntent = false;
     public bool Paused = false;
