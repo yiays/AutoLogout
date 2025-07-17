@@ -1,17 +1,26 @@
-using System.Diagnostics;
+using Microsoft.Win32;
+using System.Runtime.InteropServices;
 using QRCoder;
 
 namespace AutoLogout
 {
   public partial class ControlPanel : Form
   {
+    // UAC shield
+    private const int BCM_SETSHIELD = 0x160C;
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
     private readonly CountdownTimer parent;
     private readonly Label usedTimeIndicator;
     private readonly NumericUpDown dailylimitPicker;
     private readonly NumericUpDown todaylimitPicker;
     private readonly DateTimePicker waketimePicker;
     private readonly DateTimePicker sleeptimePicker;
-    private Button DeauthButton;
+    private readonly CheckBox autostartCheckBox;
+    private readonly bool autostartEnabled = false;
+    private readonly Button DeauthButton;
+    private readonly Button SaveButton;
     public ControlPanel(CountdownTimer parent)
     {
       this.parent = parent;
@@ -24,10 +33,17 @@ namespace AutoLogout
       MaximizeBox = false;
       BackColor = Color.White;
       Width = 360;
-      Height = 300;
+      Height = 340;
 
       AutoScaleMode = AutoScaleMode.Dpi;
       AutoScaleDimensions = new(96F, 96F);
+
+      using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(
+        @"Software\Microsoft\Windows\CurrentVersion\Run"))
+      {
+        string regValue = (string)(key?.GetValue("AutoLogout") ?? "");
+        if (regValue.Contains(Common.exePath)) autostartEnabled = true;
+      }
 
       TableLayoutPanel mainTable = new()
       {
@@ -60,6 +76,7 @@ namespace AutoLogout
         Dock = DockStyle.Fill,
         Text = "Time used today:",
         AutoSize = true,
+        Padding = new Padding { Bottom = 12 },
       };
 
       usedTimeIndicator = new()
@@ -121,6 +138,18 @@ namespace AutoLogout
         Width = 150,
       };
 
+      Label autostartLabel = new()
+      {
+        Text = "Start timer on log in:",
+        AutoSize = true,
+      };
+
+      autostartCheckBox = new()
+      {
+        Checked = autostartEnabled,
+      };
+      autostartCheckBox.CheckedChanged += autostartCheckBox_Checked;
+
       table.Controls.Add(usedTimeLabel);
       table.Controls.Add(usedTimeIndicator);
       table.Controls.Add(dailylimitLabel);
@@ -131,6 +160,8 @@ namespace AutoLogout
       table.Controls.Add(waketimePicker);
       table.Controls.Add(sleeptimeLabel);
       table.Controls.Add(sleeptimePicker);
+      table.Controls.Add(autostartLabel);
+      table.Controls.Add(autostartCheckBox);
 
       Button AuthButton = new() { Text = "Connect to your phone", AutoSize = true };
       AuthButton.Click += AuthButton_Click;
@@ -138,7 +169,7 @@ namespace AutoLogout
       DeauthButton.Click += DeauthButton_Click;
       Button ChangePasswordButton = new() { Text = "Change password", AutoSize = true };
       ChangePasswordButton.Click += ChangePasswordButton_Click;
-      Button SaveButton = new() { Text = "Save", DialogResult = DialogResult.OK, AutoSize = true };
+      SaveButton = new() { Text = "Save", DialogResult = DialogResult.OK, AutoSize = true, FlatStyle = FlatStyle.System };
       Button CancelButton = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, AutoSize = true };
       SaveButton.Click += SaveButton_Click;
 
@@ -193,6 +224,16 @@ namespace AutoLogout
       DeauthButton.Enabled = parent.state.OnlineMode;
     }
 
+    private void autostartCheckBox_Checked(object? sender, EventArgs e)
+    {
+      if(autostartCheckBox.Checked != autostartEnabled)
+        // To show the shield
+        SendMessage(SaveButton.Handle, BCM_SETSHIELD, IntPtr.Zero, new IntPtr(1));
+      else
+        // To hide the shield
+        SendMessage(SaveButton.Handle, BCM_SETSHIELD, IntPtr.Zero, new IntPtr(0));
+    }
+
     private void AuthButton_Click(object? sender, EventArgs e)
     {
       if (!parent.state.OnlineMode)
@@ -229,7 +270,10 @@ namespace AutoLogout
     }
     private void DeauthButton_Click(object? sender, EventArgs e)
     {
-      if (MessageBox.Show("Are you sure you want delete all your online data and sign out all devices?", "AutoLogout", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+      if (MessageBox.Show(
+        "Are you sure you want delete all your online data and sign out all devices?",
+        "AutoLogout", MessageBoxButtons.YesNo, MessageBoxIcon.Warning
+      ) == DialogResult.Yes)
       {
         Task.Run(parent.state.Deauth);
       }
@@ -237,7 +281,9 @@ namespace AutoLogout
     private void ChangePasswordButton_Click(object? sender, EventArgs e)
     {
       if (parent.state.NewPassword())
-        MessageBox.Show("Password changed successfully.", "AutoLogout", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        MessageBox.Show(
+          "Password changed successfully.", "AutoLogout", MessageBoxButtons.OK, MessageBoxIcon.Information
+        );
     }
     private void SaveButton_Click(object? sender, EventArgs e)
     {
@@ -250,6 +296,14 @@ namespace AutoLogout
       parent.state.bedtime = new(sleeptimePicker.Value.Hour, sleeptimePicker.Value.Minute);
       parent.state.SaveToRegistry();
       parent.state.TriggerStateChanged();
+
+      if (autostartCheckBox.Checked != autostartEnabled)
+      {
+        if (autostartCheckBox.Checked)
+          Common.Relaunch("--register");
+        else
+          Common.Relaunch("--unregister");
+      }
     }
 
     protected override void OnFormClosed(FormClosedEventArgs e)
