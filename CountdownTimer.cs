@@ -3,7 +3,6 @@ using System.Media;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 using Microsoft.Toolkit.Uwp.Notifications;
-using Microsoft.VisualBasic.ApplicationServices;
 
 namespace AutoLogout
 {
@@ -225,6 +224,13 @@ namespace AutoLogout
       {
         state.tempTimeLimit = -1;
         UpdateClock();
+        if (state.syncAuthor.HasValue)
+        {
+          new ToastContentBuilder()
+            .AddText("Time limit changed")
+            .AddText("Your time limit rules have been changed remotely.")
+            .Show();
+        }
       }
     }
     private void PauseButton_Click(object? sender, EventArgs e)
