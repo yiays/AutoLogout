@@ -9,6 +9,9 @@ static class Program
   [STAThread]
   static void Main(string[] args)
   {
+    // Ensure the base directory is correct
+    Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+
     // Help the runtime find library files that have been moved to .\Libraries\
     AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
     {
