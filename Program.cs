@@ -70,7 +70,7 @@ static class Program
     }
 
     // 
-    if (!LocalRegistry && !GlobalRegistry)
+    if (!LocalRegistry && !GlobalRegistry && !args.Contains("--skipsetup"))
     {
       // Run first time setup
       Application.Run(new FirstTime());

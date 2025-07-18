@@ -95,7 +95,7 @@ namespace AutoLogout
     protected override void OnFormClosed(FormClosedEventArgs e)
     {
       base.OnFormClosed(e);
-      Common.Relaunch("");
+      Common.Relaunch("--skipsetup");
     }
   }
 }
