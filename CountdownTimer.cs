@@ -33,7 +33,11 @@ namespace AutoLogout
     {
       Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
 
+#if DEBUG
+      Text = "Time limit [DEBUG]";
+#else
       Text = "Time limit";
+#endif
       Icon = new Icon("Resources/icon-light.ico");
       FormBorderStyle = FormBorderStyle.FixedToolWindow;
       ShowInTaskbar = false;
