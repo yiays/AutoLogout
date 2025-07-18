@@ -33,7 +33,7 @@ namespace AutoLogout
       MaximizeBox = false;
       BackColor = Color.White;
       Width = 360;
-      Height = 340;
+      Height = 400;
 
       AutoScaleMode = AutoScaleMode.Dpi;
       AutoScaleDimensions = new(96F, 96F);
@@ -169,6 +169,9 @@ namespace AutoLogout
       DeauthButton.Click += DeauthButton_Click;
       Button ChangePasswordButton = new() { Text = "Change password", AutoSize = true };
       ChangePasswordButton.Click += ChangePasswordButton_Click;
+      Button RemoveAccountButton = new() { Text = "Remove AutoLogout from this account", AutoSize = true };
+      RemoveAccountButton.Click += RemoveAccountButton_Click;
+
       SaveButton = new() { Text = "Save", DialogResult = DialogResult.OK, AutoSize = true, FlatStyle = FlatStyle.System };
       Button CancelButton = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, AutoSize = true };
       SaveButton.Click += SaveButton_Click;
@@ -176,6 +179,7 @@ namespace AutoLogout
       optionsPanel.Controls.Add(AuthButton);
       optionsPanel.Controls.Add(DeauthButton);
       optionsPanel.Controls.Add(ChangePasswordButton);
+      optionsPanel.Controls.Add(RemoveAccountButton);
       buttonPanel.Controls.Add(SaveButton);
       buttonPanel.Controls.Add(CancelButton);
 
@@ -285,6 +289,23 @@ namespace AutoLogout
           "Password changed successfully.", "AutoLogout", MessageBoxButtons.OK, MessageBoxIcon.Information
         );
     }
+    private void RemoveAccountButton_Click(object? sender, EventArgs e)
+    {
+      if (MessageBox.Show(
+        "This disables AutoLogout for this account, any other accounts are unaffected. " +
+        "You can reactivate AutoLogout anytime by opening it again." +
+        "\nDo you want to continue?",
+        "AutoLogout", MessageBoxButtons.YesNo, MessageBoxIcon.Warning
+      ) == DialogResult.Yes)
+      {
+        if(parent.state.OnlineMode)
+          Task.Run(parent.state.Deauth).Wait();
+        State.ClearRegistry();
+        parent.state.ExitIntent = true;
+        Application.Exit();
+      }
+    }
+
     private void SaveButton_Click(object? sender, EventArgs e)
     {
       parent.state.dailyTimeLimit = (int)(dailylimitPicker.Value >= 0 ? dailylimitPicker.Value * 60 : -1);

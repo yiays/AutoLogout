@@ -165,6 +165,11 @@ namespace AutoLogout
       return 0;
     }
 
+    public static void ClearRegistry()
+    {
+      Registry.CurrentUser.DeleteSubKeyTree(REGKEY);
+    }
+
     public void AcceptDelta(API.Delta delta)
     {
       // Update local state with server response
