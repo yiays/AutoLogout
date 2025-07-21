@@ -23,10 +23,11 @@ static class Program
     ApplicationConfiguration.Initialize();
 
     // Get the current state of the registry
-    bool LocalRegistry = true;
+    bool LocalRegistry = false;
     using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(State.REGKEY))
     {
-      if (key is null) LocalRegistry = false;
+      string? rawGuid = (string?)key?.GetValue("guid", null);
+      if (rawGuid is not null) LocalRegistry = true;
     }
     bool GlobalRegistry = false;
     using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(
