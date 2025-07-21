@@ -289,7 +289,7 @@ namespace AutoLogout
           "Password changed successfully.", "AutoLogout", MessageBoxButtons.OK, MessageBoxIcon.Information
         );
     }
-    private void RemoveAccountButton_Click(object? sender, EventArgs e)
+    private async void RemoveAccountButton_Click(object? sender, EventArgs e)
     {
       if (MessageBox.Show(
         "This disables AutoLogout for this account, any other accounts are unaffected. " +
@@ -298,8 +298,8 @@ namespace AutoLogout
         "AutoLogout", MessageBoxButtons.YesNo, MessageBoxIcon.Warning
       ) == DialogResult.Yes)
       {
-        if(parent.state.OnlineMode)
-          Task.Run(parent.state.Deauth).Wait();
+        if (parent.state.OnlineMode)
+          await parent.state.Deauth();
         State.ClearRegistry();
         parent.state.ExitIntent = true;
         Application.Exit();
