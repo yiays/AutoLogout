@@ -1,0 +1,3 @@
+[submodule "timelimit-sync"]
+	path = timelimit-sync
+	url = https://github.com/yiays/timelimit-sync.git
