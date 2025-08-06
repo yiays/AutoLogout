@@ -386,6 +386,7 @@ namespace AutoLogout
 
     private double? CheckBedtime()
     {
+      // Retuns time until the next downtime
       if (state.bedtime == state.waketime)
         return null;
       DateTime now = DateTime.Now;
@@ -414,12 +415,14 @@ namespace AutoLogout
 
       if (differenceInSeconds == null)
       {
+        // No downtime
         state.bedtimeTimeLimit = -1;
         UpdateClock();
         return;
       }
       else if (differenceInSeconds < 0)
       {
+        // Bedtime has already passed
         if (state.graceGiven) return;
         Task.Run(() =>
         {
@@ -434,9 +437,10 @@ namespace AutoLogout
         // No time limit, just bedtime
         state.bedtimeTimeLimit = state.usedTime + (int)differenceInSeconds;
       }
-      else if (differenceInSeconds < state.remainingTime)
+      else if (differenceInSeconds != state.bedtimeTimeLimit + state.usedTime)
       {
-        if (Math.Abs(state.remainingTime - (decimal)differenceInSeconds) > 60)
+        // Bedtime is different from expected
+        if (Math.Abs(state.bedtimeTimeLimit - state.usedTime - (int)differenceInSeconds) > 60)
         {
           // Only alert if the difference is more than a minute
           new ToastContentBuilder()
@@ -445,10 +449,6 @@ namespace AutoLogout
             .Show();
         }
         state.bedtimeTimeLimit = state.usedTime + (int)differenceInSeconds;
-      }
-      else
-      {
-        state.bedtimeTimeLimit = -1;
       }
     }
 
