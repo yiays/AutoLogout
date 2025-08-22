@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.Win32;
+using Microsoft.Toolkit.Uwp.Notifications;
 using BC = BCrypt.Net;
 
 namespace AutoLogout
@@ -58,12 +59,18 @@ namespace AutoLogout
       if (enable)
       {
         key.SetValue(appName, $"\"{exePath}\" --service");
-        MessageBox.Show("AutoLogout has been configured to start on login.", "AutoLogout");
+        new ToastContentBuilder()
+          .AddText("AutoLogout Setup")
+          .AddText("AutoLogout has been configured to start on login.")
+          .Show();
       }
       else
       {
         key.DeleteValue(appName, false);
-        MessageBox.Show("AutoLogout will no longer start on login.", "AutoLogout");
+        new ToastContentBuilder()
+          .AddText("AutoLogout Setup")
+          .AddText("AutoLogout will no longer start on login.")
+          .Show();
       }
     }
   }
