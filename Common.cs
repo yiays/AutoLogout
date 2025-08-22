@@ -92,7 +92,7 @@ namespace AutoLogout
     public int todayTimeLimit = -1;
     public int tempTimeLimit = -1; // This stores temporary overrides to the time limit. Takes priority over bedtime
     public int bedtimeTimeLimit = -1; // This stores bedtime-related overrides to the time limit
-    private int realTimeLimit { get => tempTimeLimit != -1 ? tempTimeLimit : bedtimeTimeLimit != -1 ? bedtimeTimeLimit : todayTimeLimit; }
+    private int realTimeLimit { get => tempTimeLimit != -1 ? tempTimeLimit : bedtimeTimeLimit != -1 && bedtimeTimeLimit < todayTimeLimit ? bedtimeTimeLimit : todayTimeLimit; }
     public int remainingTime { get => realTimeLimit == -1 ? -1 : Math.Max(realTimeLimit - usedTime, 0); }
     public int usedTime = 0;
     public DateOnly usageDate = DateOnly.FromDateTime(DateTime.Today);

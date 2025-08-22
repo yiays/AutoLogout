@@ -439,7 +439,7 @@ namespace AutoLogout
       else if (differenceInSeconds != state.bedtimeTimeLimit + state.usedTime)
       {
         // Bedtime is different from expected
-        if (Math.Abs(state.bedtimeTimeLimit - state.usedTime - (int)differenceInSeconds) > 60)
+        if ((state.remainingTime - (int)differenceInSeconds) > 60)
         {
           // Only alert if the difference is more than a minute
           new ToastContentBuilder()
