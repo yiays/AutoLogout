@@ -137,13 +137,17 @@ namespace AutoLogout
     public async Task Sync(State state)
     {
       // Convert state to JSON and share with online service
+      string timezone = TimeZoneInfo.Local.BaseUtcOffset.ToString(@"hh\:mm");
+      timezone = (TimeZoneInfo.Local.BaseUtcOffset < TimeSpan.Zero ? "-" : "+") + timezone;
+      string usageDate = state.usageDate.ToString(@"yyyy\-MM\-dd") + ' ' + timezone;
+
       string json = System.Text.Json.JsonSerializer.Serialize(new
       {
         state.hashedPassword,
         state.dailyTimeLimit,
         state.todayTimeLimit,
         state.usedTime,
-        state.usageDate,
+        usageDate,
         state.bedtime,
         state.waketime,
         state.graceGiven,
@@ -187,6 +191,12 @@ namespace AutoLogout
           }
         }
       }
+# if DEBUG
+      else
+      {
+        Console.WriteLine(json);
+      }
+# endif
     }
 
     public async Task<bool> Deauth(State state)
