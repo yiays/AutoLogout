@@ -1,7 +1,7 @@
 [Setup]
 AppName=AutoLogout
-VersionInfoVersion=0.9.0
-AppVersion=0.9.0
+VersionInfoVersion=0.9.1
+AppVersion=0.9.1
 DefaultDirName={autopf}\AutoLogout
 DefaultGroupName=AutoLogout
 OutputDir=.\bin\Installer
