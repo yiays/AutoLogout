@@ -1,22 +1,16 @@
+#if WINDOWS
 using NAudio.CoreAudioApi;
+#endif
 
 namespace AutoLogout
 {
 	public class AudioControl
 	{
-		private readonly MMDeviceEnumerator deviceEnumerator;
-		private MMDevice? defaultDevice;
-		private bool? previousState = null;
-		public readonly System.Windows.Forms.Timer timer;
+		public readonly System.Timers.Timer timer;
 
 		public AudioControl() {
-			// Initialize the CoreAudio components
-			deviceEnumerator = new MMDeviceEnumerator();
-			timer = new System.Windows.Forms.Timer
-			{
-				Interval = 1000
-			};
-			timer.Tick += Mute;
+			timer = new(1000);
+			timer.Elapsed += Mute;
 		}
 
 		public void Mute(object? sender, EventArgs? e)
@@ -25,22 +19,15 @@ namespace AutoLogout
 		}
 		public void Mute()
 		{
-			try
-			{
-				defaultDevice = deviceEnumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
-			}
-			catch
-			{
-				Console.WriteLine("Failed to get default audio output device.");
-				return;
-			}
-			if(previousState == null) {
-				defaultDevice = deviceEnumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
-				previousState = defaultDevice.AudioEndpointVolume.Mute;
-			}
+#if WINDOWS
+			// Windows-specific volume control using NAudio
+			var deviceEnumerator = new MMDeviceEnumerator();
 			foreach(var device in deviceEnumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active)) {
 				device.AudioEndpointVolume.Mute = true;
 			}
+#else
+			//TODO: No solution for linux or mac yet
+#endif
 
 			if(!timer.Enabled) {
 				timer.Start();
@@ -49,14 +36,16 @@ namespace AutoLogout
 
 		public void Unmute()
 		{
-			if (previousState == false && defaultDevice is not null)
+#if WINDOWS
+			// Windows-specific unmute
+			var deviceEnumerator = new MMDeviceEnumerator();
+			foreach (var device in deviceEnumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
 			{
-				foreach (var device in deviceEnumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
-				{
-					device.AudioEndpointVolume.Mute = false;
-				}
+				device.AudioEndpointVolume.Mute = false;
 			}
-			previousState = null;
+#else
+			//TODO: No solution for linux or mac yet
+#endif
 			timer.Stop();
 		}
 	}

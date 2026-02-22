@@ -1,0 +1,74 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:AutoLogout.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="360" d:DesignHeight="400"
+        x:Class="AutoLogout.ControlPanel"
+        Title="AutoLogout Settings"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False"
+        ShowInTaskbar="True"
+        SizeToContent="WidthAndHeight">
+
+    <Design.DataContext>
+        <vm:ControlPanelViewModel/>
+    </Design.DataContext>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Used Time -->
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Used time today:" Margin="0,0,10,5"/>
+        <TextBlock x:Name="usedTimeIndicator" Grid.Row="0" Grid.Column="1" Margin="0,0,0,5"/>
+
+        <!-- Daily Limit -->
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="Daily time limit (minutes):" Margin="0,0,10,5"/>
+        <NumericUpDown x:Name="dailylimitPicker" Grid.Row="1" Grid.Column="1" Margin="0,0,0,5" Minimum="0" Maximum="1440"/>
+
+        <!-- Today Limit -->
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="Time limit today (minutes):" Margin="0,0,10,5"/>
+        <NumericUpDown x:Name="todaylimitPicker" Grid.Row="2" Grid.Column="1" Margin="0,0,0,5" Minimum="0" Maximum="1440"/>
+
+        <!-- Wake Time -->
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="Wake up time:" Margin="0,0,10,5"/>
+        <TimePicker x:Name="waketimePicker" Grid.Row="3" Grid.Column="1" Margin="0,0,0,5"/>
+
+        <!-- Sleep Time -->
+        <TextBlock Grid.Row="4" Grid.Column="0" Text="Bedtime:" Margin="0,0,10,5"/>
+        <TimePicker x:Name="sleeptimePicker" Grid.Row="4" Grid.Column="1" Margin="0,0,0,5"/>
+
+        <!-- Autostart -->
+        <CheckBox x:Name="autostartCheckBox" Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Content="Start automatically on login" Margin="0,0,0,10"/>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+            <Button x:Name="AuthButton" Content="Connect to your phone" Margin="5"/>
+            <Button x:Name="DeauthButton" Content="Sign out all devices" Margin="5"/>
+            <Button x:Name="ChangePasswordButton" Content="Change password" Margin="5"/>
+            <Button x:Name="RemoveAccountButton" Content="Remove AutoLogout from this account" Margin="5"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+            <Button x:Name="SaveButton" Content="Save" Margin="5"/>
+            <Button x:Name="CancelButton" Content="Cancel" Margin="5"/>
+        </StackPanel>
+
+        <!-- QR Code Placeholder -->
+        <Image x:Name="qrCodeImage" Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+    </Grid>
+
+</Window>

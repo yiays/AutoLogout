@@ -1,0 +1,21 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="AutoLogout.FirstTimeSetup"
+        Title="AutoLogout Setup"
+        Width="512"
+        Height="480"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False"
+        ShowInTaskbar="True">
+
+    <StackPanel Margin="10">
+        <Image Source="/Assets/feature-graphic-desktop.jpg" Width="484" Height="145" Stretch="Uniform" Margin="0,0,0,10"/>
+        <TextBlock Text="Welcome to AutoLogout!&#x0a;&#x0a;It appears that this is the first time you have used AutoLogout. I can set up automatic start for you. Though there are some things you should note;" TextWrapping="Wrap" Margin="0,0,0,10"/>
+        <TextBlock Text=" - Toggling automatic start requires an administrator account.&#x0a; - AutoLogout should be in a folder that all accounts can see, but only admins can change.&#x0a;   - If you used the installer, this is already set.&#x0a; - Once automatic start is enabled, you shouldn't move or delete AutoLogout.&#x0a; - You can configure this later in the ControlPanel." FontStyle="Italic" TextWrapping="Wrap" Margin="0,0,0,20"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button x:Name="ContinueButton" Content="Continue" Margin="5"/>
+            <Button x:Name="CancelButton" Content="Cancel" Margin="5"/>
+        </StackPanel>
+    </StackPanel>
+
+</Window>

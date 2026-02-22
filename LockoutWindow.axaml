@@ -1,0 +1,17 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="AutoLogout.LockoutWindow"
+        Title="Pause screen"
+        WindowState="FullScreen"
+        SystemDecorations="None"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Background="Black">
+
+    <TextBlock Text="Timer paused. Click anywhere to show the timer."
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               Foreground="DimGray"
+               FontSize="24" />
+
+</Window>

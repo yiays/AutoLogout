@@ -1,4 +1,5 @@
-using System.Diagnostics;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
 
 namespace AutoLogout
 {
@@ -98,12 +99,12 @@ namespace AutoLogout
             UpdateWarned = true;
             _ = Task.Run(() =>
             {
-              MessageBox.Show(
-                "Please update to the latest version to ensure online features work.",
+              MessageBoxManager.GetMessageBoxStandard(
                 "AutoLogout is out of date",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning
-              );
+                "Please update to the latest version to ensure online features work.",
+                ButtonEnum.Ok,
+                Icon.Warning
+              ).ShowAsync();
             });
           }
         }
@@ -209,22 +210,22 @@ namespace AutoLogout
       {
         state.authKey = Guid.Empty;
         state.SaveToRegistry();
-        MessageBox.Show(
-          "All devices which control this computer have been signed out.",
+        await MessageBoxManager.GetMessageBoxStandard(
           "Success",
-          MessageBoxButtons.OK,
-          MessageBoxIcon.Information
-        );
+          "All devices which control this computer have been signed out.",
+          ButtonEnum.Ok,
+          Icon.Info
+        ).ShowAsync();
         return true;
       }
       else
       {
-        MessageBox.Show(
-          "Failed to sign all users out. Please try again later.",
+        await MessageBoxManager.GetMessageBoxStandard(
           "Error",
-          MessageBoxButtons.OK,
-          MessageBoxIcon.Error
-        );
+          "Failed to sign all users out. Please try again later.",
+          ButtonEnum.Ok,
+          Icon.Error
+        ).ShowAsync();
         return false;
       }
     }

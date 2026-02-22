@@ -1,12 +1,15 @@
 using System.Diagnostics;
+using Avalonia.Controls.Notifications;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
 using Microsoft.Win32;
-using Microsoft.Toolkit.Uwp.Notifications;
 using BC = BCrypt.Net;
 
 namespace AutoLogout
 {
   public static class Common
   {
+    public static WindowNotificationManager notificationManager = new();
     public static string exePath
     {
       get
@@ -59,18 +62,20 @@ namespace AutoLogout
       if (enable)
       {
         key.SetValue(appName, $"\"{exePath}\" --service");
-        new ToastContentBuilder()
-          .AddText("AutoLogout Setup")
-          .AddText("AutoLogout has been configured to start on login.")
-          .Show();
+        Notification notif = new() {
+          Title = "AutoLogout Setup",
+          Message = "AutoLogout has been configured to start on login.",
+        };
+        notificationManager.Show(notif);
       }
       else
       {
         key.DeleteValue(appName, false);
-        new ToastContentBuilder()
-          .AddText("AutoLogout Setup")
-          .AddText("AutoLogout will no longer start on login.")
-          .Show();
+        Notification notif = new() {
+          Title = "AutoLogout Setup",
+          Message = "AutoLogout will no longer start on login.",
+        };
+        notificationManager.Show(notif);
       }
     }
   }
@@ -115,12 +120,17 @@ namespace AutoLogout
       Changed?.Invoke();
     }
 
-    public int FromRegistry()
+    public async Task<int> FromRegistry()
     {
       RegistryKey? key = Registry.CurrentUser.CreateSubKey(REGKEY, true);
       if (key == null)
       {
-        MessageBox.Show("Unable to access settings.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        await MessageBoxManager.GetMessageBoxStandard(
+          "Error",
+          "Unable to access settings.",
+          ButtonEnum.Ok,
+          Icon.Error
+        ).ShowAsync();
         return -1;
       }
 
@@ -148,12 +158,17 @@ namespace AutoLogout
       return 0;
     }
 
-    public int SaveToRegistry()
+    public async Task<int> SaveToRegistry()
     {
       RegistryKey? key = Registry.CurrentUser.CreateSubKey(REGKEY);
       if (key == null)
       {
-        MessageBox.Show("Unable to save settings.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        await MessageBoxManager.GetMessageBoxStandard(
+          "Error",
+          "Unable to save settings.",
+          ButtonEnum.Ok,
+          Icon.Error
+        ).ShowAsync();
         ExitIntent = true;
         return -1;
       }
@@ -190,7 +205,7 @@ namespace AutoLogout
       syncAuthor = delta.syncAuthor;
     }
 
-    public bool NewPassword()
+    public async Task<bool> NewPassword()
     {
       string? newPassword = Prompt.ShowDialog("Enter a new parent password.", "AutoLogout", true);
       if (newPassword == null)
@@ -198,17 +213,22 @@ namespace AutoLogout
         return false;
       }
       hashedPassword = BC.BCrypt.HashPassword(newPassword);
-      SaveToRegistry();
+      await SaveToRegistry();
       return true;
     }
-    public bool CheckPassword()
+    public async Task<bool> CheckPassword()
     {
       string? password = Prompt.ShowDialog("Enter the parent password to continue.", "AutoLogout Settings", true);
       if (password == null) return false;
       if (BC.BCrypt.Verify(password, hashedPassword)) return true;
       else
       {
-        MessageBox.Show("The password was incorrect", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        await MessageBoxManager.GetMessageBoxStandard(
+          "Error",
+          "The password was incorrect",
+          ButtonEnum.Ok,
+          Icon.Error
+        ).ShowAsync();
         return false;
       }
     }
@@ -232,72 +252,17 @@ namespace AutoLogout
       {
         Changed?.Invoke();
       }
-      SaveToRegistry();
+      await SaveToRegistry();
     }
   }
 
   public static class Prompt
   {
-    private partial class PromptForm : Form
-    {
-      public TextBox textBox;
-      public PromptForm(string text, string caption, bool sensitive = false)
-      {
-        FormBorderStyle = FormBorderStyle.FixedDialog;
-        Text = caption;
-        Icon = new Icon("Resources/icon-light.ico");
-        StartPosition = FormStartPosition.CenterScreen;
-        MinimizeBox = false;
-        MaximizeBox = false;
-        BackColor = Color.White;
-        Width = 350;
-        Height = 200;
-
-        AutoScaleMode = AutoScaleMode.Dpi;
-        AutoScaleDimensions = new(96F, 96F);
-
-        FlowLayoutPanel mainPanel = new()
-        {
-          Dock = DockStyle.Top,
-          FlowDirection = FlowDirection.TopDown,
-          Padding = new Padding(12),
-        };
-        FlowLayoutPanel buttonPanel = new()
-        {
-          Dock = DockStyle.Bottom,
-          AutoSize = true,
-          BackColor = SystemColors.Control,
-          Padding = new Padding(8),
-        };
-
-
-        Label textLabel = new() { MaximumSize = new Size(576, 100), AutoSize = true, Text = text, Padding = new() { Bottom = 10 } };
-        textBox = new() { Width = 300 };
-        if (sensitive) textBox.PasswordChar = '*';
-
-        mainPanel.Controls.Add(textLabel);
-        mainPanel.Controls.Add(textBox);
-
-        Button confirmation = new() { Text = "Ok", AutoSize = true, DialogResult = DialogResult.OK };
-        Button cancel = new() { Text = "Cancel", AutoSize = true, DialogResult = DialogResult.Cancel };
-        confirmation.Click += (sender, e) => { Close(); };
-
-        buttonPanel.Controls.Add(confirmation);
-        buttonPanel.Controls.Add(cancel);
-
-        Controls.Add(mainPanel);
-        Controls.Add(buttonPanel);
-
-        AcceptButton = confirmation;
-        CancelButton = cancel;
-      }
-    }
-
     public static string? ShowDialog(string text, string caption, bool sensitive = false)
     {
-      PromptForm prompt = new(text, caption, sensitive);
-
-      return prompt.ShowDialog() == DialogResult.OK ? prompt.textBox.Text : null;
+      var prompt = new PromptDialog(text, caption, sensitive);
+      prompt.ShowDialog((Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow);
+      return prompt.Result;
     }
   }
 }

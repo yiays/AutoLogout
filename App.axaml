@@ -1,0 +1,16 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="AutoLogout.App">
+  <TrayIcon.Icons>
+    <TrayIcons>
+      <!--      Icon="/Resources/icon.ico" -->
+      <TrayIcon 
+                ToolTipText="Show time limit"
+                Clicked="TrayIcon_Clicked">
+      </TrayIcon>
+    </TrayIcons>
+  </TrayIcon.Icons>
+  <Application.Styles>
+    <FluentTheme />
+  </Application.Styles>
+</Application>
