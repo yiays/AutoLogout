@@ -4,6 +4,11 @@ namespace AutoLogout;
 
 public partial class LockoutWindow : Window
 {
+    public LockoutWindow()
+    {
+        InitializeComponent();
+    }
+
     public LockoutWindow(MainWindow parent)
     {
         InitializeComponent();

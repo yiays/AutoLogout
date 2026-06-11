@@ -17,21 +17,28 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Get the current state of the registry
+            //TODO: make this multiplatform
             bool LocalRegistry = false;
+            #if WINDOWS
             using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(State.REGKEY))
             {
                 string? rawGuid = (string?)key?.GetValue("guid", null);
                 if (rawGuid is not null) LocalRegistry = true;
             }
+            #endif
             bool GlobalRegistry = false;
+            #if WINDOWS
             using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(
               @"Software\Microsoft\Windows\CurrentVersion\Run"))
             {
                 string regValue = (string)(key?.GetValue("AutoLogout") ?? "");
                 if (regValue.Contains(Common.exePath)) GlobalRegistry = true;
             }
+            #endif
 
             // Handle special parameters
+            if(desktop.Args is null)
+                throw new Exception("Args cannot be null!");
             if (desktop.Args.Contains("--register"))
             {
                 // Register AutoLogout to start automatically on login

@@ -4,7 +4,7 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Threading;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
-using ManagedBass;
+//using ManagedBass;
 using Microsoft.Win32;
 using System.Diagnostics;
 
@@ -54,8 +54,11 @@ public partial class MainWindow : Window
 
         // Events
         Opened += OnOpened;
+        //TODO: make this multiplatform
+        #if WINDOWS
         SystemEvents.DisplaySettingsChanged += Reposition;
         SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
+        #endif
         // ToastNotificationManagerCompat.OnActivated += FocusWindow; // TODO: Port to Avalonia
 
         timer = new DispatcherTimer
@@ -68,7 +71,7 @@ public partial class MainWindow : Window
 
         lockoutWindow = new LockoutWindow(this);
         audioControl = new AudioControl();
-        alarmStream = Bass.CreateStream("Resources/alarm.wav");
+        //alarmStream = Bass.CreateStream("Resources/alarm.wav");
     }
 
     private void Reposition(object? sender, EventArgs? e)
@@ -214,7 +217,7 @@ public partial class MainWindow : Window
         {
             if (state.remainingTime == 600)
             {
-                Bass.ChannelPlay(alarmStream);
+                //Bass.ChannelPlay(alarmStream);
                 Notification notif = new() {
                     Title = "Time limit warning",
                     Message = "Your time is up in 10 minutes!"
@@ -223,8 +226,8 @@ public partial class MainWindow : Window
             }
             else if (state.remainingTime == 580)
             {
-                Bass.ChannelStop(alarmStream);
-                Bass.StreamFree(alarmStream);
+                //Bass.ChannelStop(alarmStream);
+                //Bass.StreamFree(alarmStream);
             }
             else if (state.remainingTime == 30 && !state.graceGiven)
             {
@@ -240,12 +243,13 @@ public partial class MainWindow : Window
         {
             double? remainingTime = CheckBedtime();
             if (remainingTime != null && remainingTime <= 10)
-                ShutDown();
+                await ShutDown();
             else
-                LogOff();
+                await LogOff();
         }
         UpdateClock();
     }
+    #if WINDOWS
     private void SystemEvents_SessionSwitch(object sender, Microsoft.Win32.SessionSwitchEventArgs e)
     {
         if (e.Reason == SessionSwitchReason.SessionLock)
@@ -275,6 +279,7 @@ public partial class MainWindow : Window
             }
         }
     }
+    #endif
 
     public void UpdateClock()
     {
@@ -323,7 +328,7 @@ public partial class MainWindow : Window
         else if (differenceInSeconds < 0)
         {
             if (state.graceGiven) return;
-            MessageBoxManager.GetMessageBoxStandard(
+            await MessageBoxManager.GetMessageBoxStandard(
                 "AutoLogout",
                 "It's past bedtime! Shutting down in 30 seconds.",
                 ButtonEnum.Ok,
@@ -405,8 +410,10 @@ public partial class MainWindow : Window
         else
         {
             audioControl.Unmute();
+            #if WINDOWS
             SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
             SystemEvents.DisplaySettingsChanged -= Reposition;
+            #endif
         }
     }
 }

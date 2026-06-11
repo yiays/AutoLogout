@@ -173,7 +173,7 @@ namespace AutoLogout
           {
             // Server must have provided us with an authKey
             state.authKey = apiResponse.result.delta?.authKey ?? state.authKey;
-            state.SaveToRegistry();
+            await state.SaveToRegistry();
             Console.WriteLine("Recieved new authKey");
           }
         }
@@ -209,7 +209,7 @@ namespace AutoLogout
       if (apiResult.success)
       {
         state.authKey = Guid.Empty;
-        state.SaveToRegistry();
+        await state.SaveToRegistry();
         await MessageBoxManager.GetMessageBoxStandard(
           "Success",
           "All devices which control this computer have been signed out.",

@@ -1,8 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
+#if WINDOWS
 using Avalonia.Media.Imaging;
 using Microsoft.Win32;
 using QRCoder;
+#endif
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 
@@ -17,6 +19,11 @@ public partial class ControlPanel : Window
 
     private readonly MainWindow parent;
     private readonly bool autostartEnabled = false;
+
+    public ControlPanel()
+    {
+        InitializeComponent();
+    }
 
     public ControlPanel(MainWindow parent)
     {
@@ -46,12 +53,14 @@ public partial class ControlPanel : Window
         SaveButton.Click += SaveButton_Click;
         CancelButton.Click += (s, e) => Close();
 
+        #if WINDOWS
         using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(
           @"Software\Microsoft\Windows\CurrentVersion\Run"))
         {
             string regValue = (string)(key?.GetValue("AutoLogout") ?? "");
             if (regValue.Contains(Common.exePath)) autostartEnabled = true;
         }
+        #endif
 
         // Set up controls
         dailylimitPicker.Minimum = -1;
@@ -120,6 +129,8 @@ public partial class ControlPanel : Window
         // Generate a QR code for the user to scan with their phone
         string qrContent = $"https://autologout.yiays.com/app/addAccount?uuid={parent.state.uuid}";
 
+        //TODO: make this multiplatform
+        #if WINDOWS
         using var qrGenerator = new QRCodeGenerator();
         using var qrData = qrGenerator.CreateQrCode(qrContent, QRCodeGenerator.ECCLevel.Q);
         using var qrCode = new QRCode(qrData);
@@ -141,6 +152,7 @@ public partial class ControlPanel : Window
             Content = new Image { Source = bitmap, Stretch = Avalonia.Media.Stretch.Uniform }
         };
         qrWindow.ShowDialog(this);
+        #endif
     }
 
     private async void DeauthButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

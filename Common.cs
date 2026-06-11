@@ -4,6 +4,7 @@ using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using Microsoft.Win32;
 using BC = BCrypt.Net;
+using Avalonia.Input;
 
 namespace AutoLogout
 {
@@ -54,6 +55,8 @@ namespace AutoLogout
 
     public static void RegisterStartup(bool enable)
     {
+      //TODO: make this multiplatform
+      #if WINDOWS
       string appName = "AutoLogout";
       using RegistryKey? key = Registry.LocalMachine.OpenSubKey(
         @"Software\Microsoft\Windows\CurrentVersion\Run", true
@@ -77,6 +80,7 @@ namespace AutoLogout
         };
         notificationManager.Show(notif);
       }
+      #endif
     }
   }
 
@@ -122,7 +126,11 @@ namespace AutoLogout
 
     public async Task<int> FromRegistry()
     {
+      #if WINDOWS
       RegistryKey? key = Registry.CurrentUser.CreateSubKey(REGKEY, true);
+      #else
+      RegistryKey? key = null;
+      #endif
       if (key == null)
       {
         await MessageBoxManager.GetMessageBoxStandard(
@@ -135,6 +143,8 @@ namespace AutoLogout
       }
 
       // Load current app state from registry
+      //TODO: make this multiplatform
+      #if WINDOWS
       OnlineMode = bool.Parse((string)key.GetValue("OnlineMode", "false"));
 
       string? rawAuthKey = (string?)key.GetValue("authKey", null);
@@ -154,13 +164,18 @@ namespace AutoLogout
       usageDate = DateOnly.Parse((string)key.GetValue("usageDate", "1/01/0001"));
       todayTimeLimit = (int)key.GetValue("todayTimeLimit", -1);
       usedTime = (int)key.GetValue("usedTime", 0);
+      #endif
 
       return 0;
     }
 
     public async Task<int> SaveToRegistry()
     {
-      RegistryKey? key = Registry.CurrentUser.CreateSubKey(REGKEY);
+      #if WINDOWS
+      RegistryKey? key = Registry.CurrentUser.CreateSubKey(REGKEY, true);
+      #else
+      RegistryKey? key = null;
+      #endif
       if (key == null)
       {
         await MessageBoxManager.GetMessageBoxStandard(
@@ -173,6 +188,8 @@ namespace AutoLogout
         return -1;
       }
 
+      //TODO: make this multiplatform
+      #if WINDOWS
       key.SetValue("OnlineMode", OnlineMode);
       key.SetValue("authKey", authKey);
       key.SetValue("guid", uuid);
@@ -183,13 +200,17 @@ namespace AutoLogout
       key.SetValue("usedTime", usedTime);
       key.SetValue("bedtime", bedtime);
       key.SetValue("waketime", waketime);
+      #endif
 
       return 0;
     }
 
     public static void ClearRegistry()
     {
+      //TODO: make this multiplatform
+      #if WINDOWS
       Registry.CurrentUser.DeleteSubKeyTree(REGKEY);
+      #endif
     }
 
     public void AcceptDelta(API.Delta delta)
@@ -261,7 +282,9 @@ namespace AutoLogout
     public static string? ShowDialog(string text, string caption, bool sensitive = false)
     {
       var prompt = new PromptDialog(text, caption, sensitive);
-      prompt.ShowDialog((Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow);
+      var mainWindow = (Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+      if(mainWindow is not null)
+        prompt.ShowDialog(mainWindow);
       return prompt.Result;
     }
   }
