@@ -1,0 +1,39 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="320"
+        x:Class="AutoLogout.AboutWindow"
+        Title="About AutoLogout"
+        CanResize="False"
+        Width="400"
+        Height="320">
+
+    <StackPanel Spacing="10" Margin="5">
+        <Border Width="400" Margin="-5">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                    <GradientStop Color="#9296d2" Offset="0.0"/>
+                    <GradientStop Color="#e0d8e2" Offset="0.5"/>
+                    <GradientStop Color="#9296d2" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Grid ColumnDefinitions="Auto,*,Auto" Margin="5">
+                <Image Source="avares://AutoLogout/Resources/desktop-header.png" Width="200" HorizontalAlignment="Left" />
+                <TextBlock Grid.Column="3" Text="vnull" Foreground="White" VerticalAlignment="Bottom" />
+            </Grid>
+        </Border>
+        <TextBlock TextWrapping="Wrap">
+            AutoLogout is a simple screentime manager for desktop computers.
+            It supports time limits, pausing, downtime, temporary changes to time limits, and remote management with a mobile app.
+        </TextBlock>
+        <TextBlock TextWrapping="Wrap">
+            AutoLogout can be configured by pressing the ⚙️ Settings button. From there, limits can be changed, it can be paired to a phone, or disabled for this account.
+            Settings is protected by a password that was typed in when AutoLogout was installed.
+        </TextBlock>
+        <TextBlock TextWrapping="Wrap">
+            AutoLogout is installed system-wide, but each account can have it's own restrictions, or none at all.
+        </TextBlock>
+        <HyperlinkButton x:Name="LinkButton" Content="Read more on the website" NavigateUri="https://autologout.yiays.com" />
+    </StackPanel>
+</Window>
