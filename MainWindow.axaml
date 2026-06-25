@@ -1,30 +1,33 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:AutoLogout.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="240" d:DesignHeight="144"
+        mc:Ignorable="d" d:DesignWidth="240" d:DesignHeight="164"
         x:Class="AutoLogout.MainWindow"
-        x:DataType="vm:MainWindowViewModel"
-        Title="Time limit"
+        Title="AutoLogout"
         WindowStartupLocation="Manual"
         CanResize="False"
         ShowInTaskbar="False"
-        Topmost="False"
-        SystemDecorations="None">
-
-    <Design.DataContext>
-        <vm:MainWindowViewModel/>
-    </Design.DataContext>
+        WindowDecorations="None"
+        ExtendClientAreaToDecorationsHint="True"
+        Width="240"
+        Height="164">
 
     <StackPanel>
-        <TextBlock x:Name="textTimer" Text="{Binding TimeDisplay}" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,-10,0,0" />
+        <Grid ColumnDefinitions="Auto, *, Auto">
+            <Border Grid.ColumnSpan="3" Background="#9296d2" Width="240" Height="22" WindowDecorationProperties.ElementRole="TitleBar" >
+                <TextBlock Text="AutoLogout" Foreground="White" Padding="2" />
+            </Border>
+            <Button Grid.Column="2" x:Name="AboutButton" Content="?" Foreground="White" Padding="5,0" Cursor="Hand" />
+        </Grid>
+        <TextBlock x:Name="textTimer" Text="00:00.00" FontSize="42" FontWeight="Bold" HorizontalAlignment="Center" Margin="6" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-            <Button x:Name="PauseButton" Content="Pause" Margin="5" />
-            <Button x:Name="LogoffButton" Content="Logoff" Margin="5" Width="32" Height="32" />
-            <Button x:Name="ShutdownButton" Content="Shutdown" Margin="5" Width="32" Height="32" />
-            <Button x:Name="SettingsButton" Content="Settings" Margin="5" Width="32" Height="32" />
+            <Button x:Name="PauseButton" Content="⏸️ Pause" Margin="2" />
+            <Button x:Name="SettingsButton" Content="⚙️ Settings" Margin="2" Height="32" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button x:Name="LogoffButton" Content="Log out" Margin="2" Height="32" />
+            <Button x:Name="ShutdownButton" Content="Shut down" Margin="2" Height="32" />
         </StackPanel>
     </StackPanel>
-
 </Window>
