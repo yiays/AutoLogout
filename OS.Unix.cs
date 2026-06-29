@@ -1,25 +1,43 @@
+using System;
+using System.Threading.Tasks;
+
 namespace AutoLogout;
 
 internal sealed class OSUnix : IOS
 {
-  public void Initialize()
-  {
-    //TODO
-  }
-  public void Notify(string header, string content)
-  {
-    //TODO
-  }
-  public void Relaunch(string args)
-  {
-    //TODO
-  }
-  public void RelaunchAsAdmin(string args)
-  {
-    //TODO
-  }
-  public void RegisterStartup(bool enable)
-  {
-    //TODO
-  }
+    public void Initialize()
+    {
+        //TODO
+    }
+    public void Notify(string header, string content)
+    {
+        //TODO
+    }
+    public Task<SyncedState> LoadState()
+    {
+        //TODO
+        throw new NotImplementedException();
+    }
+    public Task SaveState(SyncedState state)
+    {
+        //TODO
+        throw new NotImplementedException();
+    }
+    public Task ClearState()
+    {
+        //TODO
+        throw new NotImplementedException();
+    }
+    public void Relaunch(string args)
+    {
+        //TODO
+    }
+    public void RelaunchAsAdmin(string args)
+    {
+        //TODO
+    }
+    public void RegisterStartup(bool enable)
+    {
+        //TODO
+    }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Microsoft.Win32;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
@@ -15,11 +16,11 @@ internal sealed class OSWindows : IOS
 #endif
     string ExecutablePath
     {
-      get
-      {
-        return Process.GetCurrentProcess().MainModule?.FileName
-          ?? throw new Exception("Unable to get current executable name.");
-      }
+        get
+        {
+            return Process.GetCurrentProcess().MainModule?.FileName
+              ?? throw new Exception("Unable to get current executable name.");
+        }
     }
     public void Initialize()
     {
@@ -43,6 +44,50 @@ internal sealed class OSWindows : IOS
             .AddText(content)
             .BuildNotification();
         AppNotificationManager.Default.Show(notif);
+    }
+    public async Task<SyncedState> LoadState()
+    {
+        RegistryKey key = Registry.CurrentUser.CreateSubKey(REGKEY, true) ??
+            throw new Exception("Unable to load settings.");
+
+        string? rawAuthKey = (string?)key.GetValue("authKey", null);
+        string? rawGuid = (string?)key.GetValue("guid", null);
+        string bedtimeRaw = (string)key.GetValue("bedtime", "0:00");
+        string waketimeRaw = (string)key.GetValue("waketime", "0:00");
+
+        return new SyncedState
+        {
+            Online = bool.Parse((string)key.GetValue("OnlineMode", "false")),
+            authKey = rawAuthKey is null ? Guid.Empty : new Guid(rawAuthKey),
+            uuid = rawGuid is null ? Guid.Empty : new Guid(rawGuid),
+            hashedPassword = (string)key.GetValue("password", ""),
+            bedtime = TimeOnly.Parse(bedtimeRaw),
+            waketime = TimeOnly.Parse(waketimeRaw),
+            dailyTimeLimit = (int)key.GetValue("dailyTimeLimit", -1),
+            usageDate = DateOnly.Parse((string)key.GetValue("usageDate", "1/01/0001")),
+            todayTimeLimit = (int)key.GetValue("todayTimeLimit", -1),
+            usedTime = (int)key.GetValue("usedTime", 0)
+        };
+    }
+    public async Task SaveState(SyncedState state)
+    {
+        RegistryKey key = Registry.CurrentUser.CreateSubKey(REGKEY, true) ??
+            throw new Exception("Unable to save settings.");
+
+        key.SetValue("OnlineMode", state.Online);
+        key.SetValue("authKey", state.authKey);
+        key.SetValue("guid", state.uuid);
+        key.SetValue("password", state.hashedPassword);
+        key.SetValue("usageDate", DateOnly.FromDateTime(DateTime.Today));
+        key.SetValue("dailyTimeLimit", state.dailyTimeLimit);
+        key.SetValue("todayTimeLimit", state.todayTimeLimit);
+        key.SetValue("usedTime", state.usedTime);
+        key.SetValue("bedtime", state.bedtime);
+        key.SetValue("waketime", state.waketime);
+    }
+    public async Task ClearState()
+    {
+        Registry.CurrentUser.DeleteSubKeyTree(REGKEY);
     }
     public void Relaunch(string args)
     {
@@ -70,7 +115,7 @@ internal sealed class OSWindows : IOS
             // User cancelled UAC
         }
     }
-  
+
     public void RegisterStartup(bool enable)
     {
         /// <summary>

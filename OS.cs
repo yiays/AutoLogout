@@ -1,12 +1,19 @@
+using System.Threading.Tasks;
+
 namespace AutoLogout;
+
+public enum MessageBoxType { Error, Alert };
 
 public interface IOS
 {
-  public void Initialize();
-  public void Notify(string header, string content);
-  public void Relaunch(string args);
-  public void RelaunchAsAdmin(string args);
-  public void RegisterStartup(bool enable);
+    public void Initialize();
+    public void Notify(string header, string content);
+    public Task<SyncedState> LoadState();
+    public Task SaveState(SyncedState state);
+    public Task ClearState();
+    public void Relaunch(string args);
+    public void RelaunchAsAdmin(string args);
+    public void RegisterStartup(bool enable);
 }
 
 public static class OS
