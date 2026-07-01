@@ -9,9 +9,15 @@ public partial class MainWindow : Window
 {
     public State state = new();
     AboutWindow? aboutWindow;
+    LockoutWindow? lockoutWindow;
+    readonly DispatcherTimer Timer = new()
+    {
+        Interval = TimeSpan.FromSeconds(1)
+    };
     public MainWindow()
     {
         InitializeComponent();
+        Reposition();
         
         // Set tooltips
         ToolTip.SetTip(AboutButton, "Learn more about AutoLogout");
@@ -22,16 +28,63 @@ public partial class MainWindow : Window
 
         // Click events
         AboutButton.Click += AboutButton_Click;
+        PauseButton.Click += PauseButton_Click;
+        SettingsButton.Click += SettingsButton_Click;
+        LogoffButton.Click += LogoffButton_Click;
+        ShutdownButton.Click += ShutdownButton_Click;
 
-        Reposition();
-        ScalingChanged += Reposition;
-        Screens.Changed += Reposition;
+        // System events
+        ScalingChanged += (o, e) => Reposition();
+        Screens.Changed += (o, e) => Reposition();
+
+        // Internal events
+        Timer.Tick += state.Tick;
+        Timer.Tick += Timer_Tick;
+        Timer.Start();
+        state.Changed += OnChanged;
+    }
+
+    private void OnChanged()
+    {
+        if(state.Paused)
+        {
+            PauseButton.Content = "▶️ Resume";
+            lockoutWindow ??= new LockoutWindow(this);
+            lockoutWindow.Show();
+        }
+        else
+        {
+            lockoutWindow?.Hide();
+            PauseButton.Content = "⏸️ Pause";
+            LabelTimer.Opacity = 1;
+            Topmost = false;
+            if(state.RemainingTime is null)
+            {
+                LabelTimer.Text = "Unlimited";
+            }else{
+                var timeSpan = TimeSpan.FromSeconds((int)state.RemainingTime);
+                LabelTimer.Text = string.Format("{0:D2}:{1:D2}.{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
+            }
+        }
+        InvalidateVisual();
+        if (state.state.syncAuthor.HasValue)
+        {
+            OS.Current.Notify(
+                "Time limit changed",
+                "Your time limit rules have been changed remotely."
+            );
+            state.state.syncAuthor = null;
+        }
+    }
+    private void Timer_Tick(object? sender, EventArgs? e)
+    {
+        if (state.Paused)
+        {
+            LabelTimer.Opacity = LabelTimer.Opacity == 1? 0: 1;
+            LabelTimer.InvalidateVisual();
+        }
     }
     
-    private void Reposition(object? sender, EventArgs? e)
-    {
-        Reposition();
-    }
     private void Reposition()
     {
         if (Screens.All.Count > 0)
@@ -47,6 +100,14 @@ public partial class MainWindow : Window
     {
         aboutWindow ??= new AboutWindow();
         aboutWindow.Show();
+    }
+    private void PauseButton_Click(object? sender, EventArgs? e)
+    {
+        state.TogglePause();
+    }
+    private void SettingsButton_Click(object? sender, EventArgs? e)
+    {
+        //TODO
     }
     private void LogoffButton_Click(object? sender, EventArgs? e)
     {
