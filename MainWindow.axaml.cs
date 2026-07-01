@@ -1,13 +1,13 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Notifications;
+using Avalonia.Threading;
 using System;
 
 namespace AutoLogout;
 
 public partial class MainWindow : Window
 {
-    public WindowNotificationManager notificationManager = new();
+    public State state = new();
     AboutWindow? aboutWindow;
     public MainWindow()
     {
@@ -47,5 +47,30 @@ public partial class MainWindow : Window
     {
         aboutWindow ??= new AboutWindow();
         aboutWindow.Show();
+    }
+    private void LogoffButton_Click(object? sender, EventArgs? e)
+    {
+        OS.Current.SaveState(state.state);
+        Timer.Stop();
+        state.userIntent = UserIntent.Exit;
+        OS.Current.Logoff();
+        
+    }
+    private void ShutdownButton_Click(object? sender, EventArgs? e)
+    {
+        OS.Current.SaveState(state.state);
+        Timer.Stop();
+        state.userIntent = UserIntent.Exit;
+        OS.Current.Shutdown();
+        Close();
+    }
+    protected override void OnClosing(WindowClosingEventArgs e)
+    {
+        if (state.userIntent != UserIntent.Exit)
+            e.Cancel = true;
+        else
+        {
+            // Release any held resources before closing
+        }
     }
 }

@@ -14,6 +14,8 @@ public interface IOS
     public void Relaunch(string args);
     public void RelaunchAsAdmin(string args);
     public void RegisterStartup(bool enable);
+    public void Logoff();
+    public void Shutdown();
 }
 
 public static class OS

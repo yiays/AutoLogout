@@ -140,4 +140,20 @@ internal sealed class OSWindows : IOS
             Notify("AutoLogout Setup", "AutoLogout will no longer start on login.");
         }
     }
+    public void Logoff()
+    {
+#if DEBUG
+        Console.Write("Log out called");
+#else
+        Process.Start("shutdown", "/l /f");
+#endif
+    }
+    public void Shutdown()
+    {
+#if DEBUG
+        Console.Write("Shut down called");
+#else
+        Process.Start("shutdown", "/p /f");
+#endif
+    }
 }

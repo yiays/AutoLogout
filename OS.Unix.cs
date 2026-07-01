@@ -40,4 +40,12 @@ internal sealed class OSUnix : IOS
     {
         //TODO
     }
+    public void Logoff()
+    {
+        //TODO
+    }
+    public void Shutdown()
+    {
+        //TODO
+    }
 }
