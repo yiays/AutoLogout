@@ -24,17 +24,19 @@ internal sealed class OSWindows : IOS
     }
     public void Initialize()
     {
-        // Register the notification handler before calling Register
-        AppNotificationManager.Default.NotificationInvoked += (sender, args) =>
-        {
-            // Handle notification activation.
-            // args.Argument contains the arguments from the notification
-            // or button that was clicked, as key=value pairs separated
-            // by '&', for example "action=acknowledge".
-            Console.WriteLine($"Notification activated! Arguments: {args.Argument}");
-        };
+        if(AppNotificationManager.IsSupported()) {
+            // Register the notification handler before calling Register
+            AppNotificationManager.Default.NotificationInvoked += (sender, args) =>
+            {
+                // Handle notification activation.
+                // args.Argument contains the arguments from the notification
+                // or button that was clicked, as key=value pairs separated
+                // by '&', for example "action=acknowledge".
+                Console.WriteLine($"Notification activated! Arguments: {args.Argument}");
+            };
 
-        AppNotificationManager.Default.Register();
+            AppNotificationManager.Default.Register();
+        }
     }
     public void Notify(string header, string content)
     {

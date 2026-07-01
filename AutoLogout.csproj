@@ -2,6 +2,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFrameworks>net9.0;net9.0-windows10.0.19041.0</TargetFrameworks>
+    <WindowsPackageType>None</WindowsPackageType> 
     <Nullable>enable</Nullable>
     <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
 
