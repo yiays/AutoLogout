@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFrameworks>net9.0;net9.0-windows10.0.19041.0</TargetFrameworks>
+    <TargetFrameworks>net10.0;net10.0-windows10.0.19041.0</TargetFrameworks>
     <WindowsPackageType>None</WindowsPackageType> 
     <Nullable>enable</Nullable>
     <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
@@ -21,29 +21,29 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="12.0.4" />
-    <PackageReference Include="Avalonia.Desktop" Version="12.0.4" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.4" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.4" />
-    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1">
+    <PackageReference Include="Avalonia" Version="12.0.5" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.0.5" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.5" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.5" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0-windows10.0.19041.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Exclude Windows-only source files from non-Windows targets -->
     <Compile Remove="**\*.Windows.cs"
-      Condition="'$(TargetFramework)' != 'net9.0-windows10.0.19041.0'" />
+      Condition="'$(TargetFramework)' != 'net10.0-windows10.0.19041.0'" />
 
     <!-- Exclude non-Windows source files from Windows targets -->
     <Compile Remove="**\*.Unix.cs"
-      Condition="'$(TargetFramework)' == 'net9.0-windows10.0.19041.0'" />
+      Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'" />
   </ItemGroup>
 
   <ItemGroup>
