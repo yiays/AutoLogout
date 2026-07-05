@@ -11,6 +11,15 @@ public partial class PromptDialog : Window
     public string Input {get; set;}
     public char? Sensitive {get; set;}
 
+    public PromptDialog()
+    {
+        Text = "Unset";
+        Caption = "Unset";
+        Input = "";
+        Sensitive = null;
+        InitializeComponent();
+        DataContext = this;
+    }
     public PromptDialog(string text, string caption, bool sensitive = false)
     {
         Text = text;
