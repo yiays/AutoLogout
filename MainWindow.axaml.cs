@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using System;
 
@@ -25,13 +26,6 @@ public partial class MainWindow : Window
         ToolTip.SetTip(LogoffButton, "Log off");
         ToolTip.SetTip(ShutdownButton, "Shut down");
         ToolTip.SetTip(SettingsButton, "Settings");
-
-        // Click events
-        AboutButton.Click += AboutButton_Click;
-        PauseButton.Click += PauseButton_Click;
-        SettingsButton.Click += SettingsButton_Click;
-        LogoffButton.Click += LogoffButton_Click;
-        ShutdownButton.Click += ShutdownButton_Click;
 
         // System events
         ScalingChanged += (o, e) => Reposition();
@@ -96,20 +90,20 @@ public partial class MainWindow : Window
         }
     }
 
-    private void AboutButton_Click(object? sender, EventArgs? e)
+    private void AboutButton_Click(object? sender, RoutedEventArgs? e)
     {
         aboutWindow ??= new AboutWindow();
         aboutWindow.Show();
     }
-    private void PauseButton_Click(object? sender, EventArgs? e)
+    private void PauseButton_Click(object? sender, RoutedEventArgs? e)
     {
         state.TogglePause();
     }
-    private void SettingsButton_Click(object? sender, EventArgs? e)
+    private void SettingsButton_Click(object? sender, RoutedEventArgs? e)
     {
         //TODO
     }
-    private void LogoffButton_Click(object? sender, EventArgs? e)
+    private void LogoffButton_Click(object? sender, RoutedEventArgs? e)
     {
         OS.Current.SaveState(state.state);
         Timer.Stop();
@@ -117,7 +111,7 @@ public partial class MainWindow : Window
         OS.Current.Logoff();
         
     }
-    private void ShutdownButton_Click(object? sender, EventArgs? e)
+    private void ShutdownButton_Click(object? sender, RoutedEventArgs? e)
     {
         OS.Current.SaveState(state.state);
         Timer.Stop();

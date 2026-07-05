@@ -2,7 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AutoLogout"
         x:Class="AutoLogout.MainWindow"
+        x:DataType="local:MainWindow"
         mc:Ignorable="d" d:DesignWidth="240" d:DesignHeight="164"
         Title="AutoLogout"
         Icon="avares://AutoLogout/Resources/icon-light.ico"
@@ -19,16 +21,16 @@
             <Border Grid.ColumnSpan="3" Background="#9296d2" Width="240" Height="22" WindowDecorationProperties.ElementRole="TitleBar" >
                 <TextBlock Text="Time limit" Foreground="White" Padding="2" />
             </Border>
-            <Button Grid.Column="2" x:Name="AboutButton" Content="?" Foreground="White" Padding="5,0" Cursor="Hand" />
+            <Button Grid.Column="2" x:Name="AboutButton" Content="?" Foreground="White" Padding="5,0" Cursor="Hand" Click="AboutButton_Click" />
         </Grid>
         <TextBlock x:Name="LabelTimer" Text="00:00.00" FontSize="42" FontWeight="Bold" HorizontalAlignment="Center" Margin="6" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-            <Button x:Name="PauseButton" Content="⏸️ Pause" Margin="2" />
-            <Button x:Name="SettingsButton" Content="⚙️ Settings" Margin="2" Height="32" />
+            <Button x:Name="PauseButton" Content="⏸️ Pause" Margin="2" Click="PauseButton_Click" />
+            <Button x:Name="SettingsButton" Content="⚙️ Settings" Margin="2" Height="32" Click="SettingsButton_Click" />
         </StackPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-            <Button x:Name="LogoffButton" Content="Log out" Margin="2" Height="32" />
-            <Button x:Name="ShutdownButton" Content="Shut down" Margin="2" Height="32" />
+            <Button x:Name="LogoffButton" Content="Log out" Margin="2" Height="32" Click="LogoffButton_Click" />
+            <Button x:Name="ShutdownButton" Content="Shut down" Margin="2" Height="32" Click="ShutdownButton_Click" />
         </StackPanel>
     </StackPanel>
 </Window>
