@@ -4,11 +4,15 @@ using System.Threading.Tasks;
 using Microsoft.Win32;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
+using NAudio.CoreAudioApi;
 
 namespace AutoLogout;
 
 internal sealed class OSWindows : IOS
 {
+    private MMDeviceEnumerator? audioDeviceEnumerator;
+    private MMDevice? audioDefaultDevice;
+    private bool? audioPreviousState = null;
 #if DEBUG
     readonly string REGKEY = "Software\\Yiays\\AutoLogout-Preview";
 #else
@@ -24,7 +28,12 @@ internal sealed class OSWindows : IOS
     }
     public void Initialize()
     {
-        if(AppNotificationManager.IsSupported()) {
+        // Initialize the CoreAudio components
+        audioDeviceEnumerator = new MMDeviceEnumerator();
+
+        // Register system notifications
+        if (AppNotificationManager.IsSupported())
+        {
             // Register the notification handler before calling Register
             AppNotificationManager.Default.NotificationInvoked += (sender, args) =>
             {
@@ -90,6 +99,39 @@ internal sealed class OSWindows : IOS
     public async Task ClearState()
     {
         Registry.CurrentUser.DeleteSubKeyTree(REGKEY);
+    }
+    public void Mute()
+    {
+        if (audioDeviceEnumerator is null)
+        {
+            Console.WriteLine("audioDeviceEnumerator hasn't been initialized yet!");
+            return;
+        }
+        try
+        {
+            audioDefaultDevice = audioDeviceEnumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+        }
+        catch
+        {
+            Console.WriteLine("Failed to get default audio output device.");
+            return;
+        }
+        if (audioPreviousState is null)
+            audioPreviousState = audioDefaultDevice.AudioEndpointVolume.Mute;
+        foreach(var device in audioDeviceEnumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active)) {
+            device.AudioEndpointVolume.Mute = true;
+        }
+    }
+    public void UnMute()
+    {
+        if(audioPreviousState == false && audioDefaultDevice is not null && audioDeviceEnumerator is not null)
+        {
+            foreach (var dev in audioDeviceEnumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
+            {
+                dev.AudioEndpointVolume.Mute = false;
+            }
+        }
+        audioPreviousState = null;
     }
     public void Relaunch(string args)
     {

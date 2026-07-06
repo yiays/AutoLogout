@@ -11,6 +11,8 @@ public interface IOS
     public Task<SyncedState> LoadState();
     public Task SaveState(SyncedState state);
     public Task ClearState();
+    public void Mute();
+    public void UnMute();
     public void Relaunch(string args);
     public void RelaunchAsAdmin(string args);
     public void RegisterStartup(bool enable);

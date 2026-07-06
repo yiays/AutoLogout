@@ -3,11 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using System;
+using NetCoreAudio;
 
 namespace AutoLogout;
 
 public partial class MainWindow : Window
 {
+    private Player player = new();
     public State state = new();
     AboutWindow? aboutWindow;
     LockoutWindow? lockoutWindow;
@@ -58,6 +60,22 @@ public partial class MainWindow : Window
             }else{
                 var timeSpan = TimeSpan.FromSeconds((int)state.RemainingTime);
                 LabelTimer.Text = string.Format("{0:D2}:{1:D2}.{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
+            }
+            if(state.RemainingTime == 600)
+            {
+                OS.Current.Notify(
+                    "Time limit warning",
+                    "Your time is up in 10 minutes!"
+                );
+                player.Play("Resources/alarm.wav");
+            }
+            else if(state.RemainingTime == 30 && !state.graceGiven)
+            {
+                OS.Current.Notify(
+                    "Time limit warning",
+                    "Your time is up in 30 seconds!"
+                );
+                state.graceGiven = true;
             }
         }
         InvalidateVisual();

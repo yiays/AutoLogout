@@ -30,20 +30,20 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
+    <PackageReference Include="NetCoreAudio" Version="2.0.1" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
+    <PackageReference Include="NAudio" Version="2.3.0" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Exclude Windows-only source files from non-Windows targets -->
-    <Compile Remove="**\*.Windows.cs"
-      Condition="'$(TargetFramework)' != 'net10.0-windows10.0.19041.0'" />
+    <Compile Remove="**\*.Windows.cs" Condition="'$(TargetFramework)' != 'net10.0-windows10.0.19041.0'" />
 
     <!-- Exclude non-Windows source files from Windows targets -->
-    <Compile Remove="**\*.Unix.cs"
-      Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'" />
+    <Compile Remove="**\*.Unix.cs" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'" />
   </ItemGroup>
 
   <ItemGroup>
