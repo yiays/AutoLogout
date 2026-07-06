@@ -12,7 +12,7 @@
     <TextBlock Text="Timer paused. Click anywhere to show the timer."
                HorizontalAlignment="Center"
                VerticalAlignment="Center"
-               Foreground="DimGray"
+               Foreground="Gray"
                FontSize="24" />
 
 </Window>

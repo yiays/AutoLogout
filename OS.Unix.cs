@@ -28,6 +28,14 @@ internal sealed class OSUnix : IOS
         //TODO
         throw new NotImplementedException();
     }
+    public void Mute()
+    {
+        //TODO
+    }
+    public void UnMute()
+    {
+        //TODO
+    }
     public void Relaunch(string args)
     {
         //TODO
