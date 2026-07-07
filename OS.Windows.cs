@@ -10,6 +10,7 @@ namespace AutoLogout;
 
 internal sealed class OSWindows : IOS
 {
+    public event EventHandler<SessionSwitchEventArgs>? SessionSwitch;
     private MMDeviceEnumerator? audioDeviceEnumerator;
     private MMDevice? audioDefaultDevice;
     private bool? audioPreviousState = null;
@@ -46,6 +47,19 @@ internal sealed class OSWindows : IOS
 
             AppNotificationManager.Default.Register();
         }
+
+        // Handle session switch events
+        SystemEvents.SessionSwitch += (o, e) => {
+            SessionSwitchType switchType;
+            if (e.Reason == SessionSwitchReason.SessionLock)
+                switchType = SessionSwitchType.Lock;
+            else if (e.Reason == SessionSwitchReason.SessionUnlock)
+                switchType = SessionSwitchType.Unlock;
+            else
+                switchType = SessionSwitchType.Unknown;
+            var eventArgs = new SessionSwitchEventArgs { Type = switchType };
+            SessionSwitch?.Invoke(this, eventArgs);
+        };
     }
     public void Notify(string header, string content)
     {

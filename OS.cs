@@ -1,11 +1,18 @@
+using System;
 using System.Threading.Tasks;
 
 namespace AutoLogout;
 
 public enum MessageBoxType { Error, Alert };
+public enum SessionSwitchType { Lock, Unlock, Unknown };
+public class SessionSwitchEventArgs
+{
+    public SessionSwitchType Type;
+}
 
 public interface IOS
 {
+    public event EventHandler<SessionSwitchEventArgs>? SessionSwitch;
     public void Initialize();
     public void Notify(string header, string content);
     public Task<SyncedState> LoadState();

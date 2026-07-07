@@ -5,6 +5,7 @@ namespace AutoLogout;
 
 internal sealed class OSUnix : IOS
 {
+    public event EventHandler<SessionSwitchEventArgs>? SessionSwitch;
     public void Initialize()
     {
         //TODO
