@@ -16,7 +16,7 @@ public partial class ConfirmDialog : Window
         InitializeComponent();
         DataContext = this;
     }
-    public ConfirmDialog(string text, string caption, bool sensitive = false)
+    public ConfirmDialog(string text, string caption)
     {
         Text = text;
         Caption = caption;
