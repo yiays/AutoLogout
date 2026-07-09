@@ -122,7 +122,7 @@ public class State
         }
     }
 
-    public void Tick(object? sender, EventArgs? e)
+    public void Tick(object? sender, EventArgs e)
     {
         if(Paused) return;
         state.usedTime++;

@@ -90,7 +90,7 @@ public partial class MainWindow : Window
             state.state.syncAuthor = null;
         }
     }
-    private void Timer_Tick(object? sender, EventArgs? e)
+    private void Timer_Tick(object? sender, EventArgs e)
     {
         if (state.Paused)
         {
@@ -111,7 +111,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void SessionSwitch(object sender, SessionSwitchEventArgs e)
+    private void SessionSwitch(object? sender, SessionSwitchEventArgs e)
     {
         if(e.Type == SessionSwitchType.Lock)
         {
@@ -126,20 +126,20 @@ public partial class MainWindow : Window
         }
     }
 
-    private void AboutButton_Click(object? sender, RoutedEventArgs? e)
+    private void AboutButton_Click(object? sender, RoutedEventArgs e)
     {
         aboutWindow ??= new AboutWindow();
         aboutWindow.Show();
     }
-    private void PauseButton_Click(object? sender, RoutedEventArgs? e)
+    private void PauseButton_Click(object? sender, RoutedEventArgs e)
     {
         state.TogglePause();
     }
-    private void SettingsButton_Click(object? sender, RoutedEventArgs? e)
+    private void SettingsButton_Click(object? sender, RoutedEventArgs e)
     {
         //TODO
     }
-    private void LogoffButton_Click(object? sender, RoutedEventArgs? e)
+    private void LogoffButton_Click(object? sender, RoutedEventArgs e)
     {
         OS.Current.SaveState(state.state);
         Timer.Stop();
@@ -147,7 +147,7 @@ public partial class MainWindow : Window
         OS.Current.Logoff();
         
     }
-    private void ShutdownButton_Click(object? sender, RoutedEventArgs? e)
+    private void ShutdownButton_Click(object? sender, RoutedEventArgs e)
     {
         OS.Current.SaveState(state.state);
         Timer.Stop();
