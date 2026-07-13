@@ -137,7 +137,8 @@ public partial class MainWindow : Window
     }
     private void SettingsButton_Click(object? sender, RoutedEventArgs e)
     {
-        //TODO
+        var controlPanel = new ControlPanel(this, state);
+        controlPanel.ShowDialog(this);
     }
     private void LogoffButton_Click(object? sender, RoutedEventArgs e)
     {
@@ -145,6 +146,7 @@ public partial class MainWindow : Window
         Timer.Stop();
         state.userIntent = UserIntent.Exit;
         OS.Current.Logoff();
+        Close();
         
     }
     private void ShutdownButton_Click(object? sender, RoutedEventArgs e)
@@ -155,6 +157,7 @@ public partial class MainWindow : Window
         OS.Current.Shutdown();
         Close();
     }
+
     protected override void OnClosing(WindowClosingEventArgs e)
     {
         if (state.userIntent != UserIntent.Exit)

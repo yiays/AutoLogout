@@ -23,6 +23,7 @@ public interface IOS
     public void Relaunch(string args);
     public void RelaunchAsAdmin(string args);
     public void RegisterStartup(bool enable);
+    public bool AutoStart { get; }
     public void Logoff();
     public void Shutdown();
 }

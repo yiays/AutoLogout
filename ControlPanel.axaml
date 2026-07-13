@@ -1,0 +1,68 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:AutoLogout"
+        x:Class="AutoLogout.ControlPanel"
+        x:DataType="local:ControlPanel"
+        Title="AutoLogout Settings"
+        Width="320"
+        Height="400"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False">
+
+    <Grid RowDefinitions="*,30" Margin="5">
+        <TabControl>
+            <TabItem Header="Limits">
+                <StackPanel Spacing="5">
+                    <TextBlock TextWrapping="Wrap">
+                        You can change time limits and downtime for this account here.
+                    </TextBlock>
+                    <GroupBox Header="Today">
+                        <Grid RowDefinitions="32,32" ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Used time:"/>
+                            <TextBlock Grid.Column="1" Grid.Row="0" HorizontalAlignment="Right" Text="{Binding UsedTime}"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Time limit:"/>
+                            <TextBlock Grid.Column="1" Grid.Row="1" HorizontalAlignment="Right" Text="{Binding TodayLimit}"/>
+                        </Grid>
+                    </GroupBox>
+                    <GroupBox Header="Daily">
+                        <Grid RowDefinitions="32,32" ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Grid.Row="0" Text="Time limit:"/>
+                            <TextBlock Grid.Column="1" Grid.Row="0" HorizontalAlignment="Right" Text="{Binding DailyLimit}"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Downtime:"/>
+                            <TextBlock Grid.Column="1" Grid.Row="1" HorizontalAlignment="Right" Text="{Binding Downtime}"/>
+                        </Grid>
+                    </GroupBox>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Sync">
+                <StackPanel Spacing="5">
+                    <TextBlock TextWrapping="Wrap">
+                        You can connect AutoLogout to your phone with the AutoLogout manager app and change settings remotely.
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,10">
+                        This will sync some data over the internet.
+                    </TextBlock>
+                    <Button x:Name="AuthButton" Content="Connect to your phone" Click="AuthButton_Click"/>
+                    <Button x:Name="DeauthButton" IsEnabled="False" Content="Disconnect all devices" Click="DeauthButton_Click"/>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="System">
+                <StackPanel Spacing="5">
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,10">
+                        These settings require Administrator permissions to change.
+                    </TextBlock>
+                    <CheckBox Content="Start automatically on login" IsChecked="{Binding AutoStart}" IsCheckedChanged="AutoStart_Checked" />
+                    <Button x:Name="ChangePasswordButton" Content="Change parent password" Click="ChangePassword_Click"/>
+                    <Button x:Name="RemoveControlsButton" Content="Remove AutoLogout from this account" Click="RemoveControls_Click"/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="SaveButton" Content="Save" Margin="0,0,5,0" Click="SaveButton_Click"/>
+            <Button x:Name="CancelButton" Content="Cancel" Margin="0" Click="CancelButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

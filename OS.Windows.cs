@@ -196,6 +196,18 @@ internal sealed class OSWindows : IOS
             Notify("AutoLogout Setup", "AutoLogout will no longer start on login.");
         }
     }
+    public bool AutoStart
+    {
+        get
+        {
+            string appName = "AutoLogout";
+            using RegistryKey? key = Registry.LocalMachine.OpenSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Run", true
+            );
+            return (bool?)key?.GetValue(appName) ?? false;
+        }
+    }
+
     public void Logoff()
     {
 #if DEBUG

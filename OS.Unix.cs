@@ -49,6 +49,7 @@ internal sealed class OSUnix : IOS
     {
         //TODO
     }
+    public bool AutoStart { get => false; }
     public void Logoff()
     {
         //TODO
