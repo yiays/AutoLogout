@@ -9,7 +9,7 @@ OutputBaseFilename=AutoLogoutSetup
 PrivilegesRequired=admin
 
 [Files]
-Source: "bin\Release\net9.0-windows10.0.17763.0\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: "bin\Release\net10.0-windows10.0.19041.0\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 [Icons]
 Name: "{group}\AutoLogout"; Filename: "{app}\AutoLogout.exe"
