@@ -135,8 +135,20 @@ public partial class MainWindow : Window
     {
         state.TogglePause();
     }
-    private void SettingsButton_Click(object? sender, RoutedEventArgs e)
+    async private void SettingsButton_Click(object? sender, RoutedEventArgs e)
     {
+        var prompt = new PromptDialog(
+            "Enter the parent password to continue", "AutoLogout Settings", true
+        );
+        await prompt.ShowDialog(this);
+        if(prompt.Result is not null)
+            AuthenticateSettings_Callback(prompt.Result);
+    }
+    public void AuthenticateSettings_Callback(string password)
+    {
+        if(!state.CheckPassword(password)) {
+            return; //TODO: show a non-blocking error message with error sound
+        }
         var controlPanel = new ControlPanel(this, state);
         controlPanel.ShowDialog(this);
     }
