@@ -22,16 +22,25 @@
                             <TextBlock Grid.Column="1" Grid.Row="0" HorizontalAlignment="Right" Text="{Binding UsedTime}"/>
 
                             <TextBlock Grid.Column="0" Grid.Row="1" Text="Time limit:"/>
-                            <TextBlock Grid.Column="1" Grid.Row="1" HorizontalAlignment="Right" Text="{Binding TodayLimit}"/>
+                            <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
+                                <NumericUpDown Value="{Binding TodayLimit}" Minimum="-1" Maximum="1440"/>
+                                <TextBlock Text="mins"/>
+                            </StackPanel>
                         </Grid>
                     </GroupBox>
                     <GroupBox Header="Daily">
-                        <Grid RowDefinitions="32,32" ColumnDefinitions="120,*">
+                        <Grid RowDefinitions="32,32,32" ColumnDefinitions="120,*">
                             <TextBlock Grid.Column="0" Grid.Row="0" Text="Time limit:"/>
-                            <TextBlock Grid.Column="1" Grid.Row="0" HorizontalAlignment="Right" Text="{Binding DailyLimit}"/>
+                            <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
+                                <NumericUpDown Value="{Binding DailyLimit}" Minimum="-1" Maximum="1440"/>
+                                <TextBlock Text="mins"/>
+                            </StackPanel>
 
-                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Downtime:"/>
-                            <TextBlock Grid.Column="1" Grid.Row="1" HorizontalAlignment="Right" Text="{Binding Downtime}"/>
+                            <TextBlock Grid.Column="0" Grid.Row="1" Text="Downtime start:"/>
+                            <TimePicker Grid.Column="1" Grid.Row="1" HorizontalAlignment="Right" SelectedTime="{Binding Bedtime}"/>
+
+                            <TextBlock Grid.Column="0" Grid.Row="2" Text="Downtime end:"/>
+                            <TimePicker Grid.Column="1" Grid.Row="2" HorizontalAlignment="Right" SelectedTime="{Binding Waketime}"/>
                         </Grid>
                     </GroupBox>
                 </StackPanel>

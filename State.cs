@@ -140,6 +140,7 @@ public class State
     }
     public bool CheckPassword(string password)
     {
+        if(password.Length == 0) return false;
         return BC.BCrypt.Verify(password, state.hashedPassword);
     }
 }

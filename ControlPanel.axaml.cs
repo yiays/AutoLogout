@@ -13,7 +13,8 @@ public partial class ControlPanel : Window
     int UsedTime { get => state.state.usedTime; }
     int DailyLimit { get => state.state.dailyTimeLimit; }
     int TodayLimit { get => state.state.todayTimeLimit; }
-    int Downtime { get => state.state.bedtime.Hour; }
+    TimeSpan Bedtime { get => state.state.bedtime.ToTimeSpan(); }
+    TimeSpan Waketime { get => state.state.waketime.ToTimeSpan(); }
     bool AutoStart { get => OS.Current.AutoStart; }
 
     public ControlPanel()
