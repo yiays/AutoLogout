@@ -10,12 +10,12 @@ public partial class ControlPanel : Window
     public MainWindow? parent;
     public State state;
 
-    int UsedTime { get => state.state.usedTime; }
-    int DailyLimit { get => state.state.dailyTimeLimit; }
-    int TodayLimit { get => state.state.todayTimeLimit; }
-    TimeSpan Bedtime { get => state.state.bedtime.ToTimeSpan(); }
-    TimeSpan Waketime { get => state.state.waketime.ToTimeSpan(); }
-    bool AutoStart { get => OS.Current.AutoStart; }
+    public int UsedTime { get => state.state.usedTime; }
+    public int DailyLimit { get => state.state.dailyTimeLimit; }
+    public int TodayLimit { get => state.state.todayTimeLimit; }
+    public TimeSpan Bedtime { get => state.state.bedtime.ToTimeSpan(); }
+    public TimeSpan Waketime { get => state.state.waketime.ToTimeSpan(); }
+    public bool AutoStart { get => OS.Current.AutoStart; }
 
     public ControlPanel()
     {
