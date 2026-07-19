@@ -202,7 +202,7 @@ internal sealed class OSWindows : IOS
         {
             string appName = "AutoLogout";
             using RegistryKey? key = Registry.LocalMachine.OpenSubKey(
-                @"Software\Microsoft\Windows\CurrentVersion\Run", true
+                @"Software\Microsoft\Windows\CurrentVersion\Run", false
             );
             return (bool?)key?.GetValue(appName) ?? false;
         }
