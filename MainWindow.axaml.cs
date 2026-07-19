@@ -11,7 +11,6 @@ public partial class MainWindow : Window
 {
     private Player player = new();
     public State state = new();
-    AboutWindow? aboutWindow;
     LockoutWindow? lockoutWindow;
     readonly DispatcherTimer Timer = new()
     {
@@ -128,7 +127,7 @@ public partial class MainWindow : Window
 
     private void AboutButton_Click(object? sender, RoutedEventArgs e)
     {
-        aboutWindow ??= new AboutWindow();
+        var aboutWindow = new AboutWindow();
         aboutWindow.Show();
     }
     private void PauseButton_Click(object? sender, RoutedEventArgs e)
