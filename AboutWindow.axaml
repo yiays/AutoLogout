@@ -2,8 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AutoLogout"
         mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="360"
         x:Class="AutoLogout.AboutWindow"
+        x:DataType="local:AboutWindow"
         Title="About AutoLogout"
         CanResize="False"
         Width="400"
@@ -20,7 +22,7 @@
             </Border.Background>
             <Grid ColumnDefinitions="Auto,*,Auto" Margin="5">
                 <Image Source="avares://AutoLogout/Resources/desktop-header.png" Width="200" HorizontalAlignment="Left" />
-                <TextBlock Grid.Column="3" Text="vnull" Foreground="White" VerticalAlignment="Bottom" />
+                <TextBlock Grid.Column="3" Text="{Binding Version}" Foreground="White" VerticalAlignment="Bottom" />
             </Grid>
         </Border>
         <TextBlock TextWrapping="Wrap">
