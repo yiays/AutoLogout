@@ -4,7 +4,7 @@
         x:Class="AutoLogout.ControlPanel"
         x:DataType="local:ControlPanel"
         Title="AutoLogout Settings"
-        Width="320"
+        Width="420"
         Height="400"
         WindowStartupLocation="CenterScreen"
         CanResize="False">
@@ -47,6 +47,18 @@
             </TabItem>
             <TabItem Header="Sync">
                 <StackPanel Spacing="5">
+                    <Border>
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                                <GradientStop Color="#9296d2" Offset="0.0"/>
+                                <GradientStop Color="#e0d8e2" Offset="0.5"/>
+                                <GradientStop Color="#9296d2" Offset="1.0"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Grid ColumnDefinitions="Auto,*" Margin="5">
+                            <Image Source="avares://AutoLogout/Resources/mobile-header.png" Width="360" HorizontalAlignment="Left" />
+                        </Grid>
+                    </Border>
                     <TextBlock TextWrapping="Wrap">
                         You can connect AutoLogout to your phone with the AutoLogout manager app and change settings remotely.
                     </TextBlock>
