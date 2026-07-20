@@ -30,6 +30,8 @@ public partial class PromptDialog : Window
         Sensitive = sensitive? '*': null;
         InitializeComponent();
         DataContext = this;
+
+        Activated += (s,e) => InputTextBox.Focus();
     }
 
     private void OkButton_Click(object? sender, RoutedEventArgs e)

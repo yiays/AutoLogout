@@ -24,6 +24,8 @@ public partial class ConfirmDialog : Window
         Caption = caption;
         InitializeComponent();
         DataContext = this;
+
+        ConfirmButton.AttachedToVisualTree += (s,e) => ConfirmButton.Focus();
     }
 
     private void ConfirmButton_Click(object? sender, RoutedEventArgs e)
