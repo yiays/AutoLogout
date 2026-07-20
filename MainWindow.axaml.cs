@@ -152,6 +152,8 @@ public partial class MainWindow : Window
         }
         var controlPanel = new ControlPanel(this, state);
         await controlPanel.ShowDialog(this);
+        if(state.userIntent == UserIntent.Exit)
+            Close();
     }
     private void LogoffButton_Click(object? sender, RoutedEventArgs e)
     {

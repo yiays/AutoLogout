@@ -56,13 +56,38 @@ public partial class ControlPanel : Window
     {
         //TODO
     }
-    private void ChangePassword_Click(object sender, RoutedEventArgs e)
+    private async void ChangePassword_Click(object sender, RoutedEventArgs e)
     {
-        //TODO
+        var prompt = new PromptDialog("Enter a new parent password.", "Change parent password", true);
+        await prompt.ShowDialog(this);
+        var result = prompt.Result;
+        if(result is not null)
+        {
+            if(result.Length > 0)
+            {
+                parent?.state.NewPassword(result);
+                var alert = new AlertDialog("Parent password updated!", "Success");
+                await alert.ShowDialog(this);
+            }
+            else
+            {
+                var alert = new AlertDialog("Parent password must not be empty!", "Error");
+                await alert.ShowDialog(this);
+            }
+        }
     }
-    private void RemoveControls_Click(object sender, RoutedEventArgs e)
+    private async void RemoveControls_Click(object sender, RoutedEventArgs e)
     {
-        //TODO
+        var confirm = new ConfirmDialog("This will disable AutoLogout entirely for this account. Continue?", "Remove AutoLogout from this account");
+        await confirm.ShowDialog(this);
+        if(confirm.Result ?? false)
+        {
+            await OS.Current.ClearState();
+            var alert = new AlertDialog("AutoLogout has been removed from this account. Closing now.", "AutoLogout");
+            await alert.ShowDialog(this);
+            parent?.state.userIntent = UserIntent.Exit;
+            Close();
+        }
     }
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
