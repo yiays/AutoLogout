@@ -34,7 +34,10 @@ public class SyncedState : DeltaState
     public SyncedState()
     {
         if(DateOnly.FromDateTime(DateTime.Today) != usageDate)
+        {
             todayTimeLimit = dailyTimeLimit;
+            usedTime = 0;
+        }
     }
     public void Update(DeltaState delta)
     {
@@ -125,6 +128,7 @@ public class State
     public void Tick(object? sender, EventArgs e)
     {
         if(Paused) return;
+        state.usageDate = DateOnly.FromDateTime(DateTime.Today);
         state.usedTime++;
         Changed?.Invoke();
     }
