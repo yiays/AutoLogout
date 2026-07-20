@@ -15,6 +15,8 @@ public partial class ConfirmDialog : Window
         Caption = "Unset";
         InitializeComponent();
         DataContext = this;
+
+        ConfirmButton.AttachedToVisualTree += (s,e) => ConfirmButton.Focus();
     }
     public ConfirmDialog(string text, string caption)
     {

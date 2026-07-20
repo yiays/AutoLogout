@@ -4,15 +4,15 @@
         x:Class="AutoLogout.ConfirmDialog"
         x:DataType="local:ConfirmDialog"
         Title="{Binding Caption}"
-        Width="240"
-        Height="124"
+        Width="380"
+        SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
         CanResize="False">
 
     <StackPanel Margin="12">
-        <TextBlock Text="{Binding Text}" Margin="0,0,0,10" Height="64" TextWrapping="Wrap"/>
+        <TextBlock Text="{Binding Text}" Margin="0,0,0,10" TextWrapping="Wrap"/>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button x:Name="ConfirmButton" Content="Yes" Margin="0,0,5,0" Click="ConfirmButton_Click"/>
+            <Button x:Name="ConfirmButton" Content="Yes" Margin="0,0,5,0" IsDefault="True" Click="ConfirmButton_Click"/>
             <Button x:Name="CancelButton" Content="No" Margin="0" Click="CancelButton_Click"/>
         </StackPanel>
     </StackPanel>

@@ -19,6 +19,8 @@ public partial class PromptDialog : Window
         Sensitive = null;
         InitializeComponent();
         DataContext = this;
+
+        Activated += (s,e) => InputTextBox.Focus();
     }
     public PromptDialog(string text, string caption, bool sensitive = false)
     {

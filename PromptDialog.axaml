@@ -4,16 +4,17 @@
         x:Class="AutoLogout.PromptDialog"
         x:DataType="local:PromptDialog"
         Title="{Binding Caption}"
-        Width="320"
-        Height="124"
+        Width="380"
+        SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
-        CanResize="False">
+        CanResize="False"
+        Focusable="True">
 
     <StackPanel Margin="12">
         <TextBlock Text="{Binding Text}" Margin="0,0,0,10" TextWrapping="Wrap"/>
-        <TextBox Text="{Binding Input}" Width="300" Margin="0,0,0,10" PasswordChar="{Binding Sensitive}"/>
+        <TextBox x:Name="InputTextBox" Text="{Binding Input}" Width="340" Margin="0,0,0,10" PasswordChar="{Binding Sensitive}"/>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button x:Name="OkButton" Content="Ok" Margin="0,0,5,0" Click="OkButton_Click"/>
+            <Button x:Name="OkButton" Content="Ok" Margin="0,0,5,0" IsDefault="True" Click="OkButton_Click"/>
             <Button x:Name="CancelButton" Content="Cancel" Margin="0" Click="CancelButton_Click"/>
         </StackPanel>
     </StackPanel>
