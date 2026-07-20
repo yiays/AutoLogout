@@ -10,7 +10,13 @@
         CanResize="False">
 
     <Grid RowDefinitions="*,30" Margin="5">
-        <TabControl>
+        <TabControl x:Name="tabControl">
+            <TabControl.Styles>
+                <!-- Hides only the visual header button for this class -->
+                <Style Selector="TabItem.hidden-tab">
+                    <Setter Property="IsVisible" Value="False"/>
+                </Style>
+            </TabControl.Styles>
             <TabItem Header="Limits">
                 <StackPanel Spacing="5">
                     <TextBlock TextWrapping="Wrap">
@@ -79,10 +85,25 @@
                     <Button x:Name="RemoveControlsButton" Content="Remove AutoLogout from this account" Click="RemoveControls_Click"/>
                 </StackPanel>
             </TabItem>
+            <TabItem Classes="hidden-tab" IsSelected="True">
+                <StackPanel Spacing="5">
+                    <TextBlock TextWrapping="Wrap">
+                        Scan the QR code below to manage this account with your phone.
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" FontSize="12">
+                        If you haven't installed AutoLogout Manager, you may need to scan it twice.
+                    </TextBlock>
+                    <Grid Width="230" Height="230">
+                        <Image x:Name="ImageQRCode" Width="230" Height="230"
+                            RenderOptions.BitmapInterpolationMode="None" />
+                        <Image Source="avares://AutoLogout/Resources/qr-overlay.png" Width="80" Height="80" />
+                    </Grid>
+                </StackPanel>
+            </TabItem>
         </TabControl>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button x:Name="SaveButton" Content="Save" Margin="0,0,5,0" Click="SaveButton_Click"/>
+            <Button x:Name="SaveButton" Content="Save" Margin="0,0,5,0" IsDefault="True" Click="SaveButton_Click"/>
             <Button x:Name="CancelButton" Content="Cancel" Margin="0" Click="CancelButton_Click"/>
         </StackPanel>
     </Grid>

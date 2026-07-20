@@ -1,7 +1,9 @@
 using System;
-using System.Windows.Input;
+using System.IO;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Media.Imaging;
+using QRCoder;
 
 namespace AutoLogout;
 
@@ -16,6 +18,7 @@ public partial class ControlPanel : Window
     public TimeSpan Bedtime { get => state.state.bedtime.ToTimeSpan(); }
     public TimeSpan Waketime { get => state.state.waketime.ToTimeSpan(); }
     public bool AutoStart { get => OS.Current.AutoStart; }
+    public Bitmap? QRCode { get; set; }
 
     public ControlPanel()
     {
@@ -46,7 +49,20 @@ public partial class ControlPanel : Window
 
     private void AuthButton_Click(object sender, RoutedEventArgs e)
     {
-        //TODO
+        if(parent is null) return;
+
+        string qrContent = $"https://autologout.yiays.com/app/addAccount?uuid={parent.state.state.uuid}";
+
+        using var qrGenerator = new QRCodeGenerator();
+        using var qrData = qrGenerator.CreateQrCode(qrContent, QRCodeGenerator.ECCLevel.Q);
+        var qrCode = new PngByteQRCode(qrData);
+        var memStream = new MemoryStream(qrCode.GetGraphic(1));
+
+        QRCode = new Bitmap(memStream);
+        ImageQRCode.Source = QRCode;
+        InvalidateVisual();
+
+        tabControl.SelectedIndex = 3;
     }
     private void DeauthButton_Click(object sender, RoutedEventArgs e)
     {
