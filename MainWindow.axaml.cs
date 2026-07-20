@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using System;
 using NetCoreAudio;
+using Avalonia.Media;
 
 namespace AutoLogout;
 
@@ -23,10 +24,6 @@ public partial class MainWindow : Window
         
         // Set tooltips
         ToolTip.SetTip(AboutButton, "Learn more about AutoLogout");
-        ToolTip.SetTip(PauseButton, "Pause");
-        ToolTip.SetTip(LogoffButton, "Log off");
-        ToolTip.SetTip(ShutdownButton, "Shut down");
-        ToolTip.SetTip(SettingsButton, "Settings");
 
         // System events
         ScalingChanged += (o, e) => Reposition();
@@ -44,14 +41,18 @@ public partial class MainWindow : Window
     {
         if(state.Paused)
         {
-            PauseButton.Content = "▶️ Resume";
+            PauseButtonText.Text = "Resume";
+            PauseButtonIcon.IsVisible = false;
+            ResumeButtonIcon.IsVisible = true;
             lockoutWindow ??= new LockoutWindow(this);
             lockoutWindow.Show();
         }
         else
         {
             lockoutWindow?.Hide();
-            PauseButton.Content = "⏸️ Pause";
+            PauseButtonText.Text = "Pause";
+            PauseButtonIcon.IsVisible = true;
+            ResumeButtonIcon.IsVisible = false;
             LabelTimer.Opacity = 1;
             Topmost = false;
             OS.Current.UnMute();

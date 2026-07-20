@@ -21,16 +21,39 @@
             <Border Grid.ColumnSpan="3" Background="#9296d2" Width="240" Height="22" WindowDecorationProperties.ElementRole="TitleBar" >
                 <TextBlock Text="Time limit" Foreground="White" Padding="2" />
             </Border>
-            <Button Grid.Column="2" x:Name="AboutButton" Content="?" Foreground="White" Padding="5,0" Cursor="Hand" Click="AboutButton_Click" />
+            <Button Grid.Column="2" x:Name="AboutButton" Foreground="White" Padding="2" Cursor="Hand" Click="AboutButton_Click">
+                <PathIcon Data="{StaticResource InfoIcon}" Width="16" Height="16" />
+            </Button>
         </Grid>
         <TextBlock x:Name="LabelTimer" Text="00:00.00" FontSize="42" FontWeight="Bold" HorizontalAlignment="Center" Margin="6" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-            <Button x:Name="PauseButton" Content="⏸️ Pause" Margin="2" Click="PauseButton_Click" />
-            <Button x:Name="SettingsButton" Content="⚙️ Settings" Margin="2" Height="32" Click="SettingsButton_Click" />
+            <Button x:Name="PauseButton" Margin="2" Background="#eee" Foreground="Black" Click="PauseButton_Click">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <PathIcon x:Name="PauseButtonIcon" Data="{StaticResource PauseIcon}" Width="12" Height="12" Margin="2" />
+                    <PathIcon x:Name="ResumeButtonIcon" Data="{StaticResource PlayIcon}" Width="16" Height="16" IsVisible="False" />
+                    <TextBlock x:Name="PauseButtonText" Text="Pause" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+            <Button x:Name="SettingsButton" Margin="2" Background="#2199d8" Foreground="White" Click="SettingsButton_Click">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <PathIcon Data="{StaticResource SettingsIcon}" Width="16" Height="16" />
+                    <TextBlock Text="Settings" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
         </StackPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-            <Button x:Name="LogoffButton" Content="Log out" Margin="2" Height="32" Click="LogoffButton_Click" />
-            <Button x:Name="ShutdownButton" Content="Shut down" Margin="2" Height="32" Click="ShutdownButton_Click" />
+            <Button x:Name="LogoffButton" Margin="2" Background="#e5a84f" Foreground="White" Click="LogoffButton_Click">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <PathIcon Data="{StaticResource LogoutIcon}" Width="16" Height="16" />
+                    <TextBlock Text="Sign out" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+            <Button x:Name="ShutdownButton" Margin="2" Background="#df4d28" Foreground="White" Click="ShutdownButton_Click">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <PathIcon Data="{StaticResource ShutdownIcon}" Width="16" Height="16" />
+                    <TextBlock Text="Shut down" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
         </StackPanel>
     </StackPanel>
 </Window>
