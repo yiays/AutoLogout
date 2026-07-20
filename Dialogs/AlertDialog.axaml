@@ -1,0 +1,18 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:AutoLogout"
+        x:Class="AutoLogout.AlertDialog"
+        x:DataType="local:AlertDialog"
+        Title="{Binding Caption}"
+        Width="380"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False">
+
+    <StackPanel Margin="12">
+        <TextBlock Text="{Binding Text}" Margin="0,0,0,10" TextWrapping="Wrap"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="ConfirmButton" Content="Ok" Margin="0,0,5,0" IsDefault="True" Click="ConfirmButton_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>
