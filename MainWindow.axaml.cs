@@ -134,7 +134,7 @@ public partial class MainWindow : Window
     {
         state.TogglePause();
     }
-    async private void SettingsButton_Click(object? sender, RoutedEventArgs e)
+    private async void SettingsButton_Click(object? sender, RoutedEventArgs e)
     {
         var prompt = new PromptDialog(
             "Enter the parent password to continue", "AutoLogout Settings", true
@@ -143,13 +143,15 @@ public partial class MainWindow : Window
         if(prompt.Result is not null)
             AuthenticateSettings_Callback(prompt.Result);
     }
-    public void AuthenticateSettings_Callback(string password)
+    public async void AuthenticateSettings_Callback(string password)
     {
         if(!state.CheckPassword(password)) {
-            return; //TODO: show a non-blocking error message with error sound
+            var alert = new AlertDialog("The parent password you provided is incorrect.", "ControlPanel");
+            await alert.ShowDialog(this);
+            return;
         }
         var controlPanel = new ControlPanel(this, state);
-        controlPanel.ShowDialog(this);
+        await controlPanel.ShowDialog(this);
     }
     private void LogoffButton_Click(object? sender, RoutedEventArgs e)
     {
