@@ -1,15 +1,13 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AutoLogout"
-        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="360"
         x:Class="AutoLogout.AboutWindow"
         x:DataType="local:AboutWindow"
         Title="About AutoLogout"
         CanResize="False"
         Width="400"
-        Height="360">
+        WindowStartupLocation="CenterScreen"
+        SizeToContent="Height">
 
     <StackPanel Spacing="10" Margin="5">
         <Border Width="400" Margin="-5">
@@ -36,7 +34,13 @@
         <TextBlock TextWrapping="Wrap">
             AutoLogout is installed system-wide, but each account can have it's own restrictions, or none at all.
         </TextBlock>
-        <HyperlinkButton x:Name="LinkButton" Content="Read more on the website" NavigateUri="https://autologout.yiays.com" />
-        <HyperlinkButton Content="Privacy policy" NavigateUri="https://autologout.yiays.com/legal/#autologout-for-windows" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <HyperlinkButton NavigateUri="https://autologout.yiays.com" Background="#eee">
+                Read more on the website
+            </HyperlinkButton>
+            <HyperlinkButton NavigateUri="https://autologout.yiays.com/legal/#autologout-for-windows" Background="#eee">
+                Privacy policy
+            </HyperlinkButton>
+        </StackPanel>
     </StackPanel>
 </Window>

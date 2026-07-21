@@ -12,6 +12,9 @@
     <Grid RowDefinitions="*,30" Margin="5">
         <TabControl x:Name="tabControl">
             <TabControl.Styles>
+                <Style Selector="TabItem">
+                    <Setter Property="FontSize" Value="20"/>
+                </Style>
                 <!-- Hides only the visual header button for this class -->
                 <Style Selector="TabItem.hidden-tab">
                     <Setter Property="IsVisible" Value="False"/>
@@ -23,23 +26,23 @@
                         You can change time limits and downtime for this account here.
                     </TextBlock>
                     <GroupBox Header="Today">
-                        <Grid RowDefinitions="32,32" ColumnDefinitions="120,*">
+                        <Grid RowDefinitions="24,24" ColumnDefinitions="120,*" RowSpacing="8">
                             <TextBlock Grid.Column="0" Grid.Row="0" Text="Used time:"/>
                             <TextBlock Grid.Column="1" Grid.Row="0" HorizontalAlignment="Right" Text="{Binding UsedTime}"/>
 
                             <TextBlock Grid.Column="0" Grid.Row="1" Text="Time limit:"/>
                             <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
                                 <NumericUpDown Value="{Binding TodayLimit}" Minimum="-1" Maximum="1440"/>
-                                <TextBlock Text="mins"/>
+                                <TextBlock Text="minutes"/>
                             </StackPanel>
                         </Grid>
                     </GroupBox>
                     <GroupBox Header="Daily">
-                        <Grid RowDefinitions="32,32,32" ColumnDefinitions="120,*">
+                        <Grid RowDefinitions="24,24,24" ColumnDefinitions="120,*" RowSpacing="8">
                             <TextBlock Grid.Column="0" Grid.Row="0" Text="Time limit:"/>
                             <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
                                 <NumericUpDown Value="{Binding DailyLimit}" Minimum="-1" Maximum="1440"/>
-                                <TextBlock Text="mins"/>
+                                <TextBlock Text="minutes"/>
                             </StackPanel>
 
                             <TextBlock Grid.Column="0" Grid.Row="1" Text="Downtime start:"/>
@@ -66,12 +69,20 @@
                         </Grid>
                     </Border>
                     <TextBlock TextWrapping="Wrap">
-                        You can connect AutoLogout to your phone with the AutoLogout manager app and change settings remotely.
+                        You can connect AutoLogout to your phone with the AutoLogout Manager app and change settings remotely.
                     </TextBlock>
-                    <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,0,0,10">
+                    <TextBlock TextWrapping="Wrap" FontSize="12">
                         This will sync some data over the internet.
                     </TextBlock>
-                    <Button x:Name="AuthButton" Content="Connect to your phone" Click="AuthButton_Click"/>
+                    <HyperlinkButton NavigateUri="https://autologout.yiays.com/legal/#autologout-for-windows" FontSize="12" Background="#eee">
+                        Privacy policy
+                    </HyperlinkButton>
+                    <Button x:Name="AuthButton" Background="#9296d2" Foreground="White" Margin="0,10,0,0" Click="AuthButton_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <PathIcon Data="{StaticResource PhoneIcon}" Width="16" Height="16" />
+                            <TextBlock Text="Connect AutoLogout to your phone" />
+                        </StackPanel>
+                    </Button>
                     <Button x:Name="DeauthButton" IsEnabled="False" Content="Disconnect all devices" Click="DeauthButton_Click"/>
                 </StackPanel>
             </TabItem>
@@ -81,11 +92,12 @@
                         These settings require Administrator permissions to change.
                     </TextBlock>
                     <CheckBox Content="Start automatically on login" IsChecked="{Binding AutoStart}" IsCheckedChanged="AutoStart_Checked" />
-                    <Button x:Name="ChangePasswordButton" Content="Change parent password" Click="ChangePassword_Click"/>
-                    <Button x:Name="RemoveControlsButton" Content="Remove AutoLogout from this account" Click="RemoveControls_Click"/>
+                    <Button x:Name="RemoveControlsButton" Background="#df4d28" Foreground="White" Click="RemoveControls_Click">
+                        Remove AutoLogout from this account
+                    </Button>
                 </StackPanel>
             </TabItem>
-            <TabItem Classes="hidden-tab" IsSelected="True">
+            <TabItem Classes="hidden-tab">
                 <StackPanel Spacing="5">
                     <TextBlock TextWrapping="Wrap">
                         Scan the QR code below to manage this account with your phone.
@@ -102,9 +114,12 @@
             </TabItem>
         </TabControl>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button x:Name="SaveButton" Content="Save" Margin="0,0,5,0" IsDefault="True" Click="SaveButton_Click"/>
-            <Button x:Name="CancelButton" Content="Cancel" Margin="0" Click="CancelButton_Click"/>
-        </StackPanel>
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="5">
+            <Button Grid.Column="0" x:Name="ChangePasswordButton" Background="#eee" Foreground="Black" Click="ChangePassword_Click">
+                Change parent password
+            </Button>
+            <Button Grid.Column="1" x:Name="SaveButton" Content="Save" IsDefault="True" Click="SaveButton_Click"/>
+            <Button Grid.Column="2" x:Name="CancelButton" Content="Cancel" Click="CancelButton_Click"/>
+        </Grid>
     </Grid>
 </Window>
