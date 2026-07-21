@@ -204,7 +204,12 @@ internal sealed class OSWindows : IOS
             using RegistryKey? key = Registry.LocalMachine.OpenSubKey(
                 @"Software\Microsoft\Windows\CurrentVersion\Run", false
             );
-            return (bool?)key?.GetValue(appName) ?? false;
+            if(key?.GetValue(appName) is not null)
+            {
+                string value = (string?)key.GetValue(appName) ?? "";
+                return value.Contains(ExecutablePath);
+            }
+            return false;
         }
     }
 

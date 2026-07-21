@@ -51,6 +51,8 @@ public partial class ControlPanel : Window
     {
         if(parent is null) return;
 
+        //TODO: perform first API sync before showing QR code
+
         string qrContent = $"https://autologout.yiays.com/app/addAccount?uuid={parent.state.state.uuid}";
 
         using var qrGenerator = new QRCodeGenerator();
@@ -62,15 +64,47 @@ public partial class ControlPanel : Window
         ImageQRCode.Source = QRCode;
         InvalidateVisual();
 
+        // Switch to the hidden tab
         tabControl.SelectedIndex = 3;
     }
-    private void DeauthButton_Click(object sender, RoutedEventArgs e)
+    private async void DeauthButton_Click(object sender, RoutedEventArgs e)
     {
-        //TODO
+        var confirm = new ConfirmDialog(
+            "This will sign out all AutoLogout Manager instances and disable syncing. Continue?",
+            "Disconnect all devices"
+        );
+        await confirm.ShowDialog(this);
+        if(confirm.Result ?? false)
+        {
+            //TODO: delete API account and disable syncing
+        }
     }
-    private void AutoStart_Checked(object sender, RoutedEventArgs e)
+    private async void AutoStart_Checked(object sender, RoutedEventArgs e)
     {
-        //TODO
+        if(sender is CheckBox checkBox)
+        {
+            var enable = checkBox.IsChecked ?? false;
+            if(enable == AutoStart) return; // Nothing will be changed
+
+            var confirm = new ConfirmDialog(
+                enable?
+                    "AutoLogout will start automatically on any user accounts that have set up a parent password. Continue?"
+                :
+                    "This will prevent AutoLogout from auto-starting on all user accounts on this machine. Continue?",
+                "Start automatically on login"
+            );
+            await confirm.ShowDialog(this);
+            if(confirm.Result ?? false)
+            {
+                OS.Current.RelaunchAsAdmin(enable? "--register": "--unregister");
+            }
+            else
+            {
+                // Revert checkbox state
+                checkBox.IsChecked = !enable;
+                checkBox.InvalidateVisual();
+            }
+        }
     }
     private async void ChangePassword_Click(object sender, RoutedEventArgs e)
     {
