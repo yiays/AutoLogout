@@ -156,22 +156,26 @@ internal sealed class OSWindows : IOS
         };
         Process.Start(startInfo);
     }
-    public void RelaunchAsAdmin(string args)
+    public async Task<bool> RelaunchAsAdmin(string args)
     {
-        var startInfo = new ProcessStartInfo(ExecutablePath)
-        {
-            UseShellExecute = true,
-            Verb = "runas",
-            Arguments = args
-        };
-        try
-        {
-            Process.Start(startInfo);
-        }
-        catch
-        {
-            // User cancelled UAC
-        }
+        return await Task.Run(() => {
+            var startInfo = new ProcessStartInfo(ExecutablePath)
+            {
+                UseShellExecute = true,
+                Verb = "runas",
+                Arguments = args
+            };
+            try
+            {
+                Process.Start(startInfo);
+                return true;
+            }
+            catch
+            {
+                // Likely user denied UAC
+                return false;
+            }
+        });
     }
 
     public void RegisterStartup(bool enable)

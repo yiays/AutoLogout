@@ -96,7 +96,13 @@ public partial class ControlPanel : Window
             await confirm.ShowDialog(this);
             if(confirm.Result ?? false)
             {
-                OS.Current.RelaunchAsAdmin(enable? "--register": "--unregister");
+                var success = await OS.Current.RelaunchAsAdmin(enable? "--register": "--unregister");
+                if (!success)
+                {
+                    // Revert checkbox state
+                    checkBox.IsChecked = !enable;
+                    checkBox.InvalidateVisual();
+                }
             }
             else
             {

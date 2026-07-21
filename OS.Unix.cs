@@ -41,9 +41,10 @@ internal sealed class OSUnix : IOS
     {
         //TODO
     }
-    public void RelaunchAsAdmin(string args)
+    public async Task<bool> RelaunchAsAdmin(string args)
     {
         //TODO
+        return await Task.Run(() => false);
     }
     public void RegisterStartup(bool enable)
     {

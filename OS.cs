@@ -21,7 +21,7 @@ public interface IOS
     public void Mute();
     public void UnMute();
     public void Relaunch(string args);
-    public void RelaunchAsAdmin(string args);
+    public Task<bool> RelaunchAsAdmin(string args);
     public void RegisterStartup(bool enable);
     public bool AutoStart { get; }
     public void Logoff();

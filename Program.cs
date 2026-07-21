@@ -20,7 +20,7 @@ class Program
             // This requires an Admin privileges
             if (!Environment.IsPrivilegedProcess)
             {
-                OS.Current.RelaunchAsAdmin("--register");
+                Console.WriteLine("--register was called without admin privileges");
                 return;
             }
             OS.Current.RegisterStartup(true);
@@ -32,7 +32,7 @@ class Program
             // This requires an Admin privileges
             if (!Environment.IsPrivilegedProcess)
             {
-                OS.Current.RelaunchAsAdmin("--unregister");
+                Console.WriteLine("--unregister was called without admin privileges");
                 return;
             }
             OS.Current.RegisterStartup(false);
