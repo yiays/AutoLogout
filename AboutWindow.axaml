@@ -4,6 +4,7 @@
         x:Class="AutoLogout.AboutWindow"
         x:DataType="local:AboutWindow"
         Title="About AutoLogout"
+        Icon="{DynamicResource ThemeAwareIcon}"
         CanResize="False"
         Width="400"
         WindowStartupLocation="CenterScreen"

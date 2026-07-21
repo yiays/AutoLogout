@@ -1,6 +1,8 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:AutoLogout"
              x:Class="AutoLogout.App"
+             x:DataType="local:App"
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
@@ -13,10 +15,37 @@
             <StreamGeometry x:Key="PhoneIcon">M9 0H1C.45 0 0 .45 0 1v14c0 .55.45 1 1 1h8c.55 0 1-.45 1-1V1c0-.55-.45-1-1-1zM5 15.3c-.72 0-1.3-.58-1.3-1.3 0-.72.58-1.3 1.3-1.3.72 0 1.3.58 1.3 1.3 0 .72-.58 1.3-1.3 1.3zM9 12H1V2h8v10z</StreamGeometry>
             <StreamGeometry x:Key="PlayIcon">M14 8A7 7 0 110 8a7 7 0 0114 0zm-8.223 3.482l4.599-3.066a.5.5 0 000-.832L5.777 4.518A.5.5 0 005 4.934v6.132a.5.5 0 00.777.416z</StreamGeometry>
             <StreamGeometry x:Key="PauseIcon">M2.9714 12h-2.9714v-8h2.9714z M7.9429 12h-2.9714v-8h2.9714z</StreamGeometry>
+
+            <ResourceDictionary.ThemeDictionaries>
+                <!-- Light Theme Asset -->
+                <ResourceDictionary x:Key="Light">
+                    <WindowIcon x:Key="ThemeAwareIcon">/Resources/icon-light.ico</WindowIcon>
+                </ResourceDictionary>
+                
+                <!-- Dark Theme Asset -->
+                <ResourceDictionary x:Key="Dark">
+                    <WindowIcon x:Key="ThemeAwareIcon">/Resources/icon.ico</WindowIcon>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 
     <Application.Styles>
         <FluentTheme />
     </Application.Styles>
+
+    <TrayIcon.Icons>
+        <TrayIcons>
+            <TrayIcon
+                Icon="avares://AutoLogout/Resources/icon-light.ico"
+                ToolTipText="AutoLogout"
+                Clicked="ShowMainWindow">
+                <TrayIcon.Menu>
+                    <NativeMenu>
+                        <NativeMenuItem Header="Show AutoLogout" Click="ShowMainWindow" />
+                    </NativeMenu>
+                </TrayIcon.Menu>
+            </TrayIcon>
+        </TrayIcons>
+    </TrayIcon.Icons>
 </Application>

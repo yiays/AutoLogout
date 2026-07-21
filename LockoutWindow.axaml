@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="AutoLogout.LockoutWindow"
         Title="Pause screen"
-        Icon="avares://AutoLogout/Resources/icon-light.ico"
+        Icon="{DynamicResource ThemeAwareIcon}"
         WindowState="FullScreen"
         WindowDecorations="None"
         ShowInTaskbar="False"
