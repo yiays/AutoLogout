@@ -4,6 +4,7 @@
         x:Class="AutoLogout.PromptDialog"
         x:DataType="local:PromptDialog"
         Title="{Binding Caption}"
+        Icon="{DynamicResource ThemeAwareIcon}"
         Width="380"
         SizeToContent="Height"
         WindowStartupLocation="CenterScreen"

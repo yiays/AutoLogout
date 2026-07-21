@@ -4,6 +4,7 @@
         x:Class="AutoLogout.ConfirmDialog"
         x:DataType="local:ConfirmDialog"
         Title="{Binding Caption}"
+        Icon="{DynamicResource ThemeAwareIcon}"
         Width="380"
         SizeToContent="Height"
         WindowStartupLocation="CenterScreen"

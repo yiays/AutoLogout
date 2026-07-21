@@ -4,6 +4,7 @@
         x:Class="AutoLogout.ControlPanel"
         x:DataType="local:ControlPanel"
         Title="AutoLogout Settings"
+        Icon="{DynamicResource ThemeAwareIcon}"
         Width="420"
         Height="400"
         WindowStartupLocation="CenterScreen"
