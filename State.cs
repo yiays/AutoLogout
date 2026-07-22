@@ -4,7 +4,7 @@ using BC = BCrypt.Net;
 
 namespace AutoLogout;
 
-public enum UserIntent { None, Exit };
+public enum UserIntent { None, Setup, Parent, Grace, Exit };
 
 public class DeltaState
 {
@@ -31,14 +31,6 @@ public class SyncedState : DeltaState
     public new TimeOnly bedtime = new(0, 0);
     public new TimeOnly waketime = new(0, 0);
     public new Guid? syncAuthor = null;
-    public SyncedState()
-    {
-        if(DateOnly.FromDateTime(DateTime.Today) != usageDate)
-        {
-            todayTimeLimit = dailyTimeLimit;
-            usedTime = 0;
-        }
-    }
     public void Update(DeltaState delta)
     {
         dailyTimeLimit = delta.dailyTimeLimit ?? dailyTimeLimit;
@@ -57,9 +49,9 @@ public class State
     public SyncedState state;
     public UserIntent userIntent = UserIntent.None;
     public bool Paused = false;
-    public bool graceGiven = false;
     public int? tempTimeLimit = null; // This stores temporary overrides to the time limit. Takes priority over bedtime
     public int? bedtimeTimeLimit = null; // This stores bedtime-related overrides to the time limit
+    //NOTE: not currently used, maybe not needed?
     private int? RealTimeLimit
     {
         get
@@ -121,15 +113,28 @@ public class State
 
         if(state.uuid == Guid.Empty)
         {
+            userIntent = UserIntent.Setup; //TODO: handle this elsewhere
             state.uuid = Guid.NewGuid();
         }
     }
 
     public void Tick(object? sender, EventArgs e)
     {
-        if(Paused) return;
-        state.usageDate = DateOnly.FromDateTime(DateTime.Today);
+        // Don't progress time if the timer is paused or the parent is authorized
+        if(Paused || userIntent == UserIntent.Parent) return;
+
+        // Reset usage time whenever a new day starts
+        if(DateOnly.FromDateTime(DateTime.Today) != state.usageDate)
+        {
+            state.todayTimeLimit = state.dailyTimeLimit;
+            state.usedTime = 0;
+            state.usageDate = DateOnly.FromDateTime(DateTime.Today);
+        }
+        
+        // Count every second that the device is used
         state.usedTime++;
+
+        // Notify that the state has changed
         Changed?.Invoke();
     }
     public void TogglePause()

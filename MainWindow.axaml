@@ -24,7 +24,7 @@
         </Grid>
         <TextBlock x:Name="LabelTimer" Text="00:00.00" FontSize="42" FontWeight="Bold" HorizontalAlignment="Center" Margin="6" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-            <Button x:Name="PauseButton" Margin="2" Background="#eee" Foreground="Black" Click="PauseButton_Click">
+            <Button x:Name="PauseButton" Margin="2" Background="#eee" Foreground="Black" IsDefault="True" Click="PauseButton_Click">
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <PathIcon x:Name="PauseButtonIcon" Data="{StaticResource PauseIcon}" Width="12" Height="12" Margin="2" />
                     <PathIcon x:Name="ResumeButtonIcon" Data="{StaticResource PlayIcon}" Width="16" Height="16" IsVisible="False" />
