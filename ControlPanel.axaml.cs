@@ -12,11 +12,11 @@ public partial class ControlPanel : Window
     public MainWindow? parent;
     public State state;
 
-    public int UsedTime { get => state.state.usedTime; }
-    public int DailyLimit { get => state.state.dailyTimeLimit; }
-    public int TodayLimit { get => state.state.todayTimeLimit; }
-    public TimeSpan Bedtime { get => state.state.bedtime.ToTimeSpan(); }
-    public TimeSpan Waketime { get => state.state.waketime.ToTimeSpan(); }
+    public string UsedTime { get; set; } = "Loading...";
+    public int DailyLimit { get; set; }
+    public int TodayLimit { get; set; }
+    public TimeSpan Bedtime { get; set; }
+    public TimeSpan Waketime { get; set; }
     public bool AutoStart { get => OS.Current.AutoStart; }
     public Bitmap? QRCode { get; set; }
 
@@ -30,21 +30,31 @@ public partial class ControlPanel : Window
     {
         this.parent = parent;
         this.state = state;
+        SetFields();
         InitializeComponent();
         DataContext = this;
 
         // Events
         parent.state.Changed += OnChanged;
     }
-
     private void OnChanged()
     {
         // Discard current settings if new settings come in remotely
         if (parent?.state.state.syncAuthor.HasValue is true)
         {
             state.state = parent.state.state;
+            SetFields();
             InvalidateVisual();
         }
+    }
+    private void SetFields()
+    {
+        var timeSpan = TimeSpan.FromSeconds((int)state.state.usedTime);
+        UsedTime = string.Format("{0:D2}:{1:D2}.{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
+        DailyLimit = state.state.dailyTimeLimit / 60;
+        TodayLimit = state.state.todayTimeLimit / 60;
+        Bedtime = state.state.bedtime.ToTimeSpan();
+        Waketime = state.state.waketime.ToTimeSpan();
     }
 
     private void AuthButton_Click(object sender, RoutedEventArgs e)
@@ -147,8 +157,15 @@ public partial class ControlPanel : Window
     }
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
-        OS.Current.SaveState(state.state);
-        parent?.state.state = state.state;
+        if(parent is null) return;
+        parent.state.state.Update(new DeltaState
+        {
+            todayTimeLimit = TodayLimit * 60,
+            dailyTimeLimit = DailyLimit * 60,
+            bedtime = TimeOnly.FromTimeSpan(Bedtime),
+            waketime = TimeOnly.FromTimeSpan(Waketime),
+        });
+        OS.Current.SaveState(parent.state.state);
         Close();
     }
     private void CancelButton_Click(object sender, RoutedEventArgs e)
