@@ -9,9 +9,6 @@ namespace AutoLogout;
 
 public partial class ControlPanel : Window
 {
-    public MainWindow? parent;
-    public State state;
-
     public string UsedTime { get; set; } = "Loading...";
     public int DailyLimit { get; set; }
     public int TodayLimit { get; set; }
@@ -22,48 +19,37 @@ public partial class ControlPanel : Window
 
     public ControlPanel()
     {
-        state = new State();
-        InitializeComponent();
-        DataContext = this;
-    }
-    public ControlPanel(MainWindow parent, State state)
-    {
-        this.parent = parent;
-        this.state = state;
         SetFields();
         InitializeComponent();
         DataContext = this;
 
         // Events
-        parent.state.Changed += OnChanged;
+        State.Current.Changed += OnChanged;
     }
     private void OnChanged()
     {
         // Discard current settings if new settings come in remotely
-        if (parent?.state.state.syncAuthor.HasValue is true)
+        if (State.Current.Store.syncAuthor.HasValue is true)
         {
-            state.state = parent.state.state;
             SetFields();
             InvalidateVisual();
         }
     }
     private void SetFields()
     {
-        var timeSpan = TimeSpan.FromSeconds((int)state.state.usedTime);
+        var timeSpan = TimeSpan.FromSeconds(State.Current.Store.usedTime);
         UsedTime = string.Format("{0:D2}:{1:D2}.{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
-        DailyLimit = state.state.dailyTimeLimit / 60;
-        TodayLimit = state.state.todayTimeLimit / 60;
-        Bedtime = state.state.bedtime.ToTimeSpan();
-        Waketime = state.state.waketime.ToTimeSpan();
+        DailyLimit = State.Current.Store.dailyTimeLimit / 60;
+        TodayLimit = State.Current.Store.todayTimeLimit / 60;
+        Bedtime = State.Current.Store.bedtime.ToTimeSpan();
+        Waketime = State.Current.Store.waketime.ToTimeSpan();
     }
 
     private void AuthButton_Click(object sender, RoutedEventArgs e)
     {
-        if(parent is null) return;
-
         //TODO: perform first API sync before showing QR code
 
-        string qrContent = $"https://autologout.yiays.com/app/addAccount?uuid={parent.state.state.uuid}";
+        string qrContent = $"https://autologout.yiays.com/app/addAccount?uuid={State.Current.Store.uuid}";
 
         using var qrGenerator = new QRCodeGenerator();
         using var qrData = qrGenerator.CreateQrCode(qrContent, QRCodeGenerator.ECCLevel.Q);
@@ -131,7 +117,7 @@ public partial class ControlPanel : Window
         {
             if(result.Length > 0)
             {
-                parent?.state.NewPassword(result);
+                await State.Current.NewPassword(result);
                 var alert = new AlertDialog("Parent password updated!", "Success");
                 await alert.ShowDialog(this);
             }
@@ -151,21 +137,20 @@ public partial class ControlPanel : Window
             await OS.Current.ClearState();
             var alert = new AlertDialog("AutoLogout has been removed from this account. Closing now.", "AutoLogout");
             await alert.ShowDialog(this);
-            parent?.state.userIntent = UserIntent.Exit;
+            State.Current.Intent = UserIntent.Exit;
             Close();
         }
     }
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
-        if(parent is null) return;
-        parent.state.state.Update(new DeltaState
+        State.Current.Store.Update(new DeltaState
         {
             todayTimeLimit = TodayLimit * 60,
             dailyTimeLimit = DailyLimit * 60,
             bedtime = TimeOnly.FromTimeSpan(Bedtime),
             waketime = TimeOnly.FromTimeSpan(Waketime),
         });
-        OS.Current.SaveState(parent.state.state);
+        OS.Current.SaveState();
         Close();
     }
     private void CancelButton_Click(object sender, RoutedEventArgs e)

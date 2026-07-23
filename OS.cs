@@ -16,7 +16,7 @@ public interface IOS
     public void Initialize();
     public void Notify(string header, string content);
     public Task<SyncedState> LoadState();
-    public Task SaveState(SyncedState state);
+    public Task SaveState();
     public Task ClearState();
     public void Mute();
     public void UnMute();

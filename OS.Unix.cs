@@ -19,7 +19,7 @@ internal sealed class OSUnix : IOS
         //TODO
         throw new NotImplementedException();
     }
-    public Task SaveState(SyncedState state)
+    public Task SaveState()
     {
         //TODO
         throw new NotImplementedException();

@@ -38,10 +38,13 @@ class Program
             OS.Current.RegisterStartup(false);
             return;
         }
+
+        State.Current.Load();
         if (args.Contains("--service"))
         {
             // The --service tag indicates that AutoLogout launched automatically from any account
-            //TODO: Refuse to run if AutoLogout is not configured for this account
+            // In this state, AutoLogout shouldn't be running if it hasn't already been setup for this account
+            if(State.Current.Intent == UserIntent.Setup) return;
         }
         
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);

@@ -94,21 +94,21 @@ internal sealed class OSWindows : IOS
             usedTime = (int)key.GetValue("usedTime", 0)
         };
     }
-    public async Task SaveState(SyncedState state)
+    public async Task SaveState()
     {
         RegistryKey key = Registry.CurrentUser.CreateSubKey(REGKEY, true) ??
             throw new Exception("Unable to save settings.");
 
-        key.SetValue("OnlineMode", state.Online);
-        key.SetValue("authKey", state.authKey);
-        key.SetValue("guid", state.uuid);
-        key.SetValue("password", state.hashedPassword);
-        key.SetValue("usageDate", DateOnly.FromDateTime(DateTime.Today));
-        key.SetValue("dailyTimeLimit", state.dailyTimeLimit);
-        key.SetValue("todayTimeLimit", state.todayTimeLimit);
-        key.SetValue("usedTime", state.usedTime);
-        key.SetValue("bedtime", state.bedtime);
-        key.SetValue("waketime", state.waketime);
+        key.SetValue("OnlineMode", State.Current.Store.Online);
+        key.SetValue("authKey", State.Current.Store.authKey);
+        key.SetValue("guid", State.Current.Store.uuid);
+        key.SetValue("password", State.Current.Store.hashedPassword);
+        key.SetValue("usageDate", State.Current.Store.usageDate);
+        key.SetValue("dailyTimeLimit", State.Current.Store.dailyTimeLimit);
+        key.SetValue("todayTimeLimit", State.Current.Store.todayTimeLimit);
+        key.SetValue("usedTime", State.Current.Store.usedTime);
+        key.SetValue("bedtime", State.Current.Store.bedtime);
+        key.SetValue("waketime", State.Current.Store.waketime);
     }
     public async Task ClearState()
     {

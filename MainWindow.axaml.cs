@@ -13,7 +13,6 @@ public partial class MainWindow : Window
 {
     private Player player = new();
     private UserIntent? _lastIntent = null;
-    public State state = new();
     LockoutWindow? lockoutWindow;
     readonly DispatcherTimer Timer = new()
     {
@@ -33,15 +32,15 @@ public partial class MainWindow : Window
         OS.Current.SessionSwitch += SessionSwitch;
 
         // Internal events
-        Timer.Tick += state.Tick;
+        Timer.Tick += State.Current.Tick;
         Timer.Tick += Timer_Tick;
         Timer.Start();
-        state.Changed += OnChanged;
+        State.Current.Changed += OnChanged;
     }
 
     private void OnChanged()
     {
-        if(state.Paused)
+        if(State.Current.Paused)
         {
             PauseButtonText.Text = "Resume";
             PauseButtonIcon.IsVisible = false;
@@ -58,14 +57,14 @@ public partial class MainWindow : Window
             LabelTimer.Opacity = 1;
             Topmost = false;
             OS.Current.UnMute();
-            if(state.RemainingTime is null)
+            if(State.Current.RemainingTime is null)
             {
                 LabelTimer.Text = "Unlimited";
             }else{
-                var timeSpan = TimeSpan.FromSeconds((int)state.RemainingTime);
+                var timeSpan = TimeSpan.FromSeconds((int)State.Current.RemainingTime);
                 LabelTimer.Text = string.Format("{0:D2}:{1:D2}.{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
             }
-            if(state.RemainingTime == 600)
+            if(State.Current.RemainingTime == 600)
             {
                 OS.Current.Notify(
                     "Time limit warning",
@@ -73,20 +72,20 @@ public partial class MainWindow : Window
                 );
                 _ = player.Play("Resources/alarm.wav");
             }
-            else if(state.RemainingTime == 30 && state.userIntent != UserIntent.Grace)
+            else if(State.Current.RemainingTime == 30 && State.Current.Intent != UserIntent.Grace)
             {
                 var alert = new AlertDialog(
                     "Your time is up in 30 seconds!",
                     "Time limit warning"
                 );
                 _ = alert.ShowDialog(this);
-                state.userIntent = UserIntent.Grace;
+                State.Current.Intent = UserIntent.Grace;
             }
-            else if(state.RemainingTime <= 0)
+            else if(State.Current.RemainingTime <= 0)
             {
                 // User is out of time
-                var pastBedtime = state.TimeUntilBedtime is not null && state.TimeUntilBedtime <= 0;
-                if(state.userIntent != UserIntent.Grace)
+                var pastBedtime = State.Current.TimeUntilBedtime is not null && State.Current.TimeUntilBedtime <= 0;
+                if(State.Current.Intent != UserIntent.Grace)
                 {
                     var alert = new AlertDialog(
                         pastBedtime?
@@ -96,8 +95,8 @@ public partial class MainWindow : Window
                         "AutoLogout"
                     );
                     _ = alert.ShowDialog(this);
-                    state.userIntent = UserIntent.Grace;
-                    state.tempTimeLimit = state.state.usedTime + 30;
+                    State.Current.Intent = UserIntent.Grace;
+                    State.Current.tempTimeLimit = State.Current.Store.usedTime + 30;
                 }
                 else
                 {
@@ -109,18 +108,18 @@ public partial class MainWindow : Window
             }
         }
         InvalidateVisual();
-        if (state.state.syncAuthor.HasValue)
+        if (State.Current.Store.syncAuthor.HasValue)
         {
             OS.Current.Notify(
                 "Time limit changed",
                 "Your time limit rules have been changed remotely."
             );
-            state.state.syncAuthor = null;
+            State.Current.Store.syncAuthor = null;
         }
     }
     private void Timer_Tick(object? sender, EventArgs e)
     {
-        if (state.Paused)
+        if (State.Current.Paused)
         {
             OS.Current.Mute();
             LabelTimer.Opacity = LabelTimer.Opacity == 1? 0: 1;
@@ -143,14 +142,14 @@ public partial class MainWindow : Window
     {
         if(e.Type == SessionSwitchType.Lock)
         {
-            if(!state.Paused) state.TogglePause();
+            if(!State.Current.Paused) State.Current.TogglePause();
             Timer.Stop();
             OS.Current.UnMute();
         }
         else if(e.Type == SessionSwitchType.Unlock)
         {
             Timer.Start();
-            if(state.Paused) OS.Current.Mute();
+            if(State.Current.Paused) OS.Current.Mute();
         }
     }
 
@@ -161,7 +160,7 @@ public partial class MainWindow : Window
     }
     private void PauseButton_Click(object? sender, RoutedEventArgs e)
     {
-        state.TogglePause();
+        State.Current.TogglePause();
     }
     private async void SettingsButton_Click(object? sender, RoutedEventArgs e)
     {
@@ -174,31 +173,31 @@ public partial class MainWindow : Window
     }
     public async void AuthenticateSettings_Callback(string password)
     {
-        if(!state.CheckPassword(password)) {
+        if(!State.Current.CheckPassword(password)) {
             var alert = new AlertDialog("The parent password you provided is incorrect.", "ControlPanel");
             _ = alert.ShowDialog(this);
             return;
         }
 
         // Change userIntent to parent to show that the parent is authorized
-        _lastIntent = state.userIntent;
-        state.userIntent = UserIntent.Parent;
+        _lastIntent = State.Current.Intent;
+        State.Current.Intent = UserIntent.Parent;
 
-        var controlPanel = new ControlPanel(this, state);
+        var controlPanel = new ControlPanel();
         await controlPanel.ShowDialog(this);
 
         // Upon closing of ControlPanel, revert userIntent
-        if(state.userIntent == UserIntent.Exit)
+        if(State.Current.Intent == UserIntent.Exit)
             Close();
         else if(_lastIntent == UserIntent.Grace)
         {
             // Shut down / sign out warnings should be reset after the parent has opened settings
-            state.tempTimeLimit = null;
-            state.userIntent = UserIntent.None;
+            State.Current.tempTimeLimit = null;
+            State.Current.Intent = UserIntent.None;
         }
         else if(_lastIntent is not null)
         {
-            state.userIntent = (UserIntent)_lastIntent;
+            State.Current.Intent = (UserIntent)_lastIntent;
         }
     }
     private void LogoffButton_Click(object? sender, RoutedEventArgs e)
@@ -207,9 +206,9 @@ public partial class MainWindow : Window
     }
     private void Logoff()
     {
-        OS.Current.SaveState(state.state);
+        OS.Current.SaveState();
         Timer.Stop();
-        state.userIntent = UserIntent.Exit;
+        State.Current.Intent = UserIntent.Exit;
         OS.Current.Logoff();
         Close();
     }
@@ -219,16 +218,16 @@ public partial class MainWindow : Window
     }
     private void Shutdown()
     {
-        OS.Current.SaveState(state.state);
+        OS.Current.SaveState();
         Timer.Stop();
-        state.userIntent = UserIntent.Exit;
+        State.Current.Intent = UserIntent.Exit;
         OS.Current.Shutdown();
         Close();
     }
 
     protected override void OnClosing(WindowClosingEventArgs e)
     {
-        if (state.userIntent != UserIntent.Exit)
+        if (State.Current.Intent != UserIntent.Exit)
             e.Cancel = true;
         else
         {

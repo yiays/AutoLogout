@@ -23,7 +23,7 @@ public partial class App : Application
         {
             desktop.MainWindow = new MainWindow();
 
-            desktop.ShutdownMode = Avalonia.Controls.ShutdownMode.OnMainWindowClose;
+            desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
         }
 
         // Fetch the XAML-defined TrayIcon from the application instances
