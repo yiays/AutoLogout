@@ -60,24 +60,17 @@ public class AppState
     public UserIntent Intent = UserIntent.None;
     public bool Paused = false;
     public int? tempTimeLimit = null; // This stores temporary overrides to the time limit. Takes priority over bedtime
-    public int? bedtimeTimeLimit = null; // This stores bedtime-related overrides to the time limit
-    //NOTE: not currently used, maybe not needed?
     private int? RealTimeLimit
     {
         get
         {
-            // First check all overrides
+            // First check temp override
             if(tempTimeLimit is not null)
             {
                 if(tempTimeLimit == -1) return null;
                 return tempTimeLimit;
             }
-            else if(bedtimeTimeLimit is not null)
-            {
-                // Assume bedtimeTimeLimit is always positive
-                if(bedtimeTimeLimit < Store.todayTimeLimit) return bedtimeTimeLimit;
-            }
-            // Overrides don't apply, just return todayTimeLimit
+            // Override didn't apply, just return todayTimeLimit
             if(Store.todayTimeLimit == -1) return null;
             return Store.todayTimeLimit;
         }

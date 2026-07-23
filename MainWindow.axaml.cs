@@ -13,6 +13,7 @@ public partial class MainWindow : Window
 {
     private Player player = new();
     private UserIntent? _lastIntent = null;
+    private int? lastRemainingTime = null;
     LockoutWindow? lockoutWindow;
     readonly DispatcherTimer Timer = new()
     {
@@ -63,6 +64,16 @@ public partial class MainWindow : Window
             }else{
                 var timeSpan = TimeSpan.FromSeconds((int)State.Current.RemainingTime);
                 LabelTimer.Text = string.Format("{0:D2}:{1:D2}.{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
+            
+                // Notify the user when time drops drastically because of downtime or resuming
+                if(lastRemainingTime > 0 && lastRemainingTime - State.Current.RemainingTime > 60)
+                {
+                    OS.Current.Notify(
+                        "Time limit warning",
+                        "Your time has shortened."
+                    );
+                }
+                lastRemainingTime = State.Current.RemainingTime;
             }
             if(State.Current.RemainingTime == 600)
             {
@@ -186,7 +197,7 @@ public partial class MainWindow : Window
         var controlPanel = new ControlPanel();
         await controlPanel.ShowDialog(this);
 
-        // Upon closing of ControlPanel, revert userIntent
+        // When ControlPanel closes revert Intent, unless ControlPanel requested immediate exit
         if(State.Current.Intent == UserIntent.Exit)
             Close();
         else if(_lastIntent == UserIntent.Grace)
