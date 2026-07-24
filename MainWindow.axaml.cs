@@ -4,8 +4,6 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using System;
 using NetCoreAudio;
-using Avalonia.Media;
-using System.Diagnostics;
 
 namespace AutoLogout;
 
@@ -24,9 +22,6 @@ public partial class MainWindow : Window
         InitializeComponent();
         Reposition();
         
-        // Set tooltips
-        ToolTip.SetTip(AboutButton, "Learn more about AutoLogout");
-
         // System events
         ScalingChanged += (o, e) => Reposition();
         Screens.Changed += (o, e) => Reposition();

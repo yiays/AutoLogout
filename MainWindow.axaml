@@ -18,7 +18,7 @@
             <Border Grid.ColumnSpan="3" Background="#9296d2" Width="240" Height="22" WindowDecorationProperties.ElementRole="TitleBar" >
                 <TextBlock Text="Time limit" Foreground="White" Padding="2" />
             </Border>
-            <Button Grid.Column="2" x:Name="AboutButton" Foreground="White" Padding="2" Cursor="Hand" Click="AboutButton_Click">
+            <Button Grid.Column="2" x:Name="AboutButton" Foreground="White" Padding="2" Cursor="Hand" ToolTip.Tip="Learn more about AutoLogout" Click="AboutButton_Click">
                 <PathIcon Data="{StaticResource InfoIcon}" Width="16" Height="16" />
             </Button>
         </Grid>
