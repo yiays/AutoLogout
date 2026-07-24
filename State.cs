@@ -64,13 +64,6 @@ public class AppState
     {
         get
         {
-            // First check temp override
-            if(tempTimeLimit is not null)
-            {
-                if(tempTimeLimit == -1) return null;
-                return tempTimeLimit;
-            }
-            // Override didn't apply, just return todayTimeLimit
             if(Store.todayTimeLimit == -1) return null;
             return Store.todayTimeLimit;
         }
@@ -79,6 +72,14 @@ public class AppState
     {
         get
         {
+            // First check temp override
+            if(tempTimeLimit is not null)
+            {
+                if(tempTimeLimit == -1) return null;
+                return tempTimeLimit - Store.usedTime;
+            }
+
+            // Otherwise calculate time limit including bedtime
             var realtime = RealTimeLimit;
             var bedtime = TimeUntilBedtime;
             if(realtime is null) return null;
