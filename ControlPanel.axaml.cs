@@ -20,16 +20,17 @@ public partial class ControlPanel : Window
 
     public ControlPanel() : this(null)
     {
+        
+    }
+    public ControlPanel(string? soleTab)
+    {
+        /// Create an instance of ControlPanel where only one tab is available
         SetFields();
         InitializeComponent();
         DataContext = this;
 
         // Events
         State.Current.Changed += OnChanged;
-    }
-    public ControlPanel(string? soleTab)
-    {
-        /// Create an instance of ControlPanel where only one tab is available
         
         if(soleTab is not null)
         {
@@ -38,7 +39,8 @@ public partial class ControlPanel : Window
             TabSystem.IsEnabled = false;
             var tab = this.FindControl<TabItem>(soleTab)
                       ?? throw new Exception("soleTab must exist");
-            tabControl.TabIndex = tab.TabIndex;
+            tabControl.SelectedItem = tab;
+            tab.IsEnabled = true;
         }
     }
     private void OnChanged()
@@ -106,8 +108,9 @@ public partial class ControlPanel : Window
             }
         }
     }
-    public async Task<bool> SetAutoStart(bool enable)
+    public async Task<bool> SetAutoStart(bool enable, Window? owner = null)
     {
+        owner ??= this;
         var confirm = new ConfirmDialog(
             enable?
                 "AutoLogout will start automatically on any user accounts that have set up a parent password. Continue?"
@@ -115,7 +118,7 @@ public partial class ControlPanel : Window
                 "This will prevent AutoLogout from auto-starting on all user accounts on this machine. Continue?",
             "Start automatically on login"
         );
-        await confirm.ShowDialog(this);
+        await confirm.ShowDialog(owner);
         if(confirm.Result ?? false)
         {
             return await OS.Current.RelaunchAsAdmin(enable? "--register": "--unregister");
@@ -126,10 +129,11 @@ public partial class ControlPanel : Window
     {
         await ChangePassword();
     }
-    public async Task<bool> ChangePassword()
+    public async Task<bool> ChangePassword(Window? owner = null)
     {
+        owner ??= this;
         var prompt = new PromptDialog("Enter a new parent password.", "Change parent password", true);
-        await prompt.ShowDialog(this);
+        await prompt.ShowDialog(owner);
         var result = prompt.Result;
         if(result is not null)
         {
@@ -137,13 +141,13 @@ public partial class ControlPanel : Window
             {
                 await State.Current.NewPassword(result);
                 var alert = new AlertDialog("Parent password updated!", "Success");
-                await alert.ShowDialog(this);
+                await alert.ShowDialog(owner);
                 return true;
             }
             else
             {
                 var alert = new AlertDialog("Parent password must not be empty!", "Error");
-                await alert.ShowDialog(this);
+                await alert.ShowDialog(owner);
             }
         }
         return false;
