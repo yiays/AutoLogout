@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
@@ -17,7 +18,7 @@ public partial class ControlPanel : Window
     public bool AutoStart { get => OS.Current.AutoStart; }
     public Bitmap? QRCode { get; set; }
 
-    public ControlPanel()
+    public ControlPanel() : this(null)
     {
         SetFields();
         InitializeComponent();
@@ -26,9 +27,23 @@ public partial class ControlPanel : Window
         // Events
         State.Current.Changed += OnChanged;
     }
+    public ControlPanel(string? soleTab)
+    {
+        /// Create an instance of ControlPanel where only one tab is available
+        
+        if(soleTab is not null)
+        {
+            TabLimits.IsEnabled = false;
+            TabSync.IsEnabled = false;
+            TabSystem.IsEnabled = false;
+            var tab = this.FindControl<TabItem>(soleTab)
+                      ?? throw new Exception("soleTab must exist");
+            tabControl.TabIndex = tab.TabIndex;
+        }
+    }
     private void OnChanged()
     {
-        // Discard current settings if new settings come in remotely
+        /// Discard current settings if new settings come in remotely
         if (State.Current.Store.syncAuthor.HasValue is true)
         {
             SetFields();
@@ -45,7 +60,7 @@ public partial class ControlPanel : Window
         Waketime = State.Current.Store.waketime.ToTimeSpan();
     }
 
-    private void AuthButton_Click(object sender, RoutedEventArgs e)
+    private void AuthButton_Click(object? sender, RoutedEventArgs e)
     {
         //TODO: perform first API sync before showing QR code
 
@@ -63,7 +78,7 @@ public partial class ControlPanel : Window
         // Switch to the hidden tab
         tabControl.SelectedIndex = 3;
     }
-    private async void DeauthButton_Click(object sender, RoutedEventArgs e)
+    private async void DeauthButton_Click(object? sender, RoutedEventArgs e)
     {
         var confirm = new ConfirmDialog(
             "This will sign out all AutoLogout Manager instances and disable syncing. Continue?",
@@ -75,32 +90,15 @@ public partial class ControlPanel : Window
             //TODO: delete API account and disable syncing
         }
     }
-    private async void AutoStart_Checked(object sender, RoutedEventArgs e)
+    private async void AutoStart_Checked(object? sender, RoutedEventArgs e)
     {
         if(sender is CheckBox checkBox)
         {
             var enable = checkBox.IsChecked ?? false;
             if(enable == AutoStart) return; // Nothing will be changed
 
-            var confirm = new ConfirmDialog(
-                enable?
-                    "AutoLogout will start automatically on any user accounts that have set up a parent password. Continue?"
-                :
-                    "This will prevent AutoLogout from auto-starting on all user accounts on this machine. Continue?",
-                "Start automatically on login"
-            );
-            await confirm.ShowDialog(this);
-            if(confirm.Result ?? false)
-            {
-                var success = await OS.Current.RelaunchAsAdmin(enable? "--register": "--unregister");
-                if (!success)
-                {
-                    // Revert checkbox state
-                    checkBox.IsChecked = !enable;
-                    checkBox.InvalidateVisual();
-                }
-            }
-            else
+            var result = await SetAutoStart(enable);
+            if (!result)
             {
                 // Revert checkbox state
                 checkBox.IsChecked = !enable;
@@ -108,7 +106,27 @@ public partial class ControlPanel : Window
             }
         }
     }
-    private async void ChangePassword_Click(object sender, RoutedEventArgs e)
+    public async Task<bool> SetAutoStart(bool enable)
+    {
+        var confirm = new ConfirmDialog(
+            enable?
+                "AutoLogout will start automatically on any user accounts that have set up a parent password. Continue?"
+            :
+                "This will prevent AutoLogout from auto-starting on all user accounts on this machine. Continue?",
+            "Start automatically on login"
+        );
+        await confirm.ShowDialog(this);
+        if(confirm.Result ?? false)
+        {
+            return await OS.Current.RelaunchAsAdmin(enable? "--register": "--unregister");
+        }
+        return false;
+    }
+    private async void ChangePassword_Click(object? sender, RoutedEventArgs e)
+    {
+        await ChangePassword();
+    }
+    public async Task<bool> ChangePassword()
     {
         var prompt = new PromptDialog("Enter a new parent password.", "Change parent password", true);
         await prompt.ShowDialog(this);
@@ -120,6 +138,7 @@ public partial class ControlPanel : Window
                 await State.Current.NewPassword(result);
                 var alert = new AlertDialog("Parent password updated!", "Success");
                 await alert.ShowDialog(this);
+                return true;
             }
             else
             {
@@ -127,8 +146,9 @@ public partial class ControlPanel : Window
                 await alert.ShowDialog(this);
             }
         }
+        return false;
     }
-    private async void RemoveControls_Click(object sender, RoutedEventArgs e)
+    private async void RemoveControls_Click(object? sender, RoutedEventArgs e)
     {
         var confirm = new ConfirmDialog("This will disable AutoLogout entirely for this account. Continue?", "Remove AutoLogout from this account");
         await confirm.ShowDialog(this);
@@ -141,7 +161,7 @@ public partial class ControlPanel : Window
             Close();
         }
     }
-    private void SaveButton_Click(object sender, RoutedEventArgs e)
+    private void SaveButton_Click(object? sender, RoutedEventArgs e)
     {
         State.Current.Store.Update(new DeltaState
         {
@@ -153,7 +173,7 @@ public partial class ControlPanel : Window
         OS.Current.SaveState();
         Close();
     }
-    private void CancelButton_Click(object sender, RoutedEventArgs e)
+    private void CancelButton_Click(object? sender, RoutedEventArgs e)
     {
         Close();
     }

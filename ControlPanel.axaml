@@ -21,7 +21,7 @@
                     <Setter Property="IsVisible" Value="False"/>
                 </Style>
             </TabControl.Styles>
-            <TabItem Header="Limits">
+            <TabItem x:Name="TabLimits" Header="Limits">
                 <StackPanel Spacing="5">
                     <TextBlock TextWrapping="Wrap">
                         You can change time limits and downtime for this account here.
@@ -61,7 +61,7 @@
                     </GroupBox>
                 </StackPanel>
             </TabItem>
-            <TabItem Header="Sync">
+            <TabItem x:Name="TabSync" Header="Sync">
                 <StackPanel Spacing="5">
                     <Border>
                         <Border.Background>
@@ -93,7 +93,7 @@
                     <Button x:Name="DeauthButton" IsEnabled="False" Content="Disconnect all devices" Click="DeauthButton_Click"/>
                 </StackPanel>
             </TabItem>
-            <TabItem Header="System">
+            <TabItem x:Name="TabSystem" Header="System">
                 <StackPanel Spacing="5">
                     <TextBlock TextWrapping="Wrap" Margin="0,0,0,10">
                         These settings require Administrator permissions to change.
