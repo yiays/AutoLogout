@@ -9,15 +9,9 @@ public partial class AlertDialog : Window
     public string Text {get; set;}
     public string Caption {get; set;}
 
-    public AlertDialog()
+    public AlertDialog() : this("Unset", "Unset")
     {
-        Text = "Unset";
-        Caption = "Unset";
-        InitializeComponent();
-        DataContext = this;
-
-        ConfirmButton.AttachedToVisualTree += (s,e) => ConfirmButton.Focus();
-        Activated += (s,e) => Console.Beep();
+        
     }
     public AlertDialog(string text, string caption)
     {

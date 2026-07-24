@@ -9,14 +9,9 @@ public partial class ConfirmDialog : Window
     public string Text {get; set;}
     public string Caption {get; set;}
 
-    public ConfirmDialog()
+    public ConfirmDialog() : this("Unset", "Unset")
     {
-        Text = "Unset";
-        Caption = "Unset";
-        InitializeComponent();
-        DataContext = this;
-
-        ConfirmButton.AttachedToVisualTree += (s,e) => ConfirmButton.Focus();
+        
     }
     public ConfirmDialog(string text, string caption)
     {
