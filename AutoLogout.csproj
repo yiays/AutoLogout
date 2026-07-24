@@ -4,7 +4,7 @@
     <TargetFrameworks>net10.0;net10.0-windows10.0.19041.0</TargetFrameworks>
     <WindowsPackageType>None</WindowsPackageType> 
     <Nullable>enable</Nullable>
-    <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\icon-colour.ico</ApplicationIcon>
 
     <!-- Avalonia configuration -->
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
