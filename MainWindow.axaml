@@ -3,6 +3,7 @@
         xmlns:local="clr-namespace:AutoLogout"
         x:Class="AutoLogout.MainWindow"
         x:DataType="local:MainWindow"
+        Loaded="Window_Loaded"
         Title="AutoLogout"
         Icon="{DynamicResource ThemeAwareIcon}"
         WindowStartupLocation="Manual"

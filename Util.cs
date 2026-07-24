@@ -18,3 +18,10 @@ public sealed class ThemeVariantObserver : IObserver<ThemeVariant>
 
     public void OnNext(ThemeVariant value) => _onNext(value);
 }
+
+public class ConditionalValue<T>(Func<bool> condition, T value)
+{
+  public Func<bool> Condition { get; set; } = condition;
+  public T Value { get; set; } = value;
+  public bool Cleared = false;
+}

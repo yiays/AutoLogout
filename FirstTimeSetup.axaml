@@ -1,0 +1,139 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:AutoLogout"
+        x:Class="AutoLogout.FirstTimeSetup"
+        x:DataType="local:FirstTimeSetup"
+        Title="About AutoLogout"
+        Icon="{DynamicResource ThemeAwareIcon}"
+        CanResize="False"
+        Width="500"
+        WindowStartupLocation="CenterScreen"
+        SizeToContent="Height">
+
+    <StackPanel Spacing="10" Margin="5">
+        <Image Source="avares://AutoLogout/Resources/feature-graphic-desktop.jpg" Width="500" Margin="-5" />
+        <TabControl x:Name="tabControl" Height="300" SelectedIndex="0">
+            <TabControl.Styles>
+                <Style Selector="TabItem">
+                    <Setter Property="FontSize" Value="20"/>
+                </Style>
+                <!-- Hides only the visual header button for this class -->
+                <Style Selector="TabItem.hidden-tab">
+                    <Setter Property="IsVisible" Value="False"/>
+                </Style>
+            </TabControl.Styles>
+            <TabItem Header="Welcome">
+                <StackPanel Spacing="10">
+                    <TextBlock TextWrapping="Wrap">
+                        Welcome to AutoLogout!
+                        This program can help you enforce screen time and downtime rules on computers.
+                    </TextBlock>
+                    <Button Content="Find out more about AutoLogout" Click="AboutButton_Click" />
+                    <TextBlock TextWrapping="Wrap">
+                        It appears that AutoLogout hasn't been configured for this account.
+                    </TextBlock>
+                    <TextBlock FontStyle="Italic">
+                        Should this account be supervised or unsupervised?
+                    </TextBlock>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="24">
+                        <Button Width="150" Height="72" Click="NextButton_Click" ToolTip.Tip="This account will track usage, and could have time limits or downtime.">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <PathIcon Data="{StaticResource ShieldIcon}" Width="24" Height="24" />
+                                <TextBlock>Supervised</TextBlock>
+                            </StackPanel>
+                        </Button>
+                        <Button Width="150" Height="72" Click="UnsupervisedButton_Click" ToolTip.Tip="This account will not be monitored or have limits. AutoLogout will not run.">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <PathIcon Data="{StaticResource AnonIcon}" Width="24" Height="24" />
+                                <TextBlock>Unsupervised</TextBlock>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    <TextBlock FontSize="12">
+                        Hover over each button for details on what this means.
+                    </TextBlock>
+                </StackPanel>
+            </TabItem>
+            <TabItem x:Name="TabPassword" Header="Password" Classes="hidden-tab">
+                <StackPanel Spacing="10">
+                    <TextBlock TextWrapping="Wrap">
+                        You must set a "parent password" to protect the limits you set from being changed.
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap">
+                        The parent password is unique to this account, do take care to remember it,
+                        because if you forget it you would have to reinstall AutoLogout.
+                    </TextBlock>
+                    <Button Click="ChangePasswordButton_Click" Background="#eee" Foreground="Black">
+                        Set a parent password
+                    </Button>
+                </StackPanel>
+            </TabItem>
+            <TabItem x:Name="TabAutoStart" Header="Startup" Classes="hidden-tab">
+                <StackPanel Spacing="10">
+                    <TextBlock TextWrapping="Wrap">
+                        AutoLogout isn't currently configured to start on boot.
+                        This means you would need to open AutoLogout manually every time you want supervision to be active.
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap">
+                        If you would like to change this, click below.
+                    </TextBlock>
+                    <Button HorizontalAlignment="Center" Click="AutoStartButton_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <PathIcon Data="{StaticResource ShieldIcon}" Width="16" Height="16" Foreground="#f5b737" />
+                            <TextBlock Text="Start automatically on login" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <TextBlock FontSize="12">
+                        Administrator privileges are required to change AutoStart. You can change this later in Settings.
+                    </TextBlock>
+                    <Button Click="NextButton_Click" HorizontalAlignment="Right">Skip this for now</Button>
+                </StackPanel>
+            </TabItem>
+            <TabItem x:Name="TabLimits" Header="Limits" Classes="hidden-tab">
+                <StackPanel Spacing="10">
+                    <TextBlock TextWrapping="Wrap">
+                        By default, there is no time limit or downtime. This means AutoLogout will only track used time.
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap">
+                        If you would like to change this, change the "Daily Time limit", "Downtime start" and "Downtime end" in settings.
+                    </TextBlock>
+                    <Button Click="LimitsButton_Click" HorizontalAlignment="Center" Background="#2199d8" Foreground="White">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <PathIcon Data="{StaticResource SettingsIcon}" Width="16" Height="16" />
+                            <TextBlock Text="Limits Settings" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <TextBlock FontSize="12" TextWrapping="Wrap">
+                        If "Downtime start" and "Downtime end" are the same, Downtime is disabled.
+                    </TextBlock>
+                    <Button Click="NextButton_Click" HorizontalAlignment="Right">Skip this for now</Button>
+                </StackPanel>
+            </TabItem>
+            <TabItem x:Name="TabSync" Header="Sync" Classes="hidden-tab">
+                <StackPanel Spacing="10">
+                    <TextBlock TextWrapping="Wrap">
+                        You can connect your phone to AutoLogout to check usage and change limits from anywhere.
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap">
+                        To connect your phone, click "Connect AutoLogout to my Phone" in settings.
+                    </TextBlock>
+                    <Button Click="SyncButton_Click" HorizontalAlignment="Center" Background="#2199d8" Foreground="White">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <PathIcon Data="{StaticResource SettingsIcon}" Width="16" Height="16" />
+                            <TextBlock Text="Sync Settings" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Click="NextButton_Click" HorizontalAlignment="Right">Skip this for now</Button>
+                </StackPanel>
+            </TabItem>
+            <TabItem x:Name="TabDone" Classes="hidden-tab">
+                <StackPanel Spacing="10">
+                    <TextBlock TextWrapping="Wrap">
+                        You're done! Once this window is closed, the timer will start counting for this account.
+                    </TextBlock>
+                    <Button Click="FinishButton_Click" Content="Finish first time setup" />
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </StackPanel>
+</Window>

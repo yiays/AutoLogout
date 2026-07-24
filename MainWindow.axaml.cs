@@ -21,7 +21,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         Reposition();
-        
+
         // System events
         ScalingChanged += (o, e) => Reposition();
         Screens.Changed += (o, e) => Reposition();
@@ -33,10 +33,23 @@ public partial class MainWindow : Window
         Timer.Start();
         State.Current.Changed += OnChanged;
     }
+    private async void Window_Loaded(object? sender, RoutedEventArgs e)
+    {
+        if (State.Current.Intent == UserIntent.Setup)
+        {
+            // We are in setup mode, immediately open FirstTimeSetup
+            var setup = new FirstTimeSetup();
+            await setup.ShowDialog(this);
+
+            // After setup is done, we're either running the timer or exiting
+            if (State.Current.Intent == UserIntent.Exit)
+                Close();
+        }
+    }
 
     private void OnChanged()
     {
-        if(State.Current.Paused)
+        if (State.Current.Paused)
         {
             PauseButtonText.Text = "Resume";
             PauseButtonIcon.IsVisible = false;
@@ -53,15 +66,17 @@ public partial class MainWindow : Window
             LabelTimer.Opacity = 1;
             Topmost = false;
             OS.Current.UnMute();
-            if(State.Current.RemainingTime is null)
+            if (State.Current.RemainingTime is null)
             {
                 LabelTimer.Text = "Unlimited";
-            }else{
+            }
+            else
+            {
                 var timeSpan = TimeSpan.FromSeconds((int)State.Current.RemainingTime);
                 LabelTimer.Text = string.Format("{0:D2}:{1:D2}.{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
-            
+
                 // Notify the user when time drops drastically because of downtime or resuming
-                if(lastRemainingTime > 0 && lastRemainingTime - State.Current.RemainingTime > 60)
+                if (lastRemainingTime > 0 && lastRemainingTime - State.Current.RemainingTime > 60)
                 {
                     OS.Current.Notify(
                         "Time limit warning",
@@ -70,7 +85,7 @@ public partial class MainWindow : Window
                 }
                 lastRemainingTime = State.Current.RemainingTime;
             }
-            if(State.Current.RemainingTime == 600)
+            if (State.Current.RemainingTime == 600)
             {
                 OS.Current.Notify(
                     "Time limit warning",
@@ -78,7 +93,7 @@ public partial class MainWindow : Window
                 );
                 _ = player.Play("Resources/alarm.wav");
             }
-            else if(State.Current.RemainingTime == 30 && State.Current.Intent != UserIntent.Grace)
+            else if (State.Current.RemainingTime == 30 && State.Current.Intent != UserIntent.Grace)
             {
                 var alert = new AlertDialog(
                     "Your time is up in 30 seconds!",
@@ -87,14 +102,14 @@ public partial class MainWindow : Window
                 _ = alert.ShowDialog(this);
                 State.Current.Intent = UserIntent.Grace;
             }
-            else if(State.Current.RemainingTime <= 0)
+            else if (State.Current.RemainingTime <= 0)
             {
                 // User is out of time
                 var pastBedtime = State.Current.TimeUntilBedtime is not null && State.Current.TimeUntilBedtime <= 0;
-                if(State.Current.Intent != UserIntent.Grace)
+                if (State.Current.Intent != UserIntent.Grace)
                 {
                     var alert = new AlertDialog(
-                        pastBedtime?
+                        pastBedtime ?
                             "It's past your bedtime! Shutting down in 30 seconds."
                         :
                             "You're out of time for today! Logging out in 30 seconds.",
@@ -106,7 +121,7 @@ public partial class MainWindow : Window
                 }
                 else
                 {
-                    if(pastBedtime)
+                    if (pastBedtime)
                         Shutdown();
                     else
                         Logoff();
@@ -120,19 +135,25 @@ public partial class MainWindow : Window
                 "Time limit changed",
                 "Your time limit rules have been changed remotely."
             );
+            // Shut down / sign out warnings should be reset after limits are changed
+            State.Current.tempTimeLimit = null;
+            if(State.Current.Intent == UserIntent.Grace)
+                State.Current.Intent = UserIntent.None;
+
             State.Current.Store.syncAuthor = null;
         }
     }
     private void Timer_Tick(object? sender, EventArgs e)
     {
+        // Show the timer flashing when paused
         if (State.Current.Paused)
         {
             OS.Current.Mute();
-            LabelTimer.Opacity = LabelTimer.Opacity == 1? 0: 1;
+            LabelTimer.Opacity = LabelTimer.Opacity == 1 ? 0 : 1;
             LabelTimer.InvalidateVisual();
         }
     }
-    
+
     private void Reposition()
     {
         if (Screens.All.Count > 0)
@@ -146,16 +167,16 @@ public partial class MainWindow : Window
 
     private void SessionSwitch(object? sender, SessionSwitchEventArgs e)
     {
-        if(e.Type == SessionSwitchType.Lock)
+        if (e.Type == SessionSwitchType.Lock)
         {
-            if(!State.Current.Paused) State.Current.TogglePause();
+            if (!State.Current.Paused) State.Current.TogglePause();
             Timer.Stop();
             OS.Current.UnMute();
         }
-        else if(e.Type == SessionSwitchType.Unlock)
+        else if (e.Type == SessionSwitchType.Unlock)
         {
             Timer.Start();
-            if(State.Current.Paused) OS.Current.Mute();
+            if (State.Current.Paused) OS.Current.Mute();
         }
     }
 
@@ -174,12 +195,13 @@ public partial class MainWindow : Window
             "Enter the parent password to continue", "AutoLogout Settings", true
         );
         await prompt.ShowDialog(this);
-        if(prompt.Result is not null)
+        if (prompt.Result is not null)
             AuthenticateSettings_Callback(prompt.Result);
     }
     public async void AuthenticateSettings_Callback(string password)
     {
-        if(!State.Current.CheckPassword(password)) {
+        if (!State.Current.CheckPassword(password))
+        {
             var alert = new AlertDialog("The parent password you provided is incorrect.", "ControlPanel");
             _ = alert.ShowDialog(this);
             return;
@@ -193,15 +215,15 @@ public partial class MainWindow : Window
         await controlPanel.ShowDialog(this);
 
         // When ControlPanel closes revert Intent, unless ControlPanel requested immediate exit
-        if(State.Current.Intent == UserIntent.Exit)
+        if (State.Current.Intent == UserIntent.Exit)
             Close();
-        else if(_lastIntent == UserIntent.Grace)
+        else if (_lastIntent == UserIntent.Grace)
         {
             // Shut down / sign out warnings should be reset after the parent has opened settings
             State.Current.tempTimeLimit = null;
             State.Current.Intent = UserIntent.None;
         }
-        else if(_lastIntent is not null)
+        else if (_lastIntent is not null)
         {
             State.Current.Intent = (UserIntent)_lastIntent;
         }

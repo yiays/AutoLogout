@@ -116,8 +116,11 @@ public class AppState
 
         if(Store.uuid == Guid.Empty)
         {
-            Intent = UserIntent.Setup; //TODO: handle this elsewhere
             Store.uuid = Guid.NewGuid();
+        }
+        if(Store.hashedPassword.Length == 0)
+        {
+            Intent = UserIntent.Setup;
         }
     }
 
