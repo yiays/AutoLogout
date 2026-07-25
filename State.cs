@@ -1,10 +1,12 @@
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using BC = BCrypt.Net;
 
 namespace AutoLogout;
 
-public enum UserIntent { None, Setup, Parent, Grace, Exit };
+public enum UserIntent { None, Setup, Parent, Grace, Exit }
+public enum UpdateUrgency { None = 0, Feature = 1, Critical = 2 }
 
 public class DeltaState
 {
@@ -57,9 +59,35 @@ public class AppState
     /// </summary>
     private readonly UserIntent[] AuthIntents = [UserIntent.Parent, UserIntent.Setup];
     public event Action? Changed;
+    public event Action? UpdateAvailable; //TODO: add update banners to FirstTimeSetup and ControlPanel
     public SyncedState Store = new();
     public UserIntent Intent = UserIntent.None;
     public bool Paused = false;
+    public string Version { get {
+            var result = Assembly.GetEntryAssembly()
+                ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                ?.InformationalVersion ?? "0.0.0";
+            if(result.IndexOf('+')>0)
+                result = result[..result.IndexOf('+')];
+            return result;
+        } }
+    public UpdateUrgency Update { get; set {
+            // Only higher values can be set
+            if(value > field) {
+                field = value;
+                UpdateAvailable?.Invoke();
+            }
+        } } = UpdateUrgency.None;
+    public string? UpdateName;
+    public string UpdateUrl
+    {
+#if DEBUG
+        get => field + "#preview";
+#else
+        get => field + "#stable";
+#endif
+        set;
+    } = "https://autologout.yiays.com/download/";
     public int? tempTimeLimit = null; // This stores temporary overrides to the time limit. Takes priority over bedtime
     public int? RemainingTime
     {

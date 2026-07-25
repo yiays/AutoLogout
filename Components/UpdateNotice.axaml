@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:AutoLogout"
+             x:Class="AutoLogout.UpdateNotice"
+             x:DataType="local:UpdateNotice">
+
+    <Border x:Name="Notice" IsVisible="{Binding UpdateAvailable}" Padding="5" Background="#e5a84f">
+        <Grid ColumnDefinitions="*,*">
+            <TextBlock x:Name="UpdateNoticeText" IsVisible="False" FontWeight="600" Foreground="White">
+                An update is available.
+            </TextBlock>
+            <TextBlock x:Name="UrgentUpdateNoticeText" IsVisible="False" FontWeight="600" Foreground="White" TextWrapping="Wrap">
+                You need to update to keep online features working.
+            </TextBlock>
+            <HyperlinkButton NavigateUri="{Binding UpdateUrl}" Grid.Column="1" HorizontalAlignment="Right" Foreground="#ddf" Padding="0">
+                Learn more
+            </HyperlinkButton>
+        </Grid>
+    </Border>
+</UserControl>

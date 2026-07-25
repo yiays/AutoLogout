@@ -18,6 +18,7 @@ public interface IOS
     public Task<SyncedState> LoadState();
     public Task SaveState();
     public Task ClearState();
+    //TODO: Chime
     public void Mute();
     public void UnMute();
     public void Relaunch(string args);

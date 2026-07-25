@@ -100,7 +100,7 @@ namespace AutoLogout
         }
         public struct UpdateCheckResult
         {
-            public string latest { get; set; }
+            public string version { get; set; }
         }
 
         private async Task<ApiResult<T>> ApiCall<T>(
@@ -269,7 +269,7 @@ namespace AutoLogout
             var apiResult = await ApiCall<UpdateCheckResult>("update", HttpMethod.Get, null, null);
             if(apiResult.success)
                 return apiResult.result;
-            else return new UpdateCheckResult { latest = "0.0.0" };
+            else return new UpdateCheckResult { version = "0.0.0" };
         }
     }
 

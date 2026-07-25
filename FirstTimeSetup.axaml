@@ -12,7 +12,10 @@
 
     <StackPanel Spacing="10" Margin="5">
         <Image Source="avares://AutoLogout/Resources/feature-graphic-desktop.jpg" Width="500" Margin="-5" />
-        <TabControl x:Name="tabControl" Height="300" SelectedIndex="0">
+        
+        <local:UpdateNotice Margin="-5"/>
+        
+        <TabControl x:Name="tabControl" Height="300" Margin="0,-10,0,0" SelectedIndex="0">
             <TabControl.Styles>
                 <Style Selector="TabItem">
                     <Setter Property="FontSize" Value="20"/>

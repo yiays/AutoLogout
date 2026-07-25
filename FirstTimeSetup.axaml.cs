@@ -119,16 +119,16 @@ public partial class FirstTimeSetup : Window
         }
         else if (!setupComplete)
         {
+            e.Cancel = true;
             var confirm = new ConfirmDialog("You haven't completed setup, AutoLogout will not run on this account. Continue?", "AutoLogout");
             await confirm.ShowDialog(this);
-            if(confirm.Result != true)
-                e.Cancel = true;
-            else
+            if (confirm.Result ?? false)
             {
                 // AutoLogout will close, ensure the parent password isn't set as this is the setup flag
                 State.Current.Store.hashedPassword = "";
                 await OS.Current.SaveState();
                 State.Current.Intent = UserIntent.Exit;
+                Close();
             }
         }
         else

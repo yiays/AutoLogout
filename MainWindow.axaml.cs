@@ -2,8 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-using System;
 using NetCoreAudio;
+using Semver;
+using System;
 
 namespace AutoLogout;
 
@@ -32,9 +33,13 @@ public partial class MainWindow : Window
         Timer.Tick += Timer_Tick;
         Timer.Start();
         State.Current.Changed += OnChanged;
+        State.Current.UpdateAvailable += OnUpdateAvailable;
     }
     private async void Window_Loaded(object? sender, RoutedEventArgs e)
     {
+        // Fire and forget update check
+        CheckUpdate();
+
         // Show FirstTimeSetup as early as possible if needed
         if (State.Current.Intent == UserIntent.Setup)
         {
@@ -50,9 +55,7 @@ public partial class MainWindow : Window
         // Set up sync if needed
         if (State.Current.Store.Online)
             API.Current.syncTimer.Start();
-
     }
-
     private void OnChanged()
     {
         if (State.Current.Paused)
@@ -181,6 +184,35 @@ public partial class MainWindow : Window
         {
             Timer.Start();
             if (State.Current.Paused) OS.Current.Mute();
+        }
+    }
+    private async void CheckUpdate()
+    {
+        // Check for updates
+        var result = await API.Current.UpdateCheck();
+        var latest = SemVersion.Parse(result.version);
+        var current = SemVersion.Parse(State.Current.Version);
+        var precedence = latest.ComparePrecedenceTo(current);
+        if(precedence == 1)
+        {
+            Console.WriteLine($"AutoLogout update available! Installed: {State.Current.Version}, Available: {result.version}");
+            State.Current.Update = UpdateUrgency.Feature;
+            State.Current.UpdateName = result.version;
+        }
+        else if(precedence == 0)
+            Console.WriteLine("AutoLogout is up to date.");
+        else
+            Console.WriteLine("This appears to be an AutoLogout build from the future.");
+    }
+    private async void OnUpdateAvailable()
+    {
+        if(State.Current.Update == UpdateUrgency.Critical) {
+            var alert = new AlertDialog(
+                "An AutoLogout update may be required in order for online features to continue working. " +
+                "The parent/supervisor can find out how to update in Settings.",
+                "AutoLogout update checker"
+            );
+            await alert.ShowDialog(this);
         }
     }
 
