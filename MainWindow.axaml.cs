@@ -35,6 +35,7 @@ public partial class MainWindow : Window
     }
     private async void Window_Loaded(object? sender, RoutedEventArgs e)
     {
+        // Show FirstTimeSetup as early as possible if needed
         if (State.Current.Intent == UserIntent.Setup)
         {
             // We are in setup mode, immediately open FirstTimeSetup
@@ -45,6 +46,11 @@ public partial class MainWindow : Window
             if (State.Current.Intent == UserIntent.Exit)
                 Close();
         }
+
+        // Set up sync if needed
+        if (State.Current.Store.Online)
+            API.Current.syncTimer.Start();
+
     }
 
     private void OnChanged()
@@ -153,7 +159,6 @@ public partial class MainWindow : Window
             LabelTimer.InvalidateVisual();
         }
     }
-
     private void Reposition()
     {
         if (Screens.All.Count > 0)
@@ -164,7 +169,6 @@ public partial class MainWindow : Window
             Position = new PixelPoint(primary.WorkingArea.Right - width, primary.WorkingArea.Bottom - height);
         }
     }
-
     private void SessionSwitch(object? sender, SessionSwitchEventArgs e)
     {
         if (e.Type == SessionSwitchType.Lock)

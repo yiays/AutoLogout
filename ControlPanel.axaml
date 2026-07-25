@@ -90,7 +90,7 @@
                             <TextBlock Text="Connect AutoLogout to your phone" />
                         </StackPanel>
                     </Button>
-                    <Button x:Name="DeauthButton" IsEnabled="False" Content="Disconnect all devices" Click="DeauthButton_Click"/>
+                    <Button x:Name="DeauthButton" IsEnabled="{Binding Online}" Content="Disconnect all devices" Click="DeauthButton_Click"/>
                 </StackPanel>
             </TabItem>
             <TabItem x:Name="TabSystem" Header="System">
@@ -104,7 +104,7 @@
                     </Button>
                 </StackPanel>
             </TabItem>
-            <TabItem Classes="hidden-tab">
+            <TabItem x:Name="TabQR" Classes="hidden-tab">
                 <StackPanel Spacing="5">
                     <TextBlock TextWrapping="Wrap">
                         Scan the QR code below to manage this account with your phone.

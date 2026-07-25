@@ -11,14 +11,15 @@ public class DeltaState
     /// <summary>
     /// Contains all state which can be changed externally (from syncing or ControlPanel)
     /// </summary>
-    public Guid? uuid;
-    public int? dailyTimeLimit;
-    public int? todayTimeLimit;
-    public int? usedTime;
-    public DateOnly? usageDate;
-    public TimeOnly? bedtime;
-    public TimeOnly? waketime;
-    public Guid? syncAuthor;
+    public Guid? authKey { get; set; }
+    public Guid? uuid { get; set; }
+    public int? dailyTimeLimit { get; set; }
+    public int? todayTimeLimit { get; set; }
+    public int? usedTime { get; set; }
+    public DateOnly? usageDate { get; set; }
+    public TimeOnly? bedtime { get; set; }
+    public TimeOnly? waketime { get; set; }
+    public Guid? syncAuthor { get; set; }
 }
 
 public class SyncedState : DeltaState
@@ -26,7 +27,7 @@ public class SyncedState : DeltaState
     /// <summary>
     /// Contains all state which is stored and synced
     /// </summary>
-    public Guid authKey = Guid.Empty;
+    public new Guid authKey = Guid.Empty;
     public new Guid uuid = Guid.Empty;
     public bool Online = false;
     public string hashedPassword = "";
@@ -80,10 +81,10 @@ public class AppState
             }
 
             // Otherwise calculate time limit including bedtime
-            var realtime = RealTimeLimit;
+            int? timelimit = Store.todayTimeLimit == -1? null: Store.todayTimeLimit;
             var bedtime = TimeUntilBedtime;
-            if(realtime is null) return null;
-            var usedtime = realtime - Store.usedTime;
+            if(timelimit is null) return null;
+            var usedtime = timelimit - Store.usedTime;
             if(bedtime is null || usedtime < bedtime) return Math.Max((int)usedtime, 0);
             return Math.Max((int)bedtime, 0);
         }
@@ -144,6 +145,11 @@ public class AppState
         Store.usedTime++;
 
         // Notify that the state has changed
+        Changed?.Invoke();
+    }
+    public void AcceptDelta(DeltaState delta)
+    {
+        Store.Update(delta);
         Changed?.Invoke();
     }
     public void TogglePause()

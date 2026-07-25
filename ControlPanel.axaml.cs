@@ -16,6 +16,7 @@ public partial class ControlPanel : Window
     public TimeSpan Bedtime { get; set; }
     public TimeSpan Waketime { get; set; }
     public bool AutoStart { get => OS.Current.AutoStart; }
+    public bool Online { get => State.Current.Store.Online; }
     public Bitmap? QRCode { get; set; }
 
     public ControlPanel() : this(null)
@@ -56,16 +57,33 @@ public partial class ControlPanel : Window
     {
         var timeSpan = TimeSpan.FromSeconds(State.Current.Store.usedTime);
         UsedTime = string.Format("{0:D2}:{1:D2}.{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
-        DailyLimit = State.Current.Store.dailyTimeLimit / 60;
-        TodayLimit = State.Current.Store.todayTimeLimit / 60;
+        DailyLimit = State.Current.Store.dailyTimeLimit == -1 ? -1 : State.Current.Store.dailyTimeLimit / 60;
+        TodayLimit = State.Current.Store.todayTimeLimit == -1 ? -1 : State.Current.Store.todayTimeLimit / 60;
         Bedtime = State.Current.Store.bedtime.ToTimeSpan();
         Waketime = State.Current.Store.waketime.ToTimeSpan();
     }
 
-    private void AuthButton_Click(object? sender, RoutedEventArgs e)
+    private async void AuthButton_Click(object? sender, RoutedEventArgs e)
     {
-        //TODO: perform first API sync before showing QR code
+        if(!State.Current.Store.Online)
+        {
+            var result = await API.Current.Sync();
+            if(!result)
+            {
+                var alert = new AlertDialog(
+                    "Failed to sync! Check your network connection.",
+                    "AutoLogout Sync"
+                );
+                await alert.ShowDialog(this);
+                return;
+            }
+            State.Current.Store.Online = true;
+            API.Current.syncTimer.Start();
+            DeauthButton.IsEnabled = true;
+            await OS.Current.SaveState();
+        }
 
+        // First sync complete, users should now be able to find this account on the Manager app
         string qrContent = $"https://autologout.yiays.com/app/addAccount?uuid={State.Current.Store.uuid}";
 
         using var qrGenerator = new QRCodeGenerator();
@@ -78,7 +96,7 @@ public partial class ControlPanel : Window
         InvalidateVisual();
 
         // Switch to the hidden tab
-        tabControl.SelectedIndex = 3;
+        tabControl.SelectedItem = TabQR;
     }
     private async void DeauthButton_Click(object? sender, RoutedEventArgs e)
     {
@@ -89,7 +107,25 @@ public partial class ControlPanel : Window
         await confirm.ShowDialog(this);
         if(confirm.Result ?? false)
         {
-            //TODO: delete API account and disable syncing
+            var result = await API.Current.Deauth();
+            if(result)
+            {
+                State.Current.Store.Online = false;
+                await OS.Current.SaveState();
+                DeauthButton.IsEnabled = false;
+                
+                var alert2 = new AlertDialog(
+                    "All devices which control this account have been signed out and all online data has been deleted.",
+                    "AutoLogout Sync"
+                );
+                await alert2.ShowDialog(this);
+                return;
+            }
+            var alert = new AlertDialog(
+                "There was an error signing all devices out, please try again later.",
+                "AutoLogout Sync"
+            );
+            await alert.ShowDialog(this);
         }
     }
     private async void AutoStart_Checked(object? sender, RoutedEventArgs e)
@@ -167,10 +203,10 @@ public partial class ControlPanel : Window
     }
     private void SaveButton_Click(object? sender, RoutedEventArgs e)
     {
-        State.Current.Store.Update(new DeltaState
+        State.Current.AcceptDelta(new DeltaState
         {
-            todayTimeLimit = TodayLimit * 60,
-            dailyTimeLimit = DailyLimit * 60,
+            todayTimeLimit = TodayLimit == -1 ? -1 : TodayLimit * 60,
+            dailyTimeLimit = DailyLimit == -1 ? -1 : DailyLimit * 60,
             bedtime = TimeOnly.FromTimeSpan(Bedtime),
             waketime = TimeOnly.FromTimeSpan(Waketime),
         });
