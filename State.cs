@@ -61,14 +61,6 @@ public class AppState
     public UserIntent Intent = UserIntent.None;
     public bool Paused = false;
     public int? tempTimeLimit = null; // This stores temporary overrides to the time limit. Takes priority over bedtime
-    private int? RealTimeLimit
-    {
-        get
-        {
-            if(Store.todayTimeLimit == -1) return null;
-            return Store.todayTimeLimit;
-        }
-    }
     public int? RemainingTime
     {
         get

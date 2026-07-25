@@ -1,7 +1,10 @@
 using Avalonia.Threading;
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace AutoLogout
@@ -15,6 +18,10 @@ namespace AutoLogout
         private string Url = "https://autologout.yiays.com/api/";
 #endif
         private static readonly string API_VERSION = "3";
+        private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+        {
+            Converters = { new DateOnlyWithOffsetJsonConverter() }
+        };
         private readonly HttpClient httpClient = new()
         {
             Timeout = TimeSpan.FromSeconds(10),
@@ -54,6 +61,37 @@ namespace AutoLogout
             public bool accepted { get; set; }
             public string? error { get; set; }
             public DeltaState? delta { get; set; }
+        }
+
+        private sealed class DateOnlyWithOffsetJsonConverter : JsonConverter<DateOnly>
+        {
+            public override DateOnly Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType != JsonTokenType.String)
+                {
+                    throw new JsonException("Expected a string value for DateOnly.");
+                }
+
+                string? value = reader.GetString();
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    return default;
+                }
+
+                string datePart = value.Trim();
+                int separatorIndex = datePart.IndexOfAny(new[] { ' ', 'T' });
+                if (separatorIndex >= 0)
+                {
+                    datePart = datePart[..separatorIndex];
+                }
+
+                return DateOnly.ParseExact(datePart, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+            }
+
+            public override void Write(Utf8JsonWriter writer, DateOnly value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+            }
         }
         private struct DeauthResult
         {
@@ -118,31 +156,38 @@ namespace AutoLogout
                     string responseBody = await response.Content.ReadAsStringAsync();
                     Console.Write(responseBody);
                 }
-                return new ApiResult<T> { success = false, response = response, result = default };
+                return new ApiResult<T> { success = false, response = response };
             }
 
             if (response.IsSuccessStatusCode)
             {
                 string responseBody = await response.Content.ReadAsStringAsync();
-                T? result = System.Text.Json.JsonSerializer.Deserialize<T>(responseBody);
-                if (result == null)
-                {
-                    Console.WriteLine("Failed to deserialize api result.");
-                    return new ApiResult<T> { success = false, response = response, result = default };
+                try {
+                    T? result = JsonSerializer.Deserialize<T>(responseBody, JsonOptions);
+                    if (result == null)
+                    {
+                        Console.WriteLine("Failed to deserialize API result.");
+                        return new ApiResult<T> { success = false, response = response };
+                    }
+                    return new ApiResult<T> { success = true, response = response, result = result };
                 }
-                return new ApiResult<T> { success = true, response = response, result = result };
+                catch(JsonException e)
+                {
+                    Console.WriteLine("Error encountered deserializing API result: "+e.Message);
+                }
             }
-            return new ApiResult<T> { success = false, response = response, result = default };
+            return new ApiResult<T> { success = false, response = response };
         }
 
-        public async Task<bool> Sync()
+        public async Task<bool> Sync(Guid? syncAuthor = null)
         {
             // Convert state to JSON and share with online service
-            string timezone = TimeZoneInfo.Local.BaseUtcOffset.ToString(@"hh\:mm");
-            timezone = (TimeZoneInfo.Local.BaseUtcOffset < TimeSpan.Zero ? "-" : "+") + timezone;
-            string usageDate = State.Current.Store.usageDate.ToString(@"yyyy\-MM\-dd") + ' ' + timezone;
+            TimeSpan offset = TimeZoneInfo.Local.BaseUtcOffset;
+            string sign = offset < TimeSpan.Zero ? "-" : "+";
+            string timezone = sign + (offset < TimeSpan.Zero ? -offset : offset).ToString(@"hh\:mm");
+            string usageDate = State.Current.Store.usageDate.ToString(@"yyyy\-MM\-dd", CultureInfo.InvariantCulture) + ' ' + timezone;
 
-            string json = System.Text.Json.JsonSerializer.Serialize(new
+            string json = JsonSerializer.Serialize(new
             {
                 State.Current.Store.hashedPassword,
                 State.Current.Store.dailyTimeLimit,
@@ -151,7 +196,7 @@ namespace AutoLogout
                 usageDate,
                 State.Current.Store.bedtime,
                 State.Current.Store.waketime,
-                State.Current.Store.syncAuthor
+                syncAuthor = syncAuthor is null ? State.Current.Store.authKey : syncAuthor
             });
 
             var apiResponse = await ApiCall<SyncResult>(
@@ -195,7 +240,8 @@ namespace AutoLogout
                         Console.WriteLine("Accepting alternative State.Current.Store from server");
                         State.Current.AcceptDelta(apiResponse.result.delta);
                         await OS.Current.SaveState();
-                        return true;
+                        // Sync again with the foreign syncAuthor id to acknowledge the new state
+                        return await Sync(apiResponse.result.delta.syncAuthor);
                     }
                 }
             }
