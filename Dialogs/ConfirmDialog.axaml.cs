@@ -21,6 +21,7 @@ public partial class ConfirmDialog : Window
         DataContext = this;
 
         ConfirmButton.AttachedToVisualTree += (s,e) => ConfirmButton.Focus();
+        Loaded += (s,e) => OS.Current.Chime();
     }
 
     private void ConfirmButton_Click(object? sender, RoutedEventArgs e)

@@ -25,6 +25,7 @@ public partial class PromptDialog : Window
         DataContext = this;
 
         Activated += (s,e) => InputTextBox.Focus();
+        Loaded += (s,e) => OS.Current.Chime();
     }
 
     private void OkButton_Click(object? sender, RoutedEventArgs e)

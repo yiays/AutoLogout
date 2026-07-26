@@ -1,9 +1,10 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace AutoLogout;
 
-internal sealed class OSUnix : IOS
+internal sealed class OSMac : IOS
 {
     public event EventHandler<SessionSwitchEventArgs>? SessionSwitch;
     public void Initialize()
@@ -29,7 +30,22 @@ internal sealed class OSUnix : IOS
         //TODO
         throw new NotImplementedException();
     }
-    public void Chime() => Console.Beep();
+    // Native interop for macOS
+    [DllImport("/System/Library/Frameworks/AppKit.framework/AppKit")]
+    private static extern void NSBeep();
+    public void Chime()
+    {
+        try
+        {
+            NSBeep();
+            return;
+        }
+        catch
+        {
+            Console.WriteLine("Failed to invoke MacOS Chime");
+        }
+        Console.Beep();
+    }
     public void Mute()
     {
         //TODO

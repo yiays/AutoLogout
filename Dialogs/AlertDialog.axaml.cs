@@ -21,7 +21,7 @@ public partial class AlertDialog : Window
         DataContext = this;
 
         ConfirmButton.AttachedToVisualTree += (s,e) => ConfirmButton.Focus();
-        Loaded += (s,e) => Console.Beep();
+        Loaded += (s,e) => OS.Current.Chime();
     }
 
     private void ConfirmButton_Click(object? sender, RoutedEventArgs e)

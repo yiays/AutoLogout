@@ -18,7 +18,7 @@ public interface IOS
     public Task<SyncedState> LoadState();
     public Task SaveState();
     public Task ClearState();
-    //TODO: Chime
+    public void Chime();
     public void Mute();
     public void UnMute();
     public void Relaunch(string args);
@@ -37,6 +37,8 @@ public static class OS
     {
 #if WINDOWS
         return new OSWindows();
+#elif MACOS
+        return new OSMac();
 #else
         return new OSUnix();
 #endif

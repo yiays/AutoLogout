@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFrameworks>net10.0;net10.0-windows10.0.19041.0</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net10.0;net10.0-windows10.0.19041.0;net10.0-macos</TargetFrameworks>
     <WindowsPackageType>None</WindowsPackageType> 
     <Nullable>enable</Nullable>
     <ApplicationIcon>Resources\icon-colour.ico</ApplicationIcon>
@@ -18,6 +18,14 @@
     <Version>1.0.0</Version>
     <Description>AutoLogout helps manage device usage limits and downtime.</Description>
     <!-- <Copyright>Copyright © 2026 Yiays</Copyright> -->
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <OutputType>WinExe</OutputType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-macos'">
+    <DefineConstants>$(DefineConstants);MACOS</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -43,9 +51,12 @@
   <ItemGroup>
     <!-- Exclude Windows-only source files from non-Windows targets -->
     <Compile Remove="**\*.Windows.cs" Condition="'$(TargetFramework)' != 'net10.0-windows10.0.19041.0'" />
+    
+    <!-- Exclude MacOS-only source files from non-MacOS targets -->
+    <Compile Remove="**\*.Mac.cs" Condition="'$(TargetFramework)' != 'net10.0-macos'" />
 
-    <!-- Exclude non-Windows source files from Windows targets -->
-    <Compile Remove="**\*.Unix.cs" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'" />
+    <!-- Exclude Unix source files from non-Unix targets -->
+    <Compile Remove="**\*.Unix.cs" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0' Or '$(TargetFramework)' == 'net10.0-macos'" />
   </ItemGroup>
 
   <ItemGroup>

@@ -114,6 +114,10 @@ internal sealed class OSWindows : IOS
     {
         Registry.CurrentUser.DeleteSubKeyTree(REGKEY);
     }
+    public void Chime()
+    {
+        System.Media.SystemSounds.Exclamation.Play();
+    }
     public void Mute()
     {
         if (audioDeviceEnumerator is null)
