@@ -2,6 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net10.0;net10.0-windows10.0.19041.0;net10.0-macos</TargetFrameworks>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <WindowsPackageType>None</WindowsPackageType> 
     <Nullable>enable</Nullable>
     <ApplicationIcon>Resources\icon-colour.ico</ApplicationIcon>
@@ -63,4 +64,30 @@
     <None Include="Resources\**" CopyToOutputDirectory="PreserveNewest" />
     <AvaloniaResource Include="Resources/**" />
   </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <TrimMode>partial</TrimMode>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <SelfContained>false</SelfContained>
+    <PublishReadyToRun>false</PublishReadyToRun>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <None Update="**/*.pdb" CopyToPublishDirectory="Never" />
+    <Content Update="**/*.pdb" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <Target Name="DeleteFiles" AfterTargets="Publish">
+		<ItemGroup>
+			<FilesToDelete Include="$(PublishDir)*.pdb;"/>
+		</ItemGroup>
+		<Delete Files="@(FilesToDelete)">
+			<Output
+				TaskParameter="DeletedFiles"
+				ItemName="FilesDeleted"/>
+		</Delete>
+		<Message Text="Deleted PDB files: @(FilesDeleted)" Importance="high" />
+	</Target>
 </Project>
