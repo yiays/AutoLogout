@@ -36,7 +36,7 @@ AutoLogout is on **winget**! You can install with the following command;
 winget install Yiays.AutoLogout
 ```
 
-Alternatively, download the latest installer in [releases](releases) and follow the instructions from there.
+Alternatively, download the latest installer in [releases](https://github.com/yiays/AutoLogout/releases) and follow the instructions from there.
 
 ### Mac OS
 
