@@ -2,7 +2,6 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net10.0;net10.0-windows10.0.19041.0;net10.0-macos</TargetFrameworks>
-    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <WindowsPackageType>None</WindowsPackageType> 
     <Nullable>enable</Nullable>
     <ApplicationIcon>Resources\icon-colour.ico</ApplicationIcon>
@@ -23,6 +22,7 @@
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
     <OutputType>WinExe</OutputType>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-macos'">
