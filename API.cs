@@ -3,6 +3,8 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -18,6 +20,8 @@ namespace AutoLogout
         private string Url = "https://autologout.yiays.com/api/";
 #endif
         private static readonly string API_VERSION = "3";
+        private static readonly string UASTRING =
+            $"AutoLogoutClient/{API_VERSION} (AutoLogout {State.Current.Version}) ({RuntimeInformation.OSDescription})";
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
         {
             Converters = { new DateOnlyWithOffsetJsonConverter() }
@@ -27,7 +31,7 @@ namespace AutoLogout
             Timeout = TimeSpan.FromSeconds(10),
             DefaultRequestHeaders =
             {
-                { "User-Agent", "AutoLogoutClient/" + API_VERSION },
+                { "User-Agent", UASTRING },
                 { "Accept", "application/json" }
             }
         };
