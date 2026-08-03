@@ -3,7 +3,6 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -198,6 +197,7 @@ namespace AutoLogout
                 State.Current.Store.todayTimeLimit,
                 State.Current.Store.usedTime,
                 usageDate,
+                State.Current.Store.usage,
                 State.Current.Store.bedtime,
                 State.Current.Store.waketime,
                 syncAuthor = syncAuthor is null ? State.Current.Store.authKey : syncAuthor

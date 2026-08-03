@@ -29,6 +29,10 @@ internal sealed class OSUnix : IOS
         //TODO
         throw new NotImplementedException();
     }
+    public FocusedWindow? GetFocused()
+    {
+        return null;
+    }
     public void Chime() => Console.Beep();
     public void Mute()
     {

@@ -1,12 +1,21 @@
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using BC = BCrypt.Net;
 
 namespace AutoLogout;
 
 public enum UserIntent { None, Setup, Parent, Grace, Exit }
 public enum UpdateUrgency { None = 0, Feature = 1, Critical = 2 }
+
+public class UsageEntry
+{
+    public HashSet<string> names { get; set; } = [];
+    public float usedTime { get; set; } = 0.0F;
+}
+
+public class UsageRecord: Dictionary<DateOnly, Dictionary<string, UsageEntry>>;
 
 public class DeltaState
 {
@@ -19,6 +28,7 @@ public class DeltaState
     public int? todayTimeLimit { get; set; }
     public int? usedTime { get; set; }
     public DateOnly? usageDate { get; set; }
+    public UsageRecord? usage { get; set; }
     public TimeOnly? bedtime { get; set; }
     public TimeOnly? waketime { get; set; }
     public Guid? syncAuthor { get; set; }
@@ -37,6 +47,7 @@ public class SyncedState : DeltaState
     public new int todayTimeLimit = -1;
     public new int usedTime = 0;
     public new DateOnly usageDate = DateOnly.FromDateTime(DateTime.Today);
+    public new UsageRecord usage = [];
     public new TimeOnly bedtime = new(0, 0);
     public new TimeOnly waketime = new(0, 0);
     public new Guid? syncAuthor = null;
@@ -153,16 +164,36 @@ public class AppState
         // Also don't progress time if the userintent is in an authorized state
         if(AuthIntents.Contains(Intent)) return;
 
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
         // Reset usage time whenever a new day starts
-        if(DateOnly.FromDateTime(DateTime.Today) != Store.usageDate)
+        if(today != Store.usageDate)
         {
             Store.todayTimeLimit = Store.dailyTimeLimit;
             Store.usedTime = 0;
-            Store.usageDate = DateOnly.FromDateTime(DateTime.Today);
+            Store.usageDate = today;
         }
         
         // Count every second that the device is used
         Store.usedTime++;
+
+        // Log focused app usage if usedTime is divisible by 10
+        if(Store.usedTime % 10 == 0)
+        {
+            if(OS.Current.GetFocused() is FocusedWindow window) {
+                if(!Store.usage.ContainsKey(today)) Store.usage[today] = [];
+                if(!Store.usage[today].ContainsKey(window.exeName))
+                    Store.usage[today][window.exeName] = new UsageEntry
+                    {
+                        names = [window.windowName],
+                        usedTime = 10/60
+                    };
+                else {
+                    Store.usage[today][window.exeName].names.Add(window.windowName);
+                    Store.usage[today][window.exeName].usedTime += 10/60;
+                }
+            }
+        }
 
         // Notify that the state has changed
         Changed?.Invoke();

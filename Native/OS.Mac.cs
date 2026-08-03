@@ -30,6 +30,10 @@ internal sealed class OSMac : IOS
         //TODO
         throw new NotImplementedException();
     }
+    public FocusedWindow? GetFocused()
+    {
+        return null;
+    }
     // Native interop for macOS
     [DllImport("/System/Library/Frameworks/AppKit.framework/AppKit")]
     private static extern void NSBeep();

@@ -1,10 +1,16 @@
 using System;
 using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 using NAudio.CoreAudioApi;
+using System.Text.Json;
 
 namespace AutoLogout;
 
@@ -75,10 +81,11 @@ internal sealed class OSWindows : IOS
         RegistryKey key = Registry.CurrentUser.CreateSubKey(REGKEY, true) ??
             throw new Exception("Unable to load settings.");
 
-        string? rawAuthKey = (string?)key.GetValue("authKey", null);
-        string? rawGuid = (string?)key.GetValue("guid", null);
-        string bedtimeRaw = (string)key.GetValue("bedtime", "0:00");
-        string waketimeRaw = (string)key.GetValue("waketime", "0:00");
+        var rawAuthKey = (string?)key.GetValue("authKey", null);
+        var rawGuid = (string?)key.GetValue("guid", null);
+        var bedtimeRaw = (string)key.GetValue("bedtime", "0:00");
+        var waketimeRaw = (string)key.GetValue("waketime", "0:00");
+        var usageRaw = (string?)key.GetValue("usage", null);
 
         return new SyncedState
         {
@@ -90,6 +97,7 @@ internal sealed class OSWindows : IOS
             waketime = TimeOnly.Parse(waketimeRaw),
             dailyTimeLimit = (int)key.GetValue("dailyTimeLimit", -1),
             usageDate = DateOnly.Parse((string)key.GetValue("usageDate", "1/01/0001")),
+            usage = usageRaw is null? []: JsonSerializer.Deserialize<UsageRecord>(usageRaw) ?? [],
             todayTimeLimit = (int)key.GetValue("todayTimeLimit", -1),
             usedTime = (int)key.GetValue("usedTime", 0)
         };
@@ -107,12 +115,61 @@ internal sealed class OSWindows : IOS
         key.SetValue("dailyTimeLimit", State.Current.Store.dailyTimeLimit);
         key.SetValue("todayTimeLimit", State.Current.Store.todayTimeLimit);
         key.SetValue("usedTime", State.Current.Store.usedTime);
+        if(State.Current.Store.usage is not null)
+            key.SetValue("usage", JsonSerializer.Serialize(State.Current.Store.usage));
         key.SetValue("bedtime", State.Current.Store.bedtime);
         key.SetValue("waketime", State.Current.Store.waketime);
     }
     public async Task ClearState()
     {
         Registry.CurrentUser.DeleteSubKeyTree(REGKEY);
+    }
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+    private static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+    public FocusedWindow? GetFocused()
+    {
+        /// <summary>
+        /// Gets the window currently in focus and returns a FocusedWindow object
+        /// </summary>
+        // Get the title of the current window
+        IntPtr handle = GetForegroundWindow();
+        StringBuilder title = new StringBuilder(256);
+        if(GetWindowText(handle, title, 256) <= 0)
+        {
+            return null;
+        }
+        GetWindowThreadProcessId(handle, out uint pid);
+        if (pid <= 0) {
+            return null;
+        }
+        try {
+            Process proc = Process.GetProcessById((int)pid);
+            string? exePath = proc?.MainModule?.FileName;
+            if(exePath is null) return null;
+            Icon? appIcon = Icon.ExtractAssociatedIcon(exePath);
+            Avalonia.Media.Imaging.Bitmap? bitmap = null;
+            if(appIcon is not null) {
+                using (var memoryStream = new MemoryStream())
+                {
+                    appIcon.Save(memoryStream);
+                    memoryStream.Position = 0;
+                    bitmap = new Avalonia.Media.Imaging.Bitmap(memoryStream);
+                }
+            }
+            return new FocusedWindow {
+                exeName = exePath.Split('\\').Last(),
+                windowName = title.ToString(),
+                icon = bitmap
+            };
+        }
+        catch (Exception ex) {
+            Console.WriteLine("Error recording focused window: " + ex.Message);
+            return null;
+        }
     }
     public void Chime()
     {

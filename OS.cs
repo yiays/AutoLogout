@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Avalonia.Media.Imaging;
 
 namespace AutoLogout;
 
@@ -8,6 +9,12 @@ public enum SessionSwitchType { Lock, Unlock, Unknown };
 public class SessionSwitchEventArgs
 {
     public SessionSwitchType Type;
+}
+public class FocusedWindow
+{
+    public required string exeName;
+    public required string windowName;
+    public Bitmap? icon;
 }
 
 public interface IOS
@@ -18,6 +25,7 @@ public interface IOS
     public Task<SyncedState> LoadState();
     public Task SaveState();
     public Task ClearState();
+    public FocusedWindow? GetFocused();
     public void Chime();
     public void Mute();
     public void UnMute();
