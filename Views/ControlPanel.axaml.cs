@@ -16,7 +16,7 @@ public class UsageData
     public required string exeName { get; set; }
     public required string windowNames { get; set; }
     public required float usedTime { get; set; }
-    public string usedTimeFormatted { get => TimeSpan.FromMinutes(usedTime).ToString(@"hh\:mm"); }
+    public string usedTimeFormatted { get => TimeSpan.FromSeconds(usedTime).ToString(@"hh\:mm"); }
     public Bitmap? icon { get; set; }
 }
 

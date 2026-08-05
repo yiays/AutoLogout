@@ -14,7 +14,7 @@ public enum UpdateUrgency { None = 0, Feature = 1, Critical = 2 }
 public class UsageEntry
 {
     public HashSet<string> names { get; set; } = [];
-    public float usedTime { get; set; } = 0.0F;
+    public int usedTime { get; set; } = 0;
 }
 
 public class UsageRecord: SortedDictionary<DateOnly, Dictionary<string, UsageEntry>>;
@@ -200,11 +200,11 @@ public class AppState
                     Store.usage[today][window.exeName] = new UsageEntry
                     {
                         names = [window.windowName],
-                        usedTime = 10.0F/60.0F
+                        usedTime = 10
                     };
                 else {
                     Store.usage[today][window.exeName].names.Add(window.windowName);
-                    Store.usage[today][window.exeName].usedTime += 10.0F/60.0F;
+                    Store.usage[today][window.exeName].usedTime += 10;
                 }
             }
             OS.Current.SaveState();
