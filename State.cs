@@ -186,13 +186,14 @@ public class AppState
                     Store.usage[today][window.exeName] = new UsageEntry
                     {
                         names = [window.windowName],
-                        usedTime = 10/60
+                        usedTime = 10.0F/60.0F
                     };
                 else {
                     Store.usage[today][window.exeName].names.Add(window.windowName);
-                    Store.usage[today][window.exeName].usedTime += 10/60;
+                    Store.usage[today][window.exeName].usedTime += 10.0F/60.0F;
                 }
             }
+            OS.Current.SaveState();
         }
 
         // Notify that the state has changed
