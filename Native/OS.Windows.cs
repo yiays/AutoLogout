@@ -86,6 +86,7 @@ internal sealed class OSWindows : IOS
         var bedtimeRaw = (string)key.GetValue("bedtime", "0:00");
         var waketimeRaw = (string)key.GetValue("waketime", "0:00");
         var usageRaw = (string?)key.GetValue("usage", null);
+        var appIconsRaw = (string?)key.GetValue("appIcons", null);
 
         return new SyncedState
         {
@@ -98,6 +99,7 @@ internal sealed class OSWindows : IOS
             dailyTimeLimit = (int)key.GetValue("dailyTimeLimit", -1),
             usageDate = DateOnly.Parse((string)key.GetValue("usageDate", "1/01/0001")),
             usage = usageRaw is null? []: JsonSerializer.Deserialize<UsageRecord>(usageRaw) ?? [],
+            appIcons = appIconsRaw is null? []: JsonSerializer.Deserialize<Dictionary<string,string>>(appIconsRaw) ?? [],
             todayTimeLimit = (int)key.GetValue("todayTimeLimit", -1),
             usedTime = (int)key.GetValue("usedTime", 0)
         };
@@ -115,8 +117,8 @@ internal sealed class OSWindows : IOS
         key.SetValue("dailyTimeLimit", State.Current.Store.dailyTimeLimit);
         key.SetValue("todayTimeLimit", State.Current.Store.todayTimeLimit);
         key.SetValue("usedTime", State.Current.Store.usedTime);
-        if(State.Current.Store.usage is not null)
-            key.SetValue("usage", JsonSerializer.Serialize(State.Current.Store.usage));
+        key.SetValue("usage", JsonSerializer.Serialize(State.Current.Store.usage));
+        key.SetValue("appIcons", JsonSerializer.Serialize(State.Current.Store.appIcons));
         key.SetValue("bedtime", State.Current.Store.bedtime);
         key.SetValue("waketime", State.Current.Store.waketime);
     }

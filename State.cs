@@ -160,6 +160,16 @@ public class AppState
         }
     }
 
+    public void OnReady()
+    {
+        foreach (var kvp in Store.appIcons)
+        {
+            byte[] bytes = Convert.FromBase64String(kvp.Value);
+            using var memoryStream = new MemoryStream(bytes);
+            IconRepo[kvp.Key] = new Bitmap(memoryStream);
+        }
+    }
+
     public void Tick(object? sender, EventArgs e)
     {
         // Don't progress time if the timer is paused
