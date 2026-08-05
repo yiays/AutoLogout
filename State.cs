@@ -3,6 +3,8 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using BC = BCrypt.Net;
+using Avalonia.Media.Imaging;
+using System.IO;
 
 namespace AutoLogout;
 
@@ -15,7 +17,7 @@ public class UsageEntry
     public float usedTime { get; set; } = 0.0F;
 }
 
-public class UsageRecord: Dictionary<DateOnly, Dictionary<string, UsageEntry>>;
+public class UsageRecord: SortedDictionary<DateOnly, Dictionary<string, UsageEntry>>;
 
 public class DeltaState
 {
@@ -48,6 +50,7 @@ public class SyncedState : DeltaState
     public new int usedTime = 0;
     public new DateOnly usageDate = DateOnly.FromDateTime(DateTime.Today);
     public new UsageRecord usage = [];
+    public Dictionary<string,string> appIcons = [];
     public new TimeOnly bedtime = new(0, 0);
     public new TimeOnly waketime = new(0, 0);
     public new Guid? syncAuthor = null;
@@ -72,6 +75,7 @@ public class AppState
     public event Action? Changed;
     public event Action? UpdateAvailable; //TODO: add update banners to FirstTimeSetup and ControlPanel
     public SyncedState Store = new();
+    public Dictionary<string, Bitmap> IconRepo = [];
     public UserIntent Intent = UserIntent.None;
     public bool Paused = false;
     public string Version { get {
@@ -213,6 +217,15 @@ public class AppState
     {
         Store.hashedPassword = BC.BCrypt.HashPassword(password);
         await OS.Current.SaveState();
+    }
+    public async Task AddIcon(string exeName, MemoryStream memoryStream)
+    {
+        memoryStream.Position = 0;
+        State.Current.IconRepo[exeName] = new Bitmap(memoryStream);
+        memoryStream.Position = 0;
+        State.Current.Store.appIcons[exeName] = Convert.ToBase64String(memoryStream.GetBuffer());
+        await OS.Current.SaveState();
+        Console.WriteLine($"Saved icon for {exeName}");
     }
     public bool CheckPassword(string password)
     {

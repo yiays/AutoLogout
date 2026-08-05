@@ -14,7 +14,6 @@ public class FocusedWindow
 {
     public required string exeName;
     public required string windowName;
-    public Bitmap? icon;
 }
 
 public interface IOS

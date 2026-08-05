@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -11,6 +10,7 @@ using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 using NAudio.CoreAudioApi;
 using System.Text.Json;
+using System.Collections.Generic;
 
 namespace AutoLogout;
 
@@ -150,20 +150,25 @@ internal sealed class OSWindows : IOS
             Process proc = Process.GetProcessById((int)pid);
             string? exePath = proc?.MainModule?.FileName;
             if(exePath is null) return null;
-            Icon? appIcon = Icon.ExtractAssociatedIcon(exePath);
-            Avalonia.Media.Imaging.Bitmap? bitmap = null;
-            if(appIcon is not null) {
-                using (var memoryStream = new MemoryStream())
-                {
-                    appIcon.Save(memoryStream);
-                    memoryStream.Position = 0;
-                    bitmap = new Avalonia.Media.Imaging.Bitmap(memoryStream);
-                }
+            var exeName = exePath.Split('\\').Last();
+            if(!State.Current.IconRepo.ContainsKey(exeName))
+            {
+                System.Drawing.Icon? appIcon = System.Drawing.Icon.ExtractAssociatedIcon(exePath);
+                if(appIcon is not null) {
+                    using var win_bitmap = new System.Drawing.Bitmap(32, 32, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                    using (var g = System.Drawing.Graphics.FromImage(win_bitmap))
+                    {
+                        g.Clear(System.Drawing.Color.Transparent);
+                        g.DrawIcon(appIcon, new System.Drawing.Rectangle(0, 0, 32, 32));
+                    }
+                    using var memoryStream = new MemoryStream();
+                    win_bitmap.Save(memoryStream, System.Drawing.Imaging.ImageFormat.Png);
+                    _ = State.Current.AddIcon(exeName, memoryStream);
+        }
             }
             return new FocusedWindow {
                 exeName = exePath.Split('\\').Last(),
-                windowName = title.ToString(),
-                icon = bitmap
+                windowName = title.ToString()
             };
         }
         catch (Exception ex) {
