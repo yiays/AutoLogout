@@ -2,8 +2,6 @@ using Avalonia.Interactivity;
 using Avalonia.Controls;
 using System.Reflection;
 using System.Collections.Generic;
-using System;
-using System.Threading.Tasks;
 
 namespace AutoLogout;
 
@@ -29,9 +27,9 @@ public partial class FirstTimeSetup : Window
         // Create criteria for the order in which tabs are unlocked
         nextStep = [
             new ConditionalValue<TabItem>(() => State.Current.Store.hashedPassword == "", TabPassword),
-            new ConditionalValue<TabItem>(() => !OS.Current.AutoStart, TabAutoStart),
-            new ConditionalValue<TabItem>(() => State.Current.RemainingTime is null, TabLimits),
-            new ConditionalValue<TabItem>(() => !State.Current.Store.Online, TabSync)
+            new ConditionalValue<TabItem>(() => !OS.Current.AutoStart, TabAutoStart, true),
+            new ConditionalValue<TabItem>(() => State.Current.RemainingTime is null, TabLimits, true),
+            new ConditionalValue<TabItem>(() => !State.Current.Store.Online, TabSync, true)
         ];
     }
 
@@ -42,12 +40,17 @@ public partial class FirstTimeSetup : Window
         var resolved = false;
         foreach (var step in nextStep)
         {
-            if(!step.Cleared && step.Condition())
+            if(step.Condition())
             {
-                step.Cleared = true;
+                if(step.Cleared) continue;
                 var tab = step.Value;
-                tab.Styles.Clear();
-                tab.InvalidateVisual();
+                if(step.Optional && tabControl.SelectedItem == tab)
+                {
+                    step.Cleared = true;
+                    continue;
+                }
+                tab.Classes.Clear();
+                tabControl.InvalidateVisual();
                 tabControl.SelectedItem = tab;
 
                 resolved = true;
@@ -58,6 +61,8 @@ public partial class FirstTimeSetup : Window
         // If all setup conditions are set/cleared, show the done tab
         if(!resolved) {
             setupComplete = true;
+            TabDone.Classes.Clear();
+            tabControl.InvalidateVisual();
             tabControl.SelectedItem = TabDone;
         }
     }

@@ -129,7 +129,7 @@
                     <Button Click="NextButton_Click" HorizontalAlignment="Right">Skip this for now</Button>
                 </StackPanel>
             </TabItem>
-            <TabItem x:Name="TabDone" Classes="hidden-tab">
+            <TabItem x:Name="TabDone" Header="Finish" Classes="hidden-tab">
                 <StackPanel Spacing="10">
                     <TextBlock TextWrapping="Wrap">
                         You're done! Once this window is closed, the timer will start counting for this account.
