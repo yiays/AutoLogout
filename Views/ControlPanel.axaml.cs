@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
@@ -8,16 +10,58 @@ using QRCoder;
 
 namespace AutoLogout;
 
+public class UsageData
+{
+    public required uint position { get; set; }
+    public required string exeName { get; set; }
+    public required string windowNames { get; set; }
+    public required float usedTime { get; set; }
+    public string usedTimeFormatted { get => TimeSpan.FromMinutes(usedTime).ToString(@"hh\:mm"); }
+    public Bitmap? icon { get; set; }
+}
+
 public partial class ControlPanel : Window
 {
+    // TabLimits
     public string UsedTime { get; set; } = "Loading...";
     public int DailyLimit { get; set; }
     public int TodayLimit { get; set; }
     public TimeSpan Bedtime { get; set; }
     public TimeSpan Waketime { get; set; }
-    public bool AutoStart { get => OS.Current.AutoStart; }
+    // TabUsage
+    public DateOnly GraphDate { get; set; } = 
+        State.Current.Store.usage.Count > 0? State.Current.Store.usage.Last().Key: DateOnly.FromDateTime(DateTime.Today);
+    public bool GraphEmpty { get => UsageGraph.Count() == 0; }
+    public float GraphMax { get => UsageGraph.Count > 0? UsageGraph.First().usedTime: 1; }
+    public bool GraphNextAvailable {
+        get => State.Current.Store.usage.Count > 0? State.Current.Store.usage.Last().Key != GraphDate: false;
+    }
+    public bool GraphPrevAvailable {
+        get => State.Current.Store.usage.Count > 0? State.Current.Store.usage.First().Key != GraphDate: false;
+    }
+    public List<UsageData> UsageGraph { get {
+        if(!State.Current.Store.usage.ContainsKey(GraphDate)) return [];
+        var list = State.Current.Store.usage[GraphDate].Select(kvp =>
+        {
+            return new UsageData
+            {
+                position = 0,
+                exeName = kvp.Key,
+                windowNames = String.Join('\n', kvp.Value.names),
+                usedTime = kvp.Value.usedTime,
+                icon = State.Current.IconRepo.ContainsKey(kvp.Key)? State.Current.IconRepo[kvp.Key]: null
+            };
+        }).ToList();
+        list.Sort((a,b) => a.usedTime < b.usedTime? 1: a.usedTime == b.usedTime? 0: -1);
+        uint counter = 0;
+        list.ForEach((i) => i.position = counter++);
+        return list;
+    } }
+    // TabSync
     public bool Online { get => State.Current.Store.Online; }
     public Bitmap? QRCode { get; set; }
+    // TabSystem
+    public bool AutoStart { get => OS.Current.AutoStart; }
 
     public ControlPanel() : this(null)
     {
@@ -36,6 +80,7 @@ public partial class ControlPanel : Window
         if(soleTab is not null)
         {
             TabLimits.IsEnabled = false;
+            TabUsage.IsEnabled = false;
             TabSync.IsEnabled = false;
             TabSystem.IsEnabled = false;
             var tab = this.FindControl<TabItem>(soleTab)
@@ -63,6 +108,23 @@ public partial class ControlPanel : Window
         Waketime = State.Current.Store.waketime.ToTimeSpan();
     }
 
+    // TabUsage
+    private async void PrevDayUsage_Click(object? sender, RoutedEventArgs e)
+    {
+        GraphDate = State.Current.Store.usage.Keys.TakeWhile(k => k != GraphDate).LastOrDefault();
+        var content = TabUsage.Content;
+        TabUsage.Content = null;
+        TabUsage.Content = content;
+    }
+    private async void NextDayUsage_Click(object? sender, RoutedEventArgs e)
+    {
+        GraphDate = State.Current.Store.usage.Keys.Reverse().TakeWhile(k => k != GraphDate).LastOrDefault();
+        var content = TabUsage.Content;
+        TabUsage.Content = null;
+        TabUsage.Content = content;
+    }
+
+    // TabSync
     private async void AuthButton_Click(object? sender, RoutedEventArgs e)
     {
         if(!State.Current.Store.Online)
@@ -128,6 +190,8 @@ public partial class ControlPanel : Window
             await alert.ShowDialog(this);
         }
     }
+
+    // TabSystem
     private async void AutoStart_Checked(object? sender, RoutedEventArgs e)
     {
         if(sender is CheckBox checkBox)
@@ -161,6 +225,21 @@ public partial class ControlPanel : Window
         }
         return false;
     }
+    private async void RemoveControls_Click(object? sender, RoutedEventArgs e)
+    {
+        var confirm = new ConfirmDialog("This will disable AutoLogout entirely for this account. Continue?", "Remove AutoLogout from this account");
+        await confirm.ShowDialog(this);
+        if(confirm.Result ?? false)
+        {
+            await OS.Current.ClearState();
+            var alert = new AlertDialog("AutoLogout has been removed from this account. Closing now.", "AutoLogout");
+            await alert.ShowDialog(this);
+            State.Current.Intent = UserIntent.Exit;
+            Close();
+        }
+    }
+
+    // Main view
     private async void ChangePassword_Click(object? sender, RoutedEventArgs e)
     {
         await ChangePassword();
@@ -187,19 +266,6 @@ public partial class ControlPanel : Window
             }
         }
         return false;
-    }
-    private async void RemoveControls_Click(object? sender, RoutedEventArgs e)
-    {
-        var confirm = new ConfirmDialog("This will disable AutoLogout entirely for this account. Continue?", "Remove AutoLogout from this account");
-        await confirm.ShowDialog(this);
-        if(confirm.Result ?? false)
-        {
-            await OS.Current.ClearState();
-            var alert = new AlertDialog("AutoLogout has been removed from this account. Closing now.", "AutoLogout");
-            await alert.ShowDialog(this);
-            State.Current.Intent = UserIntent.Exit;
-            Close();
-        }
     }
     private void SaveButton_Click(object? sender, RoutedEventArgs e)
     {
