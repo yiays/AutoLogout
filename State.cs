@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using BC = BCrypt.Net;
 using Avalonia.Media.Imaging;
 using System.IO;
+using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace AutoLogout;
 
@@ -73,6 +75,20 @@ public class StoredState : DeltaState
         waketime = delta.waketime ?? waketime;
         syncAuthor = delta.syncAuthor;
     }
+    /// <summary>
+    /// Removes old and redundant data from state
+    /// </summary>
+    public void Clean()
+    {
+        var lastMonth = new DateOnly().AddMonths(-1);
+        var keysToRemove = usage.Keys
+            .Where(key => key < lastMonth)
+            .ToList();
+        foreach(var key in keysToRemove)
+            usage.Remove(key);
+    }
+}
+
 /// <summary>
 /// Rules and logic for the state of the entire app
 /// </summary>
