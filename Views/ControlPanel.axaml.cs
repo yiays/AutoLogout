@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using QRCoder;
+using Avalonia.Media;
 
 namespace AutoLogout;
 
@@ -23,7 +24,10 @@ public class UsageData
 public partial class ControlPanel : Window
 {
     // TabLimits
-    public string UsedTime { get; set; } = "Loading...";
+    public int UsedTime { get; set; } = 0;
+    public string UsedTime_Formatted { get; set; } = "Loading...";
+    public int MaxTime { get; set; } = 0;
+    public Brush ExceededTime_Colour { get; set; }
     public int DailyLimit { get; set; }
     public int TodayLimit { get; set; }
     public TimeSpan Bedtime { get; set; }
@@ -57,6 +61,13 @@ public partial class ControlPanel : Window
         list.ForEach((i) => i.position = counter++);
         return list;
     } }
+    public string DateUsage_Formatted { get =>
+        "Total usage: " + (
+            State.Current.Store.usage.TryGetValue(GraphDate, out var value) && value.totalUsage is not null ?
+                TimeSpan.FromSeconds((int)value.totalUsage).ToString(@"hh\:mm") :
+                "Unknown"
+            );
+    }
     // TabSync
     public bool Online { get => State.Current.Store.Online; }
     public Bitmap? QRCode { get; set; }
@@ -108,9 +119,12 @@ public partial class ControlPanel : Window
     private void SetFields()
     {
         var timeSpan = TimeSpan.FromSeconds(State.Current.Store.usedTime);
-        UsedTime = string.Format("{0:D2}:{1:D2}.{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
-        DailyLimit = State.Current.Store.dailyTimeLimit == -1 ? -1 : State.Current.Store.dailyTimeLimit / 60;
+        UsedTime = State.Current.Store.usedTime;
+        UsedTime_Formatted = string.Format("{0:D2}:{1:D2}.{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
         TodayLimit = State.Current.Store.todayTimeLimit == -1 ? -1 : State.Current.Store.todayTimeLimit / 60;
+        MaxTime = TodayLimit == -1? 60*60*24: TodayLimit * 60;
+        ExceededTime_Colour = new SolidColorBrush(UsedTime > MaxTime? Color.Parse("#df4d28") : Color.Parse("#9296d2"));
+        DailyLimit = State.Current.Store.dailyTimeLimit == -1 ? -1 : State.Current.Store.dailyTimeLimit / 60;
         Bedtime = State.Current.Store.bedtime.ToTimeSpan();
         Waketime = State.Current.Store.waketime.ToTimeSpan();
     }
