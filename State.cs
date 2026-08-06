@@ -16,6 +16,14 @@ public class UsageEntry
     public HashSet<string> names { get; set; } = [];
     public int usedTime { get; set; } = 0;
 }
+public class UsageDate
+{
+    public int? totalUsage { get; set; }
+    [JsonPropertyName("entries")]
+    public Dictionary<string, UsageEntry> Entries { get; set; } = [];
+}
+public class UsageRecord: SortedDictionary<DateOnly, UsageDate>;
+
 /// <summary>
 /// Contains all state which can be changed or sent externally (from syncing or ControlPanel)
 /// </summary>
@@ -215,17 +223,18 @@ public class AppState
         // Log focused app usage if usedTime is divisible by 10
         if(Store.usedTime % 10 == 0)
         {
+            if(!Store.usage.ContainsKey(today)) Store.usage[today].Entries = [];
+            Store.usage[today].totalUsage = Store.usedTime;
             if(OS.Current.GetFocused() is FocusedWindow window) {
-                if(!Store.usage.ContainsKey(today)) Store.usage[today] = [];
-                if(!Store.usage[today].ContainsKey(window.exeName))
-                    Store.usage[today][window.exeName] = new UsageEntry
+                if(!Store.usage[today].Entries.ContainsKey(window.exeName))
+                    Store.usage[today].Entries[window.exeName] = new UsageEntry
                     {
                         names = [window.windowName],
                         usedTime = 10
                     };
                 else {
-                    Store.usage[today][window.exeName].names.Add(window.windowName);
-                    Store.usage[today][window.exeName].usedTime += 10;
+                    Store.usage[today].Entries[window.exeName].names.Add(window.windowName);
+                    Store.usage[today].Entries[window.exeName].usedTime += 10;
                 }
             }
             OS.Current.SaveState();

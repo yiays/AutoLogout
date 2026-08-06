@@ -34,22 +34,22 @@ public partial class ControlPanel : Window
     public bool GraphEmpty { get => UsageGraph.Count() == 0; }
     public float GraphMax { get => UsageGraph.Count > 0? UsageGraph.First().usedTime: 1; }
     public bool GraphNextAvailable {
-        get => State.Current.Store.usage.Count > 0? State.Current.Store.usage.Last().Key != GraphDate: false;
+        get => State.Current.Store.usage.Count > 0 && State.Current.Store.usage.Last().Key != GraphDate;
     }
     public bool GraphPrevAvailable {
-        get => State.Current.Store.usage.Count > 0? State.Current.Store.usage.First().Key != GraphDate: false;
+        get => State.Current.Store.usage.Count > 0 && State.Current.Store.usage.First().Key != GraphDate;
     }
     public List<UsageData> UsageGraph { get {
-        if(!State.Current.Store.usage.ContainsKey(GraphDate)) return [];
-        var list = State.Current.Store.usage[GraphDate].Select(kvp =>
+        if(!State.Current.Store.usage.TryGetValue(GraphDate, out UsageDate? value)) return [];
+        var list = value.Entries.Select(kvp =>
         {
             return new UsageData
             {
                 position = 0,
                 exeName = kvp.Key,
-                windowNames = String.Join('\n', kvp.Value.names),
+                windowNames = string.Join('\n', kvp.Value.names),
                 usedTime = kvp.Value.usedTime,
-                icon = State.Current.IconRepo.ContainsKey(kvp.Key)? State.Current.IconRepo[kvp.Key]: null
+                icon = State.Current.IconRepo.TryGetValue(kvp.Key, out Bitmap? value) ? value : null
             };
         }).ToList();
         list.Sort((a,b) => a.usedTime < b.usedTime? 1: a.usedTime == b.usedTime? 0: -1);
