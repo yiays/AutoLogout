@@ -76,7 +76,7 @@ internal sealed class OSWindows : IOS
             .BuildNotification();
         AppNotificationManager.Default.Show(notif);
     }
-    public async Task<SyncedState> LoadState()
+    public async Task<StoredState> LoadState()
     {
         RegistryKey key = Registry.CurrentUser.CreateSubKey(REGKEY, true) ??
             throw new Exception("Unable to load settings.");
@@ -88,7 +88,7 @@ internal sealed class OSWindows : IOS
         var usageRaw = (string?)key.GetValue("usage", null);
         var appIconsRaw = (string?)key.GetValue("appIcons", null);
 
-        return new SyncedState
+        return new StoredState
         {
             Online = bool.Parse((string)key.GetValue("OnlineMode", "false")),
             authKey = rawAuthKey is null ? Guid.Empty : new Guid(rawAuthKey),

@@ -37,7 +37,7 @@ public partial class MainWindow : Window
     }
     private async void Window_Loaded(object? sender, RoutedEventArgs e)
     {
-        // Allow state to load images
+        // Allow state to load components that depend on Avalonia
         State.Current.OnReady();
 
         // Fire and forget update check
@@ -59,6 +59,9 @@ public partial class MainWindow : Window
         if (State.Current.Store.Online)
             API.Current.syncTimer.Start();
     }
+    /// <summary>
+    /// State has changed, reflect this in the UI
+    /// </summary>
     private void OnChanged()
     {
         if (State.Current.Paused)
@@ -165,6 +168,9 @@ public partial class MainWindow : Window
             LabelTimer.InvalidateVisual();
         }
     }
+    /// <summary>
+    /// Reset the position of the main window to the default location
+    /// </summary>
     private void Reposition()
     {
         if (Screens.All.Count > 0)
@@ -189,9 +195,11 @@ public partial class MainWindow : Window
             if (State.Current.Paused) OS.Current.Mute();
         }
     }
+    /// <summary>
+    /// Check the API for the latest official release
+    /// </summary>
     private async void CheckUpdate()
     {
-        // Check for updates
         var result = await API.Current.UpdateCheck();
         var latest = SemVersion.Parse(result.version);
         var current = SemVersion.Parse(State.Current.Version);
@@ -207,6 +215,9 @@ public partial class MainWindow : Window
         else
             Console.WriteLine("This appears to be an AutoLogout build from the future.");
     }
+    /// <summary>
+    /// If an update is critical, inform the user
+    /// </summary>
     private async void OnUpdateAvailable()
     {
         if(State.Current.Update == UpdateUrgency.Critical) {
@@ -241,6 +252,11 @@ public partial class MainWindow : Window
     {
         if (!State.Current.CheckPassword(password))
         {
+            if(State.Current.Intent == UserIntent.Exit)
+            {
+                Close();
+                return;
+            }
             var alert = new AlertDialog("The parent password you provided is incorrect.", "ControlPanel");
             _ = alert.ShowDialog(this);
             return;
@@ -256,13 +272,11 @@ public partial class MainWindow : Window
         // When ControlPanel closes revert Intent, unless ControlPanel requested immediate exit
         if (State.Current.Intent == UserIntent.Exit)
             Close();
-        else if (_lastIntent == UserIntent.Grace)
-        {
-            // Shut down / sign out warnings should be reset after the parent has opened settings
-            State.Current.tempTimeLimit = null;
-            State.Current.Intent = UserIntent.None;
-        }
-        else if (_lastIntent is not null)
+        // Shut down / sign out warnings should be reset after the parent has opened settings
+        State.Current.tempTimeLimit = null;
+        State.Current.Intent = UserIntent.None;
+        // Restore Intent, unless it's grace
+        if (_lastIntent is not null && _lastIntent is not UserIntent.Grace)
         {
             State.Current.Intent = (UserIntent)_lastIntent;
         }

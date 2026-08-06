@@ -102,13 +102,13 @@ public partial class FirstTimeSetup : Window
     }
     private async void LimitsButton_Click(object? sender, RoutedEventArgs e)
     {
-        var controlPanel = new ControlPanel("TabLimits");
+        var controlPanel = new ControlPanel(ControlPanel.Tab.TabLimits);
         await controlPanel.ShowDialog(this);
         RevealNextTab();
     }
     private async void SyncButton_Click(object? sender, RoutedEventArgs e)
     {
-        var controlPanel = new ControlPanel("TabSync");
+        var controlPanel = new ControlPanel(ControlPanel.Tab.TabSync);
         await controlPanel.ShowDialog(this);
         RevealNextTab();
     }

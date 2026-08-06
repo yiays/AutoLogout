@@ -21,7 +21,7 @@ public interface IOS
     public event EventHandler<SessionSwitchEventArgs>? SessionSwitch;
     public void Initialize();
     public void Notify(string header, string content);
-    public Task<SyncedState> LoadState();
+    public Task<StoredState> LoadState();
     public Task SaveState();
     public Task ClearState();
     public FocusedWindow? GetFocused();

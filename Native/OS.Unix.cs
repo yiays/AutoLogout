@@ -14,7 +14,7 @@ internal sealed class OSUnix : IOS
     {
         //TODO
     }
-    public Task<SyncedState> LoadState()
+    public Task<StoredState> LoadState()
     {
         //TODO
         throw new NotImplementedException();

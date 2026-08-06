@@ -62,14 +62,21 @@ public partial class ControlPanel : Window
     public Bitmap? QRCode { get; set; }
     // TabSystem
     public bool AutoStart { get => OS.Current.AutoStart; }
+    public enum Tab
+    {
+        TabLimits, TabUsage, TabSync, TabSystem, TabQR
+    }
 
     public ControlPanel() : this(null)
     {
         
     }
-    public ControlPanel(string? soleTab)
+    /// <summary>
+    /// Create an instance of ControlPanel where only one tab is available
+    /// </summary>
+    /// <param name="soleTab">The name of the tab which will be the only tab available</param>
+    public ControlPanel(Tab? soleTab)
     {
-        /// Create an instance of ControlPanel where only one tab is available
         SetFields();
         InitializeComponent();
         DataContext = this;
@@ -77,13 +84,13 @@ public partial class ControlPanel : Window
         // Events
         State.Current.Changed += OnChanged;
         
-        if(soleTab is not null)
+        if(soleTab is Tab SoleTab)
         {
             TabLimits.IsEnabled = false;
             TabUsage.IsEnabled = false;
             TabSync.IsEnabled = false;
             TabSystem.IsEnabled = false;
-            var tab = this.FindControl<TabItem>(soleTab)
+            var tab = this.FindControl<TabItem>(SoleTab.ToString())
                       ?? throw new Exception("soleTab must exist");
             tabControl.SelectedItem = tab;
             tab.IsEnabled = true;

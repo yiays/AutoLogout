@@ -16,14 +16,11 @@ public class UsageEntry
     public HashSet<string> names { get; set; } = [];
     public int usedTime { get; set; } = 0;
 }
-
-public class UsageRecord: SortedDictionary<DateOnly, Dictionary<string, UsageEntry>>;
-
+/// <summary>
+/// Contains all state which can be changed or sent externally (from syncing or ControlPanel)
+/// </summary>
 public class DeltaState
 {
-    /// <summary>
-    /// Contains all state which can be changed externally (from syncing or ControlPanel)
-    /// </summary>
     public Guid? authKey { get; set; }
     public Guid? uuid { get; set; }
     public int? dailyTimeLimit { get; set; }
@@ -36,11 +33,11 @@ public class DeltaState
     public Guid? syncAuthor { get; set; }
 }
 
-public class SyncedState : DeltaState
+/// <summary>
+/// Contains all state which is stored
+/// </summary>
+public class StoredState : DeltaState
 {
-    /// <summary>
-    /// Contains all state which is stored and synced
-    /// </summary>
     public new Guid authKey = Guid.Empty;
     public new Guid uuid = Guid.Empty;
     public bool Online = false;
@@ -54,6 +51,10 @@ public class SyncedState : DeltaState
     public new TimeOnly bedtime = new(0, 0);
     public new TimeOnly waketime = new(0, 0);
     public new Guid? syncAuthor = null;
+
+    /// <summary>
+    /// Apply new changes to state from an external source (like syncing)
+    /// </summary>
     public void Update(DeltaState delta)
     {
         dailyTimeLimit = delta.dailyTimeLimit ?? dailyTimeLimit;
@@ -64,17 +65,15 @@ public class SyncedState : DeltaState
         waketime = delta.waketime ?? waketime;
         syncAuthor = delta.syncAuthor;
     }
-}
-
+/// <summary>
+/// Rules and logic for the state of the entire app
+/// </summary>
 public class AppState
 {
-    /// <summary>
-    /// Rules and logic for the state of the entire app
-    /// </summary>
     private readonly UserIntent[] AuthIntents = [UserIntent.Parent, UserIntent.Setup];
     public event Action? Changed;
     public event Action? UpdateAvailable; //TODO: add update banners to FirstTimeSetup and ControlPanel
-    public SyncedState Store = new();
+    public StoredState Store = new();
     public Dictionary<string, Bitmap> IconRepo = [];
     public UserIntent Intent = UserIntent.None;
     public bool Paused = false;
@@ -94,6 +93,9 @@ public class AppState
             }
         } } = UpdateUrgency.None;
     public string? UpdateName;
+    /// <summary>
+    /// Provides a different update url depending on whether this is a pre-release
+    /// </summary>
     public string UpdateUrl
     {
 #if DEBUG
@@ -103,7 +105,13 @@ public class AppState
 #endif
         set;
     } = "https://autologout.yiays.com/download/";
-    public int? tempTimeLimit = null; // This stores temporary overrides to the time limit. Takes priority over bedtime
+    /// <summary>
+    /// This stores temporary overrides to the time limit. Takes priority over bedtime
+    /// </summary>
+    public int? tempTimeLimit = null;
+    /// <summary>
+    /// Considers all rules, returns a positive whole number, or null if there are no rules
+    /// </summary>
     public int? RemainingTime
     {
         get
@@ -112,7 +120,7 @@ public class AppState
             if(tempTimeLimit is not null)
             {
                 if(tempTimeLimit == -1) return null;
-                return tempTimeLimit - Store.usedTime;
+                return Math.Max((int)(tempTimeLimit - Store.usedTime), 0);
             }
 
             // Otherwise calculate time limit including bedtime
@@ -124,6 +132,10 @@ public class AppState
             return Math.Max((int)bedtime, 0);
         }
     }
+    /// <summary>
+    /// Determines when bedtime is next.
+    /// Returns a negative number if it is currently bedtime, returns null if there is no bedtime.
+    /// </summary>
     public int? TimeUntilBedtime
     {
         get
@@ -147,19 +159,25 @@ public class AppState
         }
         catch (Exception ex)
         {
+            // If loading fails for any reason, fall back to defaults
             Console.Write(ex);
         }
 
+        // UUID must be unique
         if(Store.uuid == Guid.Empty)
         {
             Store.uuid = Guid.NewGuid();
         }
+        // Password must be set to continue, throw the user into setup mode
         if(Store.hashedPassword.Length == 0)
         {
             Intent = UserIntent.Setup;
         }
     }
 
+    /// <summary>
+    /// Loading components that require Avalonia to be running first
+    /// </summary>
     public void OnReady()
     {
         foreach (var kvp in Store.appIcons)
@@ -170,6 +188,9 @@ public class AppState
         }
     }
 
+    /// <summary>
+    /// Call once every second to update RemainingTime, notifies Changed once tick is complete
+    /// </summary>
     public void Tick(object? sender, EventArgs e)
     {
         // Don't progress time if the timer is paused
@@ -240,6 +261,13 @@ public class AppState
     public bool CheckPassword(string password)
     {
         if(password.Length == 0) return false;
+        // This should never happen, but if it somehow does, prevent a crash
+        if(Store.hashedPassword.Length == 0) {
+            Console.WriteLine("The password is unset somehow, relaunching to force user to set a new one.");
+            Intent = UserIntent.Exit;
+            OS.Current.Relaunch("");
+            return false;
+        }
         return BC.BCrypt.Verify(password, Store.hashedPassword);
     }
 }

@@ -15,7 +15,7 @@ internal sealed class OSMac : IOS
     {
         //TODO
     }
-    public Task<SyncedState> LoadState()
+    public Task<StoredState> LoadState()
     {
         //TODO
         throw new NotImplementedException();
