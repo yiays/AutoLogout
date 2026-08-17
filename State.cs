@@ -173,6 +173,9 @@ public class AppState
         }
     }
 
+    /// <summary>
+    /// Loads state into memory, forces the app into setup mode if state is incomplete
+    /// </summary>
     public void Load()
     {
         try
@@ -200,10 +203,11 @@ public class AppState
     }
 
     /// <summary>
-    /// Loading components that require Avalonia to be running first
+    /// Load components which require the app to be interactive
     /// </summary>
     public void OnReady()
     {
+        OS.Current.SessionSwitch += SessionSwitch;
         foreach (var kvp in Store.appIcons)
         {
             byte[] bytes = Convert.FromBase64String(kvp.Value);
@@ -259,6 +263,23 @@ public class AppState
         // Notify that the state has changed
         Changed?.Invoke();
     }
+
+    /// <summary>
+    /// Don't count user activity when the user has locked the computer or switched users
+    /// </summary>
+    private void SessionSwitch(object? sender, SessionSwitchEventArgs e)
+    {
+        if (e.Type == SessionSwitchType.Lock)
+        {
+            if (!State.Current.Paused) State.Current.TogglePause();
+            OS.Current.UnMute();
+        }
+        else if (e.Type == SessionSwitchType.Unlock)
+        {
+            if (State.Current.Paused) OS.Current.Mute();
+        }
+    }
+
     public void AcceptDelta(DeltaState delta)
     {
         Store.Update(delta);

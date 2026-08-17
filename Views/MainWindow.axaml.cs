@@ -26,7 +26,6 @@ public partial class MainWindow : Window
         // System events
         ScalingChanged += (o, e) => Reposition();
         Screens.Changed += (o, e) => Reposition();
-        OS.Current.SessionSwitch += SessionSwitch;
 
         // Internal events
         Timer.Tick += State.Current.Tick;
@@ -179,20 +178,6 @@ public partial class MainWindow : Window
             var width = (int)(Width * DesktopScaling);
             var height = (int)(Height * DesktopScaling);
             Position = new PixelPoint(primary.WorkingArea.Right - width, primary.WorkingArea.Bottom - height);
-        }
-    }
-    private void SessionSwitch(object? sender, SessionSwitchEventArgs e)
-    {
-        if (e.Type == SessionSwitchType.Lock)
-        {
-            if (!State.Current.Paused) State.Current.TogglePause();
-            Timer.Stop();
-            OS.Current.UnMute();
-        }
-        else if (e.Type == SessionSwitchType.Unlock)
-        {
-            Timer.Start();
-            if (State.Current.Paused) OS.Current.Mute();
         }
     }
     /// <summary>
