@@ -15,12 +15,14 @@ public enum UpdateUrgency { None = 0, Feature = 1, Critical = 2 }
 
 public class UsageEntry
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? displayName { get; set; }
     public HashSet<string> names { get; set; } = [];
     public int usedTime { get; set; } = 0;
 }
 public class UsageDate
 {
-    public int? totalUsage { get; set; }
+    public int totalUsage { get; set; } = 0;
     [JsonPropertyName("entries")]
     public Dictionary<string, UsageEntry> Entries { get; set; } = [];
 }
@@ -243,13 +245,14 @@ public class AppState
         // Log focused app usage if usedTime is divisible by 10
         if(Store.usedTime % 10 == 0)
         {
-            if(!Store.usage.ContainsKey(today)) Store.usage[today].Entries = [];
+            if(!Store.usage.ContainsKey(today)) Store.usage[today] = new UsageDate();
             Store.usage[today].totalUsage = Store.usedTime;
             if(OS.Current.GetFocused() is FocusedWindow window) {
                 if(!Store.usage[today].Entries.ContainsKey(window.exeName))
                     Store.usage[today].Entries[window.exeName] = new UsageEntry
                     {
                         names = [window.windowName],
+                        displayName = window.displayName,
                         usedTime = 10
                     };
                 else {

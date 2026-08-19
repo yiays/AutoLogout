@@ -13,6 +13,7 @@ public class SessionSwitchEventArgs
 public class FocusedWindow
 {
     public required string exeName;
+    public string? displayName;
     public required string windowName;
 }
 

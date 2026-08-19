@@ -14,7 +14,7 @@ namespace AutoLogout;
 public class UsageData
 {
     public required uint position { get; set; }
-    public required string exeName { get; set; }
+    public required string displayName { get; set; }
     public required string windowNames { get; set; }
     public required float usedTime { get; set; }
     public string usedTimeFormatted { get => TimeSpan.FromSeconds(usedTime).ToString(@"hh\:mm"); }
@@ -50,7 +50,7 @@ public partial class ControlPanel : Window
             return new UsageData
             {
                 position = 0,
-                exeName = kvp.Key,
+                displayName = kvp.Value.displayName ?? kvp.Key,
                 windowNames = string.Join('\n', kvp.Value.names),
                 usedTime = kvp.Value.usedTime,
                 icon = State.Current.IconRepo.TryGetValue(kvp.Key, out Bitmap? value) ? value : null
@@ -63,8 +63,8 @@ public partial class ControlPanel : Window
     } }
     public string DateUsage_Formatted { get =>
         "Total usage: " + (
-            State.Current.Store.usage.TryGetValue(GraphDate, out var value) && value.totalUsage is not null ?
-                TimeSpan.FromSeconds((int)value.totalUsage).ToString(@"hh\:mm") :
+            State.Current.Store.usage.TryGetValue(GraphDate, out var value) ?
+                TimeSpan.FromSeconds(value.totalUsage).ToString(@"hh\:mm") :
                 "Unknown"
             );
     }

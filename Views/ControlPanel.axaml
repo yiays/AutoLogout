@@ -83,7 +83,7 @@
                                 <DataTemplate>
                                     <Grid ColumnDefinitions="24,*,40" RowDefinitions="24,8" ColumnSpacing="8" RowSpacing="8" Margin="8"  ToolTip.Tip="{Binding windowNames}">
                                         <Image Source="{Binding icon}" Width="24" Height="24"/>
-                                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding exeName}"/>
+                                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding displayName}"/>
                                         <TextBlock Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding usedTimeFormatted}"/>
                                         <ProgressBar Grid.Row="1" Grid.ColumnSpan="3" Maximum="{Binding $parent[Window].DataContext.GraphMax}" Value="{Binding usedTime}" />
                                     </Grid>

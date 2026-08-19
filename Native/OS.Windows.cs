@@ -152,6 +152,8 @@ internal sealed class OSWindows : IOS
             Process proc = Process.GetProcessById((int)pid);
             string? exePath = proc?.MainModule?.FileName;
             if(exePath is null) return null;
+            FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(exePath);
+            var displayName = versionInfo.ProductName;
             var exeName = exePath.Split('\\').Last();
             if(!State.Current.IconRepo.ContainsKey(exeName))
             {
@@ -166,10 +168,11 @@ internal sealed class OSWindows : IOS
                     using var memoryStream = new MemoryStream();
                     win_bitmap.Save(memoryStream, System.Drawing.Imaging.ImageFormat.Png);
                     _ = State.Current.AddIcon(exeName, memoryStream);
-        }
+                }
             }
             return new FocusedWindow {
                 exeName = exePath.Split('\\').Last(),
+                displayName = displayName,
                 windowName = title.ToString()
             };
         }
