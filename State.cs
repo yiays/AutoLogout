@@ -103,6 +103,7 @@ public class AppState
     public Dictionary<string, Bitmap> IconRepo = [];
     public UserIntent Intent = UserIntent.None;
     public bool Paused = false;
+    public bool Interactive = true;
     public string Version { get {
             var result = Assembly.GetEntryAssembly()
                 ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
@@ -274,12 +275,18 @@ public class AppState
     {
         if (e.Type == SessionSwitchType.Lock)
         {
+#if DEBUG
+            Console.WriteLine("Recieved Session Lock event");
+#endif
             if (!State.Current.Paused) State.Current.TogglePause();
-            OS.Current.UnMute();
+            State.Current.Interactive = false;
         }
         else if (e.Type == SessionSwitchType.Unlock)
         {
-            if (State.Current.Paused) OS.Current.Mute();
+#if DEBUG
+            Console.WriteLine("Recieved Session Unlock event");
+#endif
+            State.Current.Interactive = true;
         }
     }
 
@@ -291,6 +298,7 @@ public class AppState
     public void TogglePause()
     {
         Paused = !Paused;
+        if(!Paused) Interactive = true;
         Changed?.Invoke();
     }
     public async Task NewPassword(string password)

@@ -63,6 +63,12 @@ public partial class MainWindow : Window
     /// </summary>
     private void OnChanged()
     {
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(OnChanged);
+            return;
+        }
+
         if (State.Current.Paused)
         {
             PauseButtonText.Text = "Resume";
@@ -162,7 +168,9 @@ public partial class MainWindow : Window
         // Show the timer flashing when paused
         if (State.Current.Paused)
         {
-            OS.Current.Mute();
+            // Don't mute the audio when the user has locked the screen or switched users
+            if(State.Current.Interactive)
+                OS.Current.Mute();
             LabelTimer.Opacity = LabelTimer.Opacity == 1 ? 0 : 1;
             LabelTimer.InvalidateVisual();
         }
