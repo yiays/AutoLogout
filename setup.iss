@@ -10,11 +10,9 @@
 
 #if InstallerArch == "x64"
   #define OutputName "AutoLogoutSetup-x64"
-  #define AllowedArch "x64compatible"
   #define SourceDir "bin\Release\net10.0-windows10.0.19041.0\win-x64\publish"
 #else
   #define OutputName "AutoLogoutSetup-arm64"
-  #define AllowedArch "arm64"
   #define SourceDir "bin\Release\net10.0-windows10.0.19041.0\win-arm64\publish"
 #endif
 
@@ -27,7 +25,7 @@ DefaultGroupName=AutoLogout
 OutputDir=.\bin\Installer
 OutputBaseFilename={#OutputName}
 PrivilegesRequired=admin
-ArchitecturesAllowed={#AllowedArch}
+ArchitecturesAllowed=x64compatible or arm64
 ArchitecturesInstallIn64BitMode=x64compatible or arm64
 
 [Files]
@@ -38,12 +36,16 @@ Name: "{group}\AutoLogout"; Filename: "{app}\AutoLogout.exe"
 Name: "{group}\Uninstall AutoLogout"; Filename: "{uninstallexe}"
 
 [Code]
+// Utility for auto installing dependencies
+#include "CodeDependencies.iss"
+
 function InitializeSetup(): Boolean;
 var
   ErrorCode: Integer;
 var
   Url: string;
 begin
+  // 64 bit check
   if not Is64BitInstallMode then
   begin
     MsgBox('AutoLogout requires a 64-bit Windows installation.', mbError, MB_OK);
@@ -51,12 +53,13 @@ begin
     Exit;
   end;
 
+  // matching architecture check
   if '{#InstallerArch}' = 'x64' then
   begin
     if IsArm64() then
     begin
       Url := '{#DownloadUrl}';
-      MsgBox('This installer is for x64 systems. This machine appears to be ARM64. Please download the ARM64 installer from ' + Url, mbError, MB_OK);
+      MsgBox('This installer is for x64 systems. This machine appears to be ARM64. Please download the ARM64 installer.', mbError, MB_OK);
       ShellExec('', Url, '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
       Result := False;
       Exit;
@@ -67,11 +70,16 @@ begin
     if not IsArm64() then
     begin
       Url := '{#DownloadUrl}';
-      MsgBox('This installer is for ARM64 systems. This machine appears to be x64. Please download the x64 installer from ' + Url, mbError, MB_OK);
+      MsgBox('This installer is for ARM64 systems. This machine appears to be x64. Please download the x64 installer.', mbError, MB_OK);
       ShellExec('', Url, '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
       Result := False;
       Exit;
     end;
+  end;
+  
+  if not WizardSilent then
+  begin
+    Dependency_AddDotNet100;      // Add .NET 10.0 if needed
   end;
 
   Result := True;
